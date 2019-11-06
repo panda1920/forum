@@ -13,4 +13,4 @@ flask = "*"
 python_version = "3.7"
 
 [scripts]
-start = "python server/server.py"
+start = "flask run"
