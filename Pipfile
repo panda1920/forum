@@ -14,3 +14,4 @@ python_version = "3.7"
 
 [scripts]
 start = "flask run"
+testdata = "python server/database/tests/createTestData.py"

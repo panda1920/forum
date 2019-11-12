@@ -1,6 +1,7 @@
 import sys
 import pytest
 import json
+import urllib.parse
 from pathlib import Path
 from flask import request, current_app
 from unittest.mock import create_autospec
@@ -8,9 +9,8 @@ from unittest.mock import create_autospec
 PROJECT_DIR = Path(__file__).resolve().parents[2]
 
 sys.path.append( str(PROJECT_DIR / 'server') )
-sys.path.append( str(PROJECT_DIR / 'mongodb') )
 import server
-from mongodb import MongoDB
+from database.database import Database
 
 @pytest.fixture(scope='function')
 def app():
@@ -20,7 +20,7 @@ def app():
     app.testing = True
 
     # replace database with mock
-    app.config['DATABASE_OBJECT'] = create_autospec(MongoDB)
+    app.config['DATABASE_OBJECT'] = create_autospec(Database)
 
     yield app
 
@@ -55,7 +55,7 @@ class TestServerAPIs:
             assert data['name'] == jsonData['name']
             assert data['age'] == jsonData['age']
 
-    def test_post_callsStorePostOnDB(self, app):
+    def test_post_callsCreatePostOnDB(self, app):
         jsonData = {
             'author': 'someone',
             'message': 'Hello world'
@@ -65,7 +65,7 @@ class TestServerAPIs:
         with app.test_client() as client:
             client.post('/api/post', json=jsonData)
 
-            assert db.storePost.call_count == 1
+            assert db.createPost.call_count == 1
 
     def test_post_ifDBThrowsErrorReturn500(self, app):
         jsonData = {
@@ -73,9 +73,22 @@ class TestServerAPIs:
             'message': 'Hello world'
         }
         db = app.config['DATABASE_OBJECT']
-        db.storePost.side_effect = Exception('Went wrong')
+        db.createPost.side_effect = Exception('Went wrong')
 
         with app.test_client() as client:
             rv = client.post('/api/post', json=jsonData)
 
             assert rv.status_code == 500
+
+    def test_post_form(self, app):
+        formData = urllib.parse.urlencode({
+            'author': 'someone',
+            'message': 'Hello world'
+        })
+        header = { 'content-type': 'application/x-www-form-urlencoded' }
+
+        with app.test_client() as client:
+            client.post('/post', data=formData, headers=header)
+
+            assert request.form['author'] == 'someone'
+            assert request.form['message'] == 'Hello world'

@@ -30,7 +30,7 @@ def post():
     db = current_app.config['DATABASE_OBJECT']
     
     try:
-        db.storePost(data)
+        db.createPost(data)
     except:
         return make_response('Failed to store post!', 500, {'content-type': 'text/plain'})
 

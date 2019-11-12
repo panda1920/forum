@@ -6,7 +6,7 @@ def setupApp():
     from routes import routes
     app.register_blueprint(routes)
 
-    from mongodb import MongoDB
-    app.config['DATABASE_OBJECT'] = MongoDB()
+    from database.database import Database
+    app.config['DATABASE_OBJECT'] = Database()
 
     return app
