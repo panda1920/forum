@@ -1,4 +1,6 @@
+import time
 from flask import Blueprint, render_template, request, current_app, make_response
+
 
 routes = Blueprint('routes', __name__,)
 
@@ -26,11 +28,14 @@ def examplepost():
     
 @routes.route('/api/post', methods=['POST'])
 def post():
-    data = request.data
-    db = current_app.config['DATABASE_OBJECT']
-    
     try:
-        db.createPost(data)
+        postData = request.form
+        db = current_app.config['DATABASE_OBJECT']
+        db.createPost({
+            'userId': postData['userId'],
+            'post': postData['post'],
+            'postId': '111111'
+        })
     except:
         return make_response('Failed to store post!', 500, {'content-type': 'text/plain'})
 

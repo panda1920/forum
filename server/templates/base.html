@@ -1,0 +1,14 @@
+<html>
+    <head>
+      {% if title %}
+      <title>{{ title }} - my forum</title>
+      {% else %}
+      <title>Welcome to my forum</title>
+      {% endif %}
+    </head>
+    <body>
+        <div>Forum: <a href="/index">Home</a></div>
+        <hr>
+        {% block content %}{% endblock %}
+    </body>
+</html>

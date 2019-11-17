@@ -10,57 +10,78 @@ class SimpleFile(Database):
 
     def __init__(self, filePath):
         self._saveLocation = filePath
+        self._usersFile = self.createIfNotExist(self._saveLocation / self.USERS_FILENAME)
+        self._postsFile = self.createIfNotExist(self._saveLocation / self.POSTS_FILENAME)
+        self._threadsFile = self.createIfNotExist(self._saveLocation / self.THREADS_FILENAME)
+
+    def createIfNotExist(self, filePath):
+        if not filePath.exists():
+            with filePath.open('w', encoding='utf-8') as f:
+                json.dump([], f)
+
+        return filePath
 
     def createUser(self, userProps):
-        usersFile = self._saveLocation / self.USERS_FILENAME
-
-        with usersFile.open('r', encoding='utf-8') as f:
+        with self._usersFile.open('r', encoding='utf-8') as f:
             data = json.load(f)
 
         userData = userProps
         userData['createdAt'] = time.time()
         data.append(userData)
 
-        with usersFile.open('w') as f:
+        with self._usersFile.open('w') as f:
             json.dump(data, f)
 
     def searchUser(self, searchCritera):
         pass
 
-    def deleteUser(self, userId):
-        usersFile = self._saveLocation / self.USERS_FILENAME
+    def deleteUser(self, userIds):
+        with self._usersFile.open('r', encoding='utf-8') as f:
+            users = json.load(f)
 
-        with usersFile.open('r', encoding='utf-8') as f:
-            data = json.load(f)
+        filteredUsers = [
+            user for user in users
+            if user['userId'] not in userIds
+        ]
 
-        data = [ user for user in data if user['userId'] != userId ]
+        with self._usersFile.open('w') as f:
+            json.dump(filteredUsers, f)
 
-        with usersFile.open('w') as f:
-            json.dump(data, f)
+        postsToDelete = self.searchPost({
+            'userId': userIds
+        })
+        self.deletePost( [post['postId'] for post in postsToDelete] )
 
     def createPost(self, post):
-        postsFile = self._saveLocation / self.POSTS_FILENAME
-
-        with postsFile.open('r', encoding='utf-8') as f:
+        with self._postsFile.open('r', encoding='utf-8') as f:
             data = json.load(f)
 
         postData = post
         postData['createdAt'] = time.time()
         data.append(postData)
 
-        with postsFile.open('w') as f:
+        with self._postsFile.open('w') as f:
             json.dump(data, f)
     
     def searchPost(self, searchCriteria):
-        pass
+        with self._postsFile.open('r', encoding='utf-8') as f:
+            posts = json.load(f)
 
-    def deletePost(self, postId):
-        postsFile = self._saveLocation / self.POSTS_FILENAME
+        return [post for post in posts if self.matchesCriteria(post, searchCriteria)]
 
-        with postsFile.open('r', encoding='utf-8') as f:
+    def matchesCriteria(self, post, searchCriteria):
+        for field, values in searchCriteria.items():
+            for value in values:
+                if post[field] == value:
+                    return True
+
+        return False
+
+    def deletePost(self, postIds):
+        with self._postsFile.open('r', encoding='utf-8') as f:
             data = json.load(f)
 
-        data = [ post for post in data if post['postId'] != postId ]
+        data = [ post for post in data if post['postId'] not in postIds ]
 
-        with postsFile.open('w') as f:
+        with self._postsFile.open('w') as f:
             json.dump(data, f)

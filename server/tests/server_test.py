@@ -55,18 +55,6 @@ class TestServerAPIs:
             assert data['name'] == jsonData['name']
             assert data['age'] == jsonData['age']
 
-    def test_post_callsCreatePostOnDB(self, app):
-        jsonData = {
-            'author': 'someone',
-            'message': 'Hello world'
-        }
-        db = app.config['DATABASE_OBJECT']
-
-        with app.test_client() as client:
-            client.post('/api/post', json=jsonData)
-
-            assert db.createPost.call_count == 1
-
     def test_post_ifDBThrowsErrorReturn500(self, app):
         jsonData = {
             'author': 'someone',
@@ -92,3 +80,34 @@ class TestServerAPIs:
 
             assert request.form['author'] == 'someone'
             assert request.form['message'] == 'Hello world'
+
+    def test_post_form_withoutHeadersReturn500(self, app):
+        formData = urllib.parse.urlencode({
+            'userId': '112233',
+            'post': 'This is a post by 112233 for test'
+        })
+
+        with app.test_client() as client:
+            response = client.post('/api/post', data=formData)
+
+            assert request.form == {}
+            assert response.status_code == 500
+
+    def test_postCallsCreatePostOnDB(self, app):
+        formData = urllib.parse.urlencode({
+            'userId': '112233',
+            'post': 'This is a post by 112233 for test'
+        })
+        header = { 'content-type': 'application/x-www-form-urlencoded' }
+
+        with app.test_client() as client:
+            response = client.post('/api/post', data=formData, headers=header)
+            assert response.status_code == 200
+            
+            mockDB = app.config['DATABASE_OBJECT']
+            assert mockDB.createPost.call_count == 1
+
+            passedPost = mockDB.createPost.call_args[0][0]
+            assert passedPost['userId'] == '112233'
+            assert passedPost['post'] == 'This is a post by 112233 for test'
+            assert 'postId' in passedPost.keys()

@@ -8,7 +8,7 @@ class Database:
     def searchUser(self, searchCritera):
         pass
 
-    def deleteUser(self, userId):
+    def deleteUser(self, userIds):
         pass
     
     def createPost(self, post):
@@ -17,5 +17,5 @@ class Database:
     def searchPost(self, searchCriteria):
         pass
 
-    def deletePost(self, postId):
+    def deletePost(self, postIds):
         pass
