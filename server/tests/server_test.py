@@ -111,3 +111,41 @@ class TestServerAPIs:
             assert passedPost['userId'] == '112233'
             assert passedPost['post'] == 'This is a post by 112233 for test'
             assert 'postId' in passedPost.keys()
+
+    def test_postAPICallsDeletePostOnDBWhenDELETE(self, app):
+        formData = urllib.parse.urlencode({
+            'postId': '0',
+        })
+        header = { 'content-type': 'application/x-www-form-urlencoded' }
+        
+        with app.test_client() as client:
+            response = client.delete('/api/post', data=formData, headers=header)
+            assert response.status_code == 200
+
+            mockDB = app.config['DATABASE_OBJECT']
+            assert mockDB.deletePost.call_count == 1
+
+    def test_postAPICallsSearchPostOnDBWhenGET(self, app):
+        searchCriteria = {
+            'postId': '0',
+        }
+
+        with app.test_client() as client:
+            response = client.get('/api/post', query_string=searchCriteria)
+            assert response.status_code == 200
+
+            mockDB = app.config['DATABASE_OBJECT']
+            assert mockDB.searchPost.call_count == 1
+
+    def test_postAPICallsUpdatePostOnDBWhenPATCH(self, app):
+        formData = urllib.parse.urlencode({
+            'postId': '0',
+        })
+        header = { 'content-type': 'application/x-www-form-urlencoded' }
+        
+        with app.test_client() as client:
+            response = client.patch('/api/post', data=formData, headers=header)
+            assert response.status_code == 200
+            
+            # mockDB = app.config['DATABASE_OBJECT']
+            # assert mockDB.updatePost.call_count == 1

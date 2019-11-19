@@ -1,4 +1,5 @@
 import time
+import urllib.parse
 from flask import Blueprint, render_template, request, current_app, make_response
 
 
@@ -27,7 +28,7 @@ def examplepost():
     print(data)
     
 @routes.route('/api/post', methods=['POST'])
-def post():
+def postCreate():
     try:
         postData = request.form
         db = current_app.config['DATABASE_OBJECT']
@@ -36,7 +37,34 @@ def post():
             'post': postData['post'],
             'postId': '111111'
         })
-    except:
-        return make_response('Failed to store post!', 500, {'content-type': 'text/plain'})
+    except Exception as e:
+        return make_response(str(e), 500, {'content-type': 'text/plain'})
 
     return make_response('Post was stored!', 200, {'content-type': 'text/plain'})
+
+@routes.route('/api/post', methods=['GET'])
+def postSearch():
+    try:
+        db = current_app.config['DATABASE_OBJECT']
+        searchCriteria = urllib.parse.parse_qs( request.query_string )
+        db.searchPost(searchCriteria)
+        return make_response('', 200)
+    except Exception as e:
+        return make_response(str(e), 500, {'content-type': 'text/plain'})
+    
+@routes.route('/api/post', methods=['DELETE'])
+def postDelete():
+    try:
+        db = current_app.config['DATABASE_OBJECT']
+        db.deletePost({
+            'postId': request.form['postId']
+        })
+        return make_response('Post was deleted!', 200, {'content-type': 'text/plain'})
+    except Exception as e:
+        return make_response(str(e), 500, {'content-type': 'text/plain'})
+
+@routes.route('/api/post', methods=['PATCH'])
+def postUpdate():
+    db = current_app.config['DATABASE_OBJECT']
+
+    return make_response('Post was updated!', 200, {'content-type': 'text/plain'})

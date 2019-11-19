@@ -10,6 +10,7 @@ TESTDATA = PROJECT_DIR / 'server' / 'database' / 'tests' / 'testdata.json'
 
 sys.path.append( str(PROJECT_DIR / 'server') )
 from database.simplefile import SimpleFile
+from database.datacreator import DataCreator
 
 @pytest.fixture(scope='function')
 def setupDB():
@@ -49,17 +50,13 @@ class SetupDB_SimpleFile:
         return data['posts']
 
     def validateCreatedUsers(self):
+        createdUsers = self.getAllUsers()
         assert self._usersFile.exists()
-        assert len(self.getAllUsers()) == len(self.getOriginalUsers())
-        # assert users[0]['userId'] == '1'
-        # assert users[0]['displayName'] == 'Daniel'
-        # assert users[1]['userName'] == 'eugene@myforumwebapp.com'
+        assert len(createdUsers) == len(self.getOriginalUsers())
 
     def validateCreatedPosts(self):
         assert self._postsFile.exists()
         assert len(self.getAllPosts()) == len(self.getOriginalPosts())
-        # assert posts[0]['userId'] == '1'
-        # assert posts[3]['post'] == 'Eugene\'s post 2'
 
     def getAllUsers(self):
         return self.readJson( self._usersFile )
@@ -145,7 +142,7 @@ class TestUsersAPI:
         db.deleteUser([userIdToDelete])
 
         posts = setupDB.getAllPosts()
-        assert len(posts) == len(setupDB.getOriginalPosts()) - 5
+        assert len(posts) == len(setupDB.getOriginalPosts()) - DataCreator.getPostCountPerUser()
 
         postsBelongingToDeletedUser = [
             post for post in posts
