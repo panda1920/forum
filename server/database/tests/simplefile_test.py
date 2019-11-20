@@ -4,6 +4,7 @@ import urllib.parse
 from pathlib import Path
 import shutil
 import pytest
+import pdb
 
 PROJECT_DIR = Path(__file__).resolve().parents[3]
 TESTDATA = PROJECT_DIR / 'server' / 'database' / 'tests' / 'testdata.json'
@@ -232,3 +233,18 @@ class TestUsersAPI:
         posts = db.searchPost(searchCriteria)
 
         assert len(posts) == 0
+
+    def test_updatePostUpdatesPostOnDB(self, setupDB):
+        db = setupDB.getDB()
+        postToUpdate = {
+            'postId': '1',
+            'post': 'Post 1 was updated for testing!'
+        }
+        # pdb.set_trace()
+        db.updatePost(postToUpdate)
+
+        postInDB = [
+            post for post in setupDB.getAllPosts() 
+            if post['postId'] == postToUpdate['postId']
+        ][0]
+        assert postInDB['post'] == postToUpdate['post']

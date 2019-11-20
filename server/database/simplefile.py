@@ -3,6 +3,36 @@ import time
 
 from .database import Database
 
+def updateJSONFileContent(filenameAttr):
+    """
+    The issue was that I was writing the code below over and over:
+    1. read file content
+    2. edit the content
+    3. write the updated content back to the file
+    1 and 3 is essentially the same every time.
+    So the motivation was to isolate 2 from the recurring code.
+    This decorator helps achieve this.
+
+    usage:
+    @updateJSONFileContent(<filenameAttr>)
+    def updateContent(self, arg, filecontent = None):
+        ... # do something with filecontent
+        return updatedContent
+
+    """
+    def updateJSONFileContentDecorator(func):
+        def wrapper(*args):
+            filename = getattr(args[0], filenameAttr) # args[0] refers to self
+            with filename.open('r', encoding='utf-8') as f:
+                filecontent = json.load(f)
+
+                updatedContent = func(*args, filecontent) # None wont appear in *args
+            
+            with filename.open('w') as f:
+                json.dump(updatedContent, f)
+        return wrapper
+    return updateJSONFileContentDecorator
+
 class SimpleFile(Database):
     USERS_FILENAME = 'users.json'
     POSTS_FILENAME = 'posts.json'
@@ -21,48 +51,33 @@ class SimpleFile(Database):
 
         return filePath
 
-    def createUser(self, userProps):
-        with self._usersFile.open('r', encoding='utf-8') as f:
-            data = json.load(f)
-
-        userData = userProps
-        userData['createdAt'] = time.time()
-        data.append(userData)
-
-        with self._usersFile.open('w') as f:
-            json.dump(data, f)
+    @updateJSONFileContent('_usersFile')
+    def createUser(self, user, currentUsers = None):
+        user['createdAt'] = time.time()
+        return [*currentUsers, user]
 
     def searchUser(self, searchCritera):
         pass
 
-    def deleteUser(self, userIds):
-        with self._usersFile.open('r', encoding='utf-8') as f:
-            users = json.load(f)
-
-        filteredUsers = [
-            user for user in users
-            if user['userId'] not in userIds
-        ]
-
-        with self._usersFile.open('w') as f:
-            json.dump(filteredUsers, f)
-
+    @updateJSONFileContent('_usersFile')
+    def deleteUser(self, userIds, currentUsers = None):
+        # delete related posts
         postsToDelete = self.searchPost({
             'userId': userIds
         })
         self.deletePost( [post['postId'] for post in postsToDelete] )
+        
+        updatedUsers = [
+            user for user in currentUsers
+            if user['userId'] not in userIds
+        ]
+        return updatedUsers
 
-    def createPost(self, post):
-        with self._postsFile.open('r', encoding='utf-8') as f:
-            data = json.load(f)
+    @updateJSONFileContent('_postsFile')
+    def createPost(self, post, currentPosts = None):
+        post['createdAt'] = time.time()
+        return [*currentPosts, post]
 
-        postData = post
-        postData['createdAt'] = time.time()
-        data.append(postData)
-
-        with self._postsFile.open('w') as f:
-            json.dump(data, f)
-    
     def searchPost(self, searchCriteria):
         with self._postsFile.open('r', encoding='utf-8') as f:
             posts = json.load(f)
@@ -77,11 +92,16 @@ class SimpleFile(Database):
 
         return False
 
-    def deletePost(self, postIds):
-        with self._postsFile.open('r', encoding='utf-8') as f:
-            data = json.load(f)
+    @updateJSONFileContent('_postsFile')
+    def deletePost(self, postIds, currentPosts = None):
+        return [ post for post in currentPosts if post['postId'] not in postIds ]
 
-        data = [ post for post in data if post['postId'] not in postIds ]
-
-        with self._postsFile.open('w') as f:
-            json.dump(data, f)
+    @updateJSONFileContent('_postsFile')
+    def updatePost(self, post, currentPosts = None):
+        postIdx = [
+            idx for idx, p in enumerate(currentPosts)
+            if p['postId'] == post['postId']
+        ][0]
+        updatedPosts = [*currentPosts]
+        updatedPosts[postIdx]['post'] = post['post']
+        return updatedPosts

@@ -2,7 +2,7 @@ class Database:
     def __init__(self):
         pass
 
-    def createUser(self, userProps):
+    def createUser(self, user):
         pass
 
     def searchUser(self, searchCritera):
@@ -18,4 +18,7 @@ class Database:
         pass
 
     def deletePost(self, postIds):
+        pass
+
+    def updatePost(self, post):
         pass
