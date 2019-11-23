@@ -240,7 +240,6 @@ class TestUsersAPI:
             'postId': '1',
             'post': 'Post 1 was updated for testing!'
         }
-        # pdb.set_trace()
         db.updatePost(postToUpdate)
 
         postInDB = [

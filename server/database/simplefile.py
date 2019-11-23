@@ -10,13 +10,13 @@ def updateJSONFileContent(filenameAttr):
     2. edit the content
     3. write the updated content back to the file
     1 and 3 is essentially the same every time.
-    So the motivation was to isolate 2 from the recurring code.
+    So the motivation was to isolate 2 from the rest of recurring code.
     This decorator helps achieve this.
 
     usage:
     @updateJSONFileContent(<filenameAttr>)
     def updateContent(self, arg, filecontent = None):
-        ... # do something with filecontent
+        ... # do something with filecontent and update it
         return updatedContent
 
     """
