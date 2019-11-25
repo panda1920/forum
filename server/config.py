@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from database.simplefile import SimpleFile
+from server.database.simplefile import SimpleFile
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'this_is_secretkey')

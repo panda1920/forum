@@ -1,12 +1,8 @@
-import sys
-from pathlib import Path
-import pytest
 import pdb
+import pytest
 
-PROJECT_DIR = Path(__file__).resolve().parents[3]
-
-sys.path.append( str(PROJECT_DIR / 'server') )
-from database.filter import *
+from server.database.filter import *
+from server.exceptions import FilterParseError, InvalidOperatorError
 
 @pytest.fixture(scope='function')
 def fixture():
@@ -65,23 +61,34 @@ class TestFilterCreation:
     
     def test_createEQ(self):
         querystringObj = {
-            'operator': 'fuzzy',
+            'operator': 'eq',
             'value': ['val1'],
             'field': 'content',
         }
         f = Filter.createFilter(querystringObj)
 
         assert isinstance(f, EQFilter)
-  
-    def test_createPage(self):
+
+    def test_createFilterShouldThrowExceptionWhenMissingAttributes(self):
+        querystringObjs = [
+            {'operator': 'eq', 'value': [1, 2]}, # missing field
+            {'operator': 'eq', 'field': 'content'}, # missing value
+            {'value': [1, 2], 'field': 'content'}, # missing operator
+        ]
+
+        with pytest.raises(FilterParseError):
+            for querystringObj in querystringObjs:
+                Filter.createFilter(querystringObj)
+
+    def test_createFilterThrowsErrorWhenInvalidOperator(self):
         querystringObj = {
-            'operator': 'page',
+            'operator': 'non_existant_operator',
             'value': ['val1'],
             'field': 'content',
         }
-        f = Filter.createFilter(querystringObj)
 
-        assert isinstance(f, PageFilter)
+        with pytest.raises(InvalidOperatorError):
+            Filter.createFilter(querystringObj)
 
 class TestFilterMatching:
     pass

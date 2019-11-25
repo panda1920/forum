@@ -1,16 +1,11 @@
-import sys
-import pytest
 import json
 import urllib.parse
-from pathlib import Path
-from flask import request, current_app
+import pytest
+from flask import request
 from unittest.mock import create_autospec
 
-PROJECT_DIR = Path(__file__).resolve().parents[2]
-
-sys.path.append( str(PROJECT_DIR / 'server') )
-import server
-from database.database import Database
+from server import server
+from server.database.database import Database
 
 @pytest.fixture(scope='function')
 def app():

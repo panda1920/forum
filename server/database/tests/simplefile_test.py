@@ -1,4 +1,3 @@
-import sys
 import json
 import urllib.parse
 from pathlib import Path
@@ -6,12 +5,11 @@ import shutil
 import pytest
 import pdb
 
+from server.database.simplefile import SimpleFile
+from server.database.datacreator import DataCreator
+
 PROJECT_DIR = Path(__file__).resolve().parents[3]
 TESTDATA = PROJECT_DIR / 'server' / 'database' / 'tests' / 'testdata.json'
-
-sys.path.append( str(PROJECT_DIR / 'server') )
-from database.simplefile import SimpleFile
-from database.datacreator import DataCreator
 
 @pytest.fixture(scope='function')
 def setupDB():

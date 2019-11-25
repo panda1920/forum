@@ -1,15 +1,24 @@
 import urllib.parse
 from pathlib import Path
 
-formData = urllib.parse.urlencode({
-	'author': 'someone',
-	'message': 'Hello world'
-})
+class SomeClass:
+    def __init__(self):
+        print('parent init')
 
-print(formData)
+class DerivedClass1(SomeClass):
+    pass
 
-saveLocation = Path(__file__).resolve().parents[0] / 'temp'
-fileName = saveLocation / 'temp.txt'
+class DerivedClass2(SomeClass):
+    def __init__(self):
+        print('child init')
 
-print(saveLocation)
-print(fileName)
+SomeClass()
+print('================')
+DerivedClass1()
+print('================')
+DerivedClass2()
+print('================')
+
+# what I learned:
+# When creating a constructor for derived classes,
+# Parent constructor would not be called unless it is explicitly invoked through super().__init__()

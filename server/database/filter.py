@@ -1,3 +1,5 @@
+from server.exceptions import FilterParseError, InvalidOperatorError
+
 class Filter:
     """
     An object that defines search filter
@@ -12,6 +14,8 @@ class Filter:
         """
         Factory method to create a derivative instance of Filter
         """
+        Filter.validateQuerystringObj(querystringObj)
+        
         operator = querystringObj['operator']
         if operator == 'fuzzy':
             return FuzzyStringFilter(querystringObj)
@@ -27,8 +31,15 @@ class Filter:
             return EQFilter(querystringObj)
         elif operator == 'regex':
             return RegexFilter(querystringObj)
-        elif operator == 'page':
-            return PageFilter(querystringObj)
+        else:
+            raise InvalidOperatorError(f'Operator {operator} is not defined')
+
+    @staticmethod
+    def validateQuerystringObj(querystringObj):
+        attributes = ['operator', 'value', 'field']
+        for attr in attributes:
+            if attr not in querystringObj.keys():
+                raise FilterParseError(f'querystringObj is missing attribute {attr}')
 
     def __init__(self, querystringObj):
         pass
@@ -43,55 +54,33 @@ class FuzzyStringFilter(Filter):
     """
     Allows fuzzy searches like searching for post that contains a certain substring
     """
-    def __init__(self, querystringObj):
-        pass
 
-class GTFilter:
+class GTFilter(Filter):
     """
     Greather than filter
     """
-    def __init__(self, querystringObj):
-        pass
 
-class GTEFilter:
+class GTEFilter(Filter):
     """
     Greather than or equal to filter
     """
-    def __init__(self, querystringObj):
-        pass
 
-class LTFilter:
+class LTFilter(Filter):
     """
     Less than filter
     """
-    def __init__(self, querystringObj):
-        pass
 
-class LTEFilter:
+class LTEFilter(Filter):
     """
     Less than or equal to filter
     """
-    def __init__(self, querystringObj):
-        pass
     
-class EQFilter:
+class EQFilter(Filter):
     """
     Exact match filter
     """
-    def __init__(self, querystringObj):
-        pass
     
-class RegexFilter:
+class RegexFilter(Filter):
     """
     Regular expression filter
     """
-    def __init__(self, querystringObj):
-        pass
-    
-class PageFilter:
-    """
-    Deals with pagination
-    """
-    def __init__(self, querystringObj):
-        pass    
-    
