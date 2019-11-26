@@ -1,0 +1,28 @@
+FORUM
+    [DB]
+        - Implement user CRUD
+        - Implement pagination
+        - Figure out the best way to hold password in db. why plain texts are bad
+        - Think through various scenarios where exceptions are raised
+        
+    [Flask]
+        - Finish naive implementation of CRUD operation of post messages
+        - Finish naive implemenation of CRUD operation of users
+        - Implement user authentication system
+        - Add user authentication system to operations that need it
+        - Figure out how to encyrpt incoming information
+            JWT?
+        - Arrange route definining functions in separate files, each representing the object which they are associated with
+        - Implement validation mechanism of incoming data for create/update/search
+        - Implement sanitization mechanism for incoming query string
+		- Sort out the api
+			reference WebAPI: the good parts
+    
+    [Frontend]
+        - Figure out how to carry around user information on the client side
+        - Create a simple page to signup user
+        - Create a simple page to write posts
+
+    [MISC]
+        - Change layout of test files
+            separating test from production code
