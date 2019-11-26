@@ -2,7 +2,7 @@ class FilterParseError(Exception):
     """
     Thrown when parsing failed during construction of filters
     """
-class InvalidOperatorError(Exception):
+class InvalidFilterOperatorError(Exception):
     """
-    Thrown when invalid operator was given for parse
+    Thrown when invalid filter operator was given to parse
     """

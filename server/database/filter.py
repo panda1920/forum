@@ -1,4 +1,4 @@
-from server.exceptions import FilterParseError, InvalidOperatorError
+from server.exceptions import FilterParseError, InvalidFilterOperatorError
 
 class Filter:
     """
@@ -6,7 +6,7 @@ class Filter:
     Passed to database object when querying for records
     Conceptually a filter consists of the following 3 elements:
         - target field
-        - values of the field to look for in list
+        - value(s) of the field to look for
         - operator used to compare the above field value against records in db
     """
     @staticmethod
@@ -32,53 +32,109 @@ class Filter:
         elif operator == 'regex':
             return RegexFilter(querystringObj)
         else:
-            raise InvalidOperatorError(f'Operator {operator} is not defined')
+            raise InvalidFilterOperatorError(f'Operator {operator} is not defined')
 
     @staticmethod
     def validateQuerystringObj(querystringObj):
+        """
+        validate that dictionary passed has required attributes
+        """
         attributes = ['operator', 'value', 'field']
         for attr in attributes:
             if attr not in querystringObj.keys():
-                raise FilterParseError(f'querystringObj is missing attribute {attr}')
+                raise FilterParseError(f'querystring is missing attribute {attr}')
 
     def __init__(self, querystringObj):
-        pass
+        self._field = querystringObj['field']
+        self._values = querystringObj['value']
 
-    def parse(self, querystringObj):
+    # def parse(self, querystringObj):
+    #     raise NotImplementedError
+
+    def matches(self, record):
+        """
+        Determines if target record matches the filter
+        """
         raise NotImplementedError
 
-    def isMatch(self, record):
-        raise NotImplementedError
+    def isFieldInRecord(self, record):
+        return self._field in record.keys()
 
 class FuzzyStringFilter(Filter):
     """
     Allows fuzzy searches like searching for post that contains a certain substring
     """
+    def matches(self, record):
+        if not self.isFieldInRecord(record):
+            return False
+        
+        for fieldValue in self._values:
+            if record[self._field].find(fieldValue) != -1:
+                return True
+
+        return False
 
 class GTFilter(Filter):
     """
-    Greather than filter
+    Greater than filter
     """
+    def matches(self, record):
+        if not self.isFieldInRecord(record):
+            return False
+        
+        # only use the first value
+        # the reasoning is that I felt it makes no sense to OR together 
+        # greater than comparison filters
+        # same goes with gte, lt, lte
+        fieldValue = self._values[0]
+        return record[self._field] > fieldValue
 
 class GTEFilter(Filter):
     """
-    Greather than or equal to filter
+    Greater than or equal to filter
     """
+    def matches(self, record):
+        if not self.isFieldInRecord(record):
+            return False
+        
+        fieldValue = self._values[0]
+        return record[self._field] >= fieldValue
 
 class LTFilter(Filter):
     """
     Less than filter
     """
+    def matches(self, record):
+        if not self.isFieldInRecord(record):
+            return False
+        
+        fieldValue = self._values[0]
+        return record[self._field] < fieldValue
 
 class LTEFilter(Filter):
     """
     Less than or equal to filter
     """
+    def matches(self, record):
+        if not self.isFieldInRecord(record):
+            return False
+        
+        fieldValue = self._values[0]
+        return record[self._field] <= fieldValue
     
 class EQFilter(Filter):
     """
     Exact match filter
     """
+    def matches(self, record):
+        if not self.isFieldInRecord(record):
+            return False
+
+        for fieldValue in self._values:
+            if record[self._field] == fieldValue:
+                return True
+
+        return False
     
 class RegexFilter(Filter):
     """

@@ -2,7 +2,7 @@ import pdb
 import pytest
 
 from server.database.filter import *
-from server.exceptions import FilterParseError, InvalidOperatorError
+from server.exceptions import FilterParseError, InvalidFilterOperatorError
 
 @pytest.fixture(scope='function')
 def fixture():
@@ -12,7 +12,7 @@ class TestFilterCreation:
     def test_createFuzzyString(self):
         querystringObj = {
             'operator': 'fuzzy',
-            'value': ['val1'],
+            'value': 100,
             'field': 'content',
         }
         f = Filter.createFilter(querystringObj)
@@ -62,7 +62,7 @@ class TestFilterCreation:
     def test_createEQ(self):
         querystringObj = {
             'operator': 'eq',
-            'value': ['val1'],
+            'value': 100,
             'field': 'content',
         }
         f = Filter.createFilter(querystringObj)
@@ -71,9 +71,9 @@ class TestFilterCreation:
 
     def test_createFilterShouldThrowExceptionWhenMissingAttributes(self):
         querystringObjs = [
-            {'operator': 'eq', 'value': [1, 2]}, # missing field
+            {'operator': 'eq', 'value': 100}, # missing field
             {'operator': 'eq', 'field': 'content'}, # missing value
-            {'value': [1, 2], 'field': 'content'}, # missing operator
+            {'value': 100, 'field': 'content'}, # missing operator
         ]
 
         with pytest.raises(FilterParseError):
@@ -87,8 +87,148 @@ class TestFilterCreation:
             'field': 'content',
         }
 
-        with pytest.raises(InvalidOperatorError):
+        with pytest.raises(InvalidFilterOperatorError):
             Filter.createFilter(querystringObj)
 
 class TestFilterMatching:
-    pass
+    FIELD_TO_COMPARE = 'counter'
+    FIELD_VALUE = 100
+
+    def test_fuzzyStringMatching(self):
+        objsShouldMatch = [
+            {self.FIELD_TO_COMPARE: 'is'},
+            {self.FIELD_TO_COMPARE: 'his'},
+            {self.FIELD_TO_COMPARE: 'history'},
+            {self.FIELD_TO_COMPARE: 'I play bass'},
+            {self.FIELD_TO_COMPARE: 'Fast fish'},
+            {self.FIELD_TO_COMPARE: 'I made a mistake'},
+            {self.FIELD_TO_COMPARE: 'I made a mistake', 'id': '11223344'},
+        ]
+        objsShouldNotMatch = [
+            {self.FIELD_TO_COMPARE: 'aa'},
+            {self.FIELD_TO_COMPARE: 'i s'},
+            {self.FIELD_TO_COMPARE: '  i s '},
+            {self.FIELD_TO_COMPARE: 'HISTORY'},
+            {self.FIELD_TO_COMPARE: 'MASSAGE'},
+            {self.FIELD_TO_COMPARE: 'I love testing'},
+            {'id': '112233'},
+            {'id': 'is'},
+        ]
+
+        # fuzzy search for 'is' OR 'as'
+        f = self.createFilter('fuzzy', ['is', 'as'])
+        for obj in objsShouldMatch:
+            assert f.matches(obj)
+        for obj in objsShouldNotMatch:
+            assert not f.matches(obj)
+
+    def test_GTFilter(self):
+        objsShouldMatch = [
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 1},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 10000},
+        ]
+        objsShouldNotMatch = [
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 1},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 10000},
+            {'id': '112233'},
+            {'id': self.FIELD_VALUE + 1},
+        ]
+
+        f = self.createFilter('gt')
+        for obj in objsShouldMatch:
+            assert f.matches(obj)
+        for obj in objsShouldNotMatch:
+            assert not f.matches(obj)
+
+    def test_GTEFilter(self):
+        objsShouldMatch = [
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 1},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 10000},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE},
+        ]
+        objsShouldNotMatch = [
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 1},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 10000},
+            {'id': '112233'},
+            {'id': self.FIELD_VALUE + 1},
+        ]
+
+        f = self.createFilter('gte')
+        for obj in objsShouldMatch:
+            assert f.matches(obj)
+        for obj in objsShouldNotMatch:
+            assert not f.matches(obj)
+            
+    def test_LTFilter(self):
+        objsShouldMatch = [
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 1},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 10000},
+        ]
+        objsShouldNotMatch = [
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 1},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 10000},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE},
+            {'id': '112233'},
+            {'id': self.FIELD_VALUE + 1},
+        ]
+
+        f = self.createFilter('lt')
+        for obj in objsShouldMatch:
+            assert f.matches(obj)
+        for obj in objsShouldNotMatch:
+            assert not f.matches(obj)
+
+    def test_LTEFilter(self):
+        objsShouldMatch = [
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 1},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 10000},
+        ]
+        objsShouldNotMatch = [
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 1},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 10000},
+            {'id': '112233'},
+            {'id': self.FIELD_VALUE + 1},
+        ]
+
+        f = self.createFilter('lte')
+        for obj in objsShouldMatch:
+            assert f.matches(obj)
+        for obj in objsShouldNotMatch:
+            assert not f.matches(obj)
+
+    def test_EQFilter(self):
+        objsShouldMatch = [
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE},
+            {self.FIELD_TO_COMPARE: 500},
+        ]
+        objsShouldNotMatch = [
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 1},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 10000},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 1},
+            {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 10000},
+            {self.FIELD_TO_COMPARE: 500 + 10000},
+            {self.FIELD_TO_COMPARE: 500 - 1},
+            {'id': '112233'},
+            {'id': self.FIELD_VALUE},
+        ]
+
+        # search for either of the 2 by exact matches
+        f = self.createFilter('eq', [self.FIELD_VALUE, 500])
+        for obj in objsShouldMatch:
+            assert f.matches(obj)
+        for obj in objsShouldNotMatch:
+            assert not f.matches(obj)
+    
+    def createFilter(self, *args):
+        op = args[0]
+        fieldValue = args[1] if len(args) > 1 else [self.FIELD_VALUE]
+        
+        return Filter.createFilter(
+            {
+            'operator': op,
+            'field': self.FIELD_TO_COMPARE,
+            'value': fieldValue,
+            }
+        )
