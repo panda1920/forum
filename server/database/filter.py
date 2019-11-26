@@ -17,17 +17,17 @@ class Filter:
         Filter.validateQuerystringObj(querystringObj)
         
         operator = querystringObj['operator']
-        if operator == 'fuzzy':
+        if operator == FuzzyStringFilter.getOpString():
             return FuzzyStringFilter(querystringObj)
-        elif operator == 'gt':
+        elif operator == GTFilter.getOpString():
             return GTFilter(querystringObj)
-        elif operator == 'gte':
+        elif operator == GTEFilter.getOpString():
             return GTEFilter(querystringObj)
-        elif operator == 'lt':
+        elif operator == LTFilter.getOpString():
             return LTFilter(querystringObj)
-        elif operator == 'lte':
+        elif operator == LTEFilter.getOpString():
             return LTEFilter(querystringObj)
-        elif operator == 'eq':
+        elif operator == EQFilter.getOpString():
             return EQFilter(querystringObj)
         elif operator == 'regex':
             return RegexFilter(querystringObj)
@@ -51,19 +51,26 @@ class Filter:
     # def parse(self, querystringObj):
     #     raise NotImplementedError
 
+    def isFieldInRecord(self, record):
+        return self._field in record.keys()
+    
     def matches(self, record):
         """
         Determines if target record matches the filter
         """
         raise NotImplementedError
 
-    def isFieldInRecord(self, record):
-        return self._field in record.keys()
-
 class FuzzyStringFilter(Filter):
     """
     Allows fuzzy searches like searching for post that contains a certain substring
     """
+    @classmethod
+    def getOpString(cls):
+        """
+        returns string value that represents this filter class
+        """
+        return 'fuzzy'
+
     def matches(self, record):
         if not self.isFieldInRecord(record):
             return False
@@ -78,6 +85,13 @@ class GTFilter(Filter):
     """
     Greater than filter
     """
+    @classmethod
+    def getOpString(cls):
+        """
+        returns string value that represents this filter class
+        """
+        return 'gt'
+
     def matches(self, record):
         if not self.isFieldInRecord(record):
             return False
@@ -93,6 +107,13 @@ class GTEFilter(Filter):
     """
     Greater than or equal to filter
     """
+    @classmethod
+    def getOpString(cls):
+        """
+        returns string value that represents this filter class
+        """
+        return 'gte'
+
     def matches(self, record):
         if not self.isFieldInRecord(record):
             return False
@@ -104,6 +125,13 @@ class LTFilter(Filter):
     """
     Less than filter
     """
+    @classmethod
+    def getOpString(cls):
+        """
+        returns string value that represents this filter class
+        """
+        return 'lt'
+
     def matches(self, record):
         if not self.isFieldInRecord(record):
             return False
@@ -115,6 +143,13 @@ class LTEFilter(Filter):
     """
     Less than or equal to filter
     """
+    @classmethod
+    def getOpString(cls):
+        """
+        returns string value that represents this filter class
+        """
+        return 'lte'
+
     def matches(self, record):
         if not self.isFieldInRecord(record):
             return False
@@ -126,6 +161,13 @@ class EQFilter(Filter):
     """
     Exact match filter
     """
+    @classmethod
+    def getOpString(cls):
+        """
+        returns string value that represents this filter class
+        """
+        return 'eq'
+
     def matches(self, record):
         if not self.isFieldInRecord(record):
             return False
