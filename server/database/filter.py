@@ -1,3 +1,5 @@
+from cerberus import Validator
+
 from server.exceptions import FilterParseError, InvalidFilterOperatorError
 
 class Filter:
@@ -34,15 +36,30 @@ class Filter:
         else:
             raise InvalidFilterOperatorError(f'Operator {operator} is not defined')
 
-    @staticmethod
-    def validateQuerystringObj(querystringObj):
+    filterSchema = {
+        'operator' : {
+            'required': True,
+            'type': 'string'
+        },
+        'value': {
+            'required': True,
+            'type': 'list'
+        },
+        'field': {
+            'required': True,
+            'type': 'string'
+        },
+    }
+
+    @classmethod
+    def validateQuerystringObj(cls, querystringObj):
         """
-        validate that dictionary passed has required attributes
+        validate that dictionary contains enough information to form a search filter
         """
-        attributes = ['operator', 'value', 'field']
-        for attr in attributes:
-            if attr not in querystringObj.keys():
-                raise FilterParseError(f'querystring is missing attribute {attr}')
+        v = Validator(schema=cls.filterSchema, allow_unknown=True)
+        isValidated = v.validate(querystringObj)
+        if not isValidated:
+            raise FilterParseError()
 
     def __init__(self, querystringObj):
         self._field = querystringObj['field']

@@ -12,12 +12,13 @@ class DerivedClass2(SomeClass):
     def __init__(self):
         print('child init')
 
-SomeClass()
-print('================')
-DerivedClass1()
-print('================')
-DerivedClass2()
-print('================')
+def discoverConstructorBehavior():
+    SomeClass()
+    print('================')
+    DerivedClass1()
+    print('================')
+    DerivedClass2()
+    print('================')
 
 # what I learned:
 # When creating a constructor for derived classes,
@@ -38,12 +39,35 @@ def func1(a, b = None):
 def func2(a, b = []):
     pass
 
-func1(2, 3)
-func1(2)
-func2(2, [1, 2])
-func2(2)
+def seeArgsPassedToDecoratedFunc():
+    func1(2, 3)
+    func1(2)
+    func2(2, [1, 2])
+    func2(2)
 
 # what i leanred:
 # when creating a decorator that returns a function that takes *args
 # we must carefully consider the behavior of default parameters the original function had
 # *args would only contain arguments that was explicitly passed
+
+from cerberus import Validator
+
+schema1 = {
+    'name': {
+        'type': 'string',
+        'maxlength': 10,
+        'required': True,
+    }
+}
+documents = [
+    {'name': 'Mark'},
+    {'name': 'Markiplier200'},
+    {'name': 'John', 'id': '2211'},
+    {'name': 22},
+]
+
+for document in documents:
+    v = Validator(allow_unknown=True)
+    validated = v.validate(document, schema1)
+    if not validated:
+        print(v.errors)

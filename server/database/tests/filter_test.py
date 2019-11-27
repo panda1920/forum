@@ -12,7 +12,7 @@ class TestFilterCreation:
     def test_createFuzzyString(self):
         querystringObj = {
             'operator': FuzzyStringFilter.getOpString(),
-            'value': 100,
+            'value': [100],
             'field': 'content',
         }
         f = Filter.createFilter(querystringObj)
@@ -22,7 +22,7 @@ class TestFilterCreation:
     def test_createGT(self):
         querystringObj = {
             'operator': GTFilter.getOpString(),
-            'value': 100,
+            'value': [100],
             'field': 'content',
         }
         f = Filter.createFilter(querystringObj)
@@ -32,7 +32,7 @@ class TestFilterCreation:
     def test_createGTE(self):
         querystringObj = {
             'operator': GTEFilter.getOpString(),
-            'value': 100,
+            'value': [100],
             'field': 'content',
         }
         f = Filter.createFilter(querystringObj)
@@ -42,7 +42,7 @@ class TestFilterCreation:
     def test_createLT(self):
         querystringObj = {
             'operator': LTFilter.getOpString(),
-            'value': 100,
+            'value': [100],
             'field': 'content',
         }
         f = Filter.createFilter(querystringObj)
@@ -52,7 +52,7 @@ class TestFilterCreation:
     def test_creatLTE(self):
         querystringObj = {
             'operator': LTEFilter.getOpString(),
-            'value': 100,
+            'value': [100],
             'field': 'content',
         }
         f = Filter.createFilter(querystringObj)
@@ -62,7 +62,7 @@ class TestFilterCreation:
     def test_createEQ(self):
         querystringObj = {
             'operator': EQFilter.getOpString(),
-            'value': 100,
+            'value': [100],
             'field': 'content',
         }
         f = Filter.createFilter(querystringObj)
@@ -71,9 +71,9 @@ class TestFilterCreation:
 
     def test_createFilterShouldThrowExceptionWhenMissingAttributes(self):
         querystringObjs = [
-            {'operator': EQFilter.getOpString(), 'value': 100}, # missing field
+            {'operator': EQFilter.getOpString(), 'value': [100]}, # missing field
             {'operator': EQFilter.getOpString(), 'field': 'content'}, # missing value
-            {'value': 100, 'field': 'content'}, # missing operator
+            {'value': [100], 'field': 'content'}, # missing operator
         ]
 
         with pytest.raises(FilterParseError):
@@ -83,7 +83,7 @@ class TestFilterCreation:
     def test_createFilterThrowsErrorWhenInvalidOperator(self):
         querystringObj = {
             'operator': 'non_existant_operator',
-            'value': ['val1'],
+            'value': [100],
             'field': 'content',
         }
 
