@@ -50,24 +50,49 @@ def seeArgsPassedToDecoratedFunc():
 # we must carefully consider the behavior of default parameters the original function had
 # *args would only contain arguments that was explicitly passed
 
-from cerberus import Validator
+def cerberusChecker():
+    from cerberus import Validator
 
-schema1 = {
-    'name': {
-        'type': 'string',
-        'maxlength': 10,
-        'required': True,
+    schema1 = {
+        'name': {
+            'type': 'string',
+            'maxlength': 10,
+            'required': True,
+        }
     }
-}
-documents = [
-    {'name': 'Mark'},
-    {'name': 'Markiplier200'},
-    {'name': 'John', 'id': '2211'},
-    {'name': 22},
-]
+    documents = [
+        {'name': 'Mark'},
+        {'name': 'Markiplier200'},
+        {'name': 'John', 'id': '2211'},
+        {'name': 22},
+    ]
 
-for document in documents:
-    v = Validator(allow_unknown=True)
-    validated = v.validate(document, schema1)
-    if not validated:
+    for document in documents:
+        v = Validator(allow_unknown=True)
+        validated = v.validate(document, schema1)
+        if not validated:
+            print(v.errors)
+
+    schema2 = {
+        'id': {
+            'type': 'integer',
+            'coerce': int,
+            'default': 100,
+            'required': True,
+        }
+    }
+    documents = [
+        {'id': 2233},
+        {'id': '2233'},
+        {},
+        {'id': 'some_string'},
+
+    ]
+    v = Validator(schema=schema2)
+    for document in documents:
+        print(v.validate(document))
         print(v.errors)
+        print(v.document)
+        print(v.normalized(document))
+
+cerberusChecker()

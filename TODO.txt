@@ -4,6 +4,8 @@ FORUM
         - Implement pagination
         - Figure out the best way to hold password in db. why plain texts are bad
         - Think through various scenarios where exceptions are raised
+            Is exception required for search filter?
+            Just not create one if conditions are not met?
         
     [Flask]
         - Finish naive implementation of CRUD operation of post messages
@@ -17,6 +19,7 @@ FORUM
         - Implement sanitization mechanism for incoming query string
 		- Sort out the api
 			reference WebAPI: the good parts
+        - Design a good system of query string for search operations
     
     [Frontend]
         - Figure out how to carry around user information on the client side

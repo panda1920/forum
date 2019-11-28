@@ -36,7 +36,21 @@ class Filter:
         else:
             raise InvalidFilterOperatorError(f'Operator {operator} is not defined')
 
-    filterSchema = {
+    @classmethod
+    def validateQuerystringObj(cls, querystringObj):
+        """
+        validate that dictionary contains enough information to form a search filter
+        """
+        v = Validator(schema=cls._filterSchema, allow_unknown=True)
+        isValidated = v.validate(querystringObj)
+        if not isValidated:
+            raise FilterParseError('Failed construting search filter')
+
+    _filterSchema = {
+        'field': {
+            'required': True,
+            'type': 'string'
+        },
         'operator' : {
             'required': True,
             'type': 'string'
@@ -45,21 +59,7 @@ class Filter:
             'required': True,
             'type': 'list'
         },
-        'field': {
-            'required': True,
-            'type': 'string'
-        },
     }
-
-    @classmethod
-    def validateQuerystringObj(cls, querystringObj):
-        """
-        validate that dictionary contains enough information to form a search filter
-        """
-        v = Validator(schema=cls.filterSchema, allow_unknown=True)
-        isValidated = v.validate(querystringObj)
-        if not isValidated:
-            raise FilterParseError()
 
     def __init__(self, querystringObj):
         self._field = querystringObj['field']
