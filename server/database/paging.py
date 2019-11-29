@@ -26,7 +26,7 @@ class Paging:
         }
     }
 
-    def __init__(self, querystringObj):
+    def __init__(self, querystringObj = {}):
         parsed = self.parseQuerystring(querystringObj)
         self.offset = parsed['offset']
         self.limit = parsed['limit']

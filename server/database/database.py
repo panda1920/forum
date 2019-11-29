@@ -1,3 +1,5 @@
+from server.database.paging import Paging
+
 class Database:
     def __init__(self):
         pass
@@ -5,7 +7,7 @@ class Database:
     def createUser(self, user):
         pass
 
-    def searchUser(self, searchCritera):
+    def searchUser(self, searchCritera, paging = Paging()):
         pass
 
     def deleteUser(self, userIds):
@@ -14,7 +16,7 @@ class Database:
     def createPost(self, post):
         pass
     
-    def searchPost(self, searchCriteria):
+    def searchPost(self, searchFilters, paging = Paging()):
         pass
 
     def deletePost(self, postIds):

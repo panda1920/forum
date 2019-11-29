@@ -1,7 +1,9 @@
 import json
 import time
 
-from .database import Database
+from server.database.database import Database
+from server.database.filter import Filter
+from server.database.paging import Paging
 
 def updateJSONFileContent(filenameAttr):
     """
@@ -51,20 +53,27 @@ class SimpleFile(Database):
 
         return filePath
 
+    def createUser(self, user):
+        self._createUserImpl(user)
+
+    def searchUser(self, searchCritera, paging = Paging()):
+        pass
+
+    def deleteUser(self, userIds):
+        self._deleteUserImpl(userIds)
+
     @updateJSONFileContent('_usersFile')
-    def createUser(self, user, currentUsers = None):
+    def _createUserImpl(self, user, currentUsers = None):
         user['createdAt'] = time.time()
         return [*currentUsers, user]
 
-    def searchUser(self, searchCritera):
-        pass
-
     @updateJSONFileContent('_usersFile')
-    def deleteUser(self, userIds, currentUsers = None):
+    def _deleteUserImpl(self, userIds, currentUsers = None):
         # delete related posts
-        postsToDelete = self.searchPost({
-            'userId': userIds
-        })
+        postsToDelete = self.searchPost(
+            [Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds })], 
+            Paging({ 'limit': 10000 })
+        )
         self.deletePost( [post['postId'] for post in postsToDelete] )
         
         updatedUsers = [
@@ -73,31 +82,41 @@ class SimpleFile(Database):
         ]
         return updatedUsers
 
-    @updateJSONFileContent('_postsFile')
-    def createPost(self, post, currentPosts = None):
-        post['createdAt'] = time.time()
-        return [*currentPosts, post]
+    def createPost(self, post):
+        self._createPostImpl(post)
 
-    def searchPost(self, searchCriteria):
+    def searchPost(self, searchFilters, paging = Paging()):
+        if len(searchFilters) == 0:
+            return []
+
         with self._postsFile.open('r', encoding='utf-8') as f:
             posts = json.load(f)
 
-        return [post for post in posts if self.matchesCriteria(post, searchCriteria)]
+        searchedPost = []
+        for post in posts[paging.offset:]:
+            matchConditions = [search.matches(post) for search in searchFilters]
+            if all(matchConditions):
+                searchedPost.append(post)
 
-    def matchesCriteria(self, post, searchCriteria):
-        for field, values in searchCriteria.items():
-            for value in values:
-                if post[field] == value:
-                    return True
+        return searchedPost[:paging.limit]
 
-        return False
+    def deletePost(self, postIds):
+        self._deletePostImpl(postIds)
+
+    def updatePost(self, post):
+        self._updatePostImpl(post)
 
     @updateJSONFileContent('_postsFile')
-    def deletePost(self, postIds, currentPosts = None):
+    def _createPostImpl(self, post, currentPosts = None):
+        post['createdAt'] = time.time()
+        return [*currentPosts, post]
+
+    @updateJSONFileContent('_postsFile')
+    def _deletePostImpl(self, postIds, currentPosts = None):
         return [ post for post in currentPosts if post['postId'] not in postIds ]
 
     @updateJSONFileContent('_postsFile')
-    def updatePost(self, post, currentPosts = None):
+    def _updatePostImpl(self, post, currentPosts = None):
         postIdx = [
             idx for idx, p in enumerate(currentPosts)
             if p['postId'] == post['postId']

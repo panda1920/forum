@@ -7,6 +7,8 @@ import pdb
 
 from server.database.simplefile import SimpleFile
 from server.database.datacreator import DataCreator
+from server.database.filter import Filter
+from server.database.paging import Paging
 
 PROJECT_DIR = Path(__file__).resolve().parents[3]
 TESTDATA = PROJECT_DIR / 'server' / 'database' / 'tests' / 'testdata.json'
@@ -157,6 +159,7 @@ class TestUsersAPI:
 
         setupDB.validateCreatedUsers()
 
+class TestPostsAPI:
     def test_createPostShouldCreatePostInDB(self, setupDB):
         db = setupDB.getDB()
 
@@ -215,20 +218,69 @@ class TestUsersAPI:
 
     def test_searchPostByPostIdsShouldReturnPostFromDB(self, setupDB):
         db = setupDB.getDB()
-        searchCriteria = {
-            'postId': ['1']
-        }
-        posts = db.searchPost(searchCriteria)
+        searchFilters = [
+            Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': ['1'] }),
+        ]
+        posts = db.searchPost(searchFilters)
 
         assert len(posts) == 1
-        assert posts[0]['postId'] == searchCriteria['postId'][0]
+        assert posts[0]['postId'] in ['1']
+
+    def test_searchPostByMultiplePostIdsShouldReturnPostFromDB(self, setupDB):
+        db = setupDB.getDB()
+        searchFilters = [
+            Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': ['1', '2'] }),
+        ]
+        posts = db.searchPost(searchFilters)
+
+        assert len(posts) == 2
+        for post in posts:
+            assert post['postId'] in ['1', '2']
 
     def test_searchPostByNonExitantPostIdShouldReturnNothing(self, setupDB):
         db = setupDB.getDB()
-        searchCriteria = {
-            'postId': ['non_existant']
-        }
-        posts = db.searchPost(searchCriteria)
+        searchFilters = [
+            Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': ['non_existant'] }),
+        ]
+        posts = db.searchPost(searchFilters)
+
+        assert len(posts) == 0
+
+    def test_searchPostWithoutExplicitPagingShouldReturnDefaultAmount(self, setupDB):
+        db = setupDB.getDB()
+        searchFilters = [
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['0', '1', '2'] }),
+        ]
+        posts = db.searchPost(searchFilters)
+
+        assert len(posts) == Paging.DEFAULT_LIMIT
+
+    def test_searchPostWithExplicitPagingShouldBeLimited(self, setupDB):
+        db = setupDB.getDB()
+        paging = Paging({ 'offset': DataCreator.POSTCOUNT_PER_USER * 2 + 1, 'limit': DataCreator.POSTCOUNT_PER_USER })
+        searchFilters = [
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['0', '1', '2'] }),
+        ]
+        posts = db.searchPost(searchFilters, paging)
+
+        assert len(posts) == DataCreator.POSTCOUNT_PER_USER - 1
+
+    def test_searchPostByMultipleFiltersAreSearchedByAND(self, setupDB):
+        db = setupDB.getDB()
+        displayNameOfFirstUser = setupDB.getOriginalUsers()[0]['displayName']
+        paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })
+        searchFilters = [
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['0', '1', '2'] }),
+            Filter.createFilter({ 'field': 'post', 'operator': 'fuzzy', 'value': [displayNameOfFirstUser] }),
+        ]
+        posts = db.searchPost(searchFilters, paging)
+
+        assert len(posts) == DataCreator.POSTCOUNT_PER_USER
+
+    def test_searchPostWithEmptyFiltersShouldReturNothing(self, setupDB):
+        db = setupDB.getDB()
+        searchFilters = []
+        posts = db.searchPost(searchFilters)
 
         assert len(posts) == 0
 
