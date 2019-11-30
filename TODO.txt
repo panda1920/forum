@@ -6,7 +6,7 @@ FORUM
         - Think through various scenarios where exceptions are raised
             Is exception required for search filter?
             Just not create one if conditions are not met?
-        - I might need a special version of paging class which has no limits
+        - Add sorting
         
     [Flask]
         - Finish naive implementation of CRUD operation of post messages

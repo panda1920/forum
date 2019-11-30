@@ -265,7 +265,7 @@ class TestPostsAPI:
 
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER - 1
 
-    def test_searchPostByMultipleFiltersAreSearchedByAND(self, setupDB):
+    def test_searchPostByMultipleFiltersIsSearchedByAND(self, setupDB):
         db = setupDB.getDB()
         displayNameOfFirstUser = setupDB.getOriginalUsers()[0]['displayName']
         paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })

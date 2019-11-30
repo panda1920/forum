@@ -22,7 +22,7 @@ class Paging:
             'type': 'integer',
             'coerce': int,
             'default': DEFAULT_LIMIT,
-            'min': 1
+            'min': 0
         }
     }
 
@@ -40,3 +40,12 @@ class Paging:
         for attribute in v.errors.keys():
             parsedQuerystring[attribute] = self._schema[attribute]['default']
         return parsedQuerystring
+
+class PagingNoLimit(Paging):
+    """
+    No limit to how many records shown in 1 page
+    """
+    def __init__(self, querystringObj = {}):
+        super().__init__(querystringObj)
+
+        self.limit = None

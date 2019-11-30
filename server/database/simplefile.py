@@ -3,7 +3,7 @@ import time
 
 from server.database.database import Database
 from server.database.filter import Filter
-from server.database.paging import Paging
+from server.database.paging import Paging, PagingNoLimit
 
 def updateJSONFileContent(filenameAttr):
     """
@@ -62,26 +62,6 @@ class SimpleFile(Database):
     def deleteUser(self, userIds):
         self._deleteUserImpl(userIds)
 
-    @updateJSONFileContent('_usersFile')
-    def _createUserImpl(self, user, currentUsers = None):
-        user['createdAt'] = time.time()
-        return [*currentUsers, user]
-
-    @updateJSONFileContent('_usersFile')
-    def _deleteUserImpl(self, userIds, currentUsers = None):
-        # delete related posts
-        postsToDelete = self.searchPost(
-            [Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds })], 
-            Paging({ 'limit': 10000 })
-        )
-        self.deletePost( [post['postId'] for post in postsToDelete] )
-        
-        updatedUsers = [
-            user for user in currentUsers
-            if user['userId'] not in userIds
-        ]
-        return updatedUsers
-
     def createPost(self, post):
         self._createPostImpl(post)
 
@@ -92,19 +72,39 @@ class SimpleFile(Database):
         with self._postsFile.open('r', encoding='utf-8') as f:
             posts = json.load(f)
 
-        searchedPost = []
+        matchedPosts = []
         for post in posts[paging.offset:]:
             matchConditions = [search.matches(post) for search in searchFilters]
             if all(matchConditions):
-                searchedPost.append(post)
+                matchedPosts.append(post)
 
-        return searchedPost[:paging.limit]
+        return matchedPosts[:paging.limit]
 
     def deletePost(self, postIds):
         self._deletePostImpl(postIds)
 
     def updatePost(self, post):
         self._updatePostImpl(post)
+
+    @updateJSONFileContent('_usersFile')
+    def _createUserImpl(self, user, currentUsers = None):
+        user['createdAt'] = time.time()
+        return [*currentUsers, user]
+
+    @updateJSONFileContent('_usersFile')
+    def _deleteUserImpl(self, userIds, currentUsers = None):
+        # delete related posts
+        postsToDelete = self.searchPost(
+            [Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds })], 
+            PagingNoLimit()
+        )
+        self.deletePost( [post['postId'] for post in postsToDelete] )
+        
+        updatedUsers = [
+            user for user in currentUsers
+            if user['userId'] not in userIds
+        ]
+        return updatedUsers
 
     @updateJSONFileContent('_postsFile')
     def _createPostImpl(self, post, currentPosts = None):
