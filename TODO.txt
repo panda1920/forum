@@ -1,12 +1,13 @@
 FORUM
     [DB]
         - Implement user CRUD
-        - Implement pagination
         - Figure out the best way to hold password in db. why plain texts are bad
         - Think through various scenarios where exceptions are raised
             Is exception required for search filter?
             Just not create one if conditions are not met?
         - Add sorting
+        - Implement CRUD operations in some sort of real DB system
+            probably mongoDB
         
     [Flask]
         - Finish naive implementation of CRUD operation of post messages
@@ -15,17 +16,28 @@ FORUM
         - Add user authentication system to operations that need it
         - Figure out how to encyrpt incoming information
             JWT?
-        - Arrange route definining functions in separate files, each representing the object which they are associated with
         - Implement validation mechanism of incoming data for create/update/search
         - Implement sanitization mechanism for incoming query string
 		- Sort out the api
 			reference WebAPI: the good parts
+            - /v1/posts
+            - /v1/posts/create
+            - /v1/posts/<id>
+            - /v1/posts/<id>/update
+            - /v1/posts/<id>/delete
+
         - Design a good system of query string for search operations
     
     [Frontend]
         - Figure out how to carry around user information on the client side
+            sessionstorage, localstorage?
         - Create a simple page to signup user
         - Create a simple page to write posts
+
+    [Deployment]
+        - Deploy on amazon
+        - Try using docker
+        - Get a CI system going
 
     [MISC]
         - Change layout of test files

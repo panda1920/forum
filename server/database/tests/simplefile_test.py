@@ -159,6 +159,85 @@ class TestUsersAPI:
 
         setupDB.validateCreatedUsers()
 
+    def test_searchUserByUserIdShouldReturnUserFromDB(self, setupDB):
+        db = setupDB.getDB()
+
+        userIdsToSearch = ['1']
+        filters = [
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
+        ]
+        users = db.searchUser(filters)
+
+        assert len(users) == 1
+        assert users[0]['userId'] == userIdsToSearch[0]
+
+    def test_searchUserByNonExistantUserIdShouldReturnZeroUsersFromDB(self, setupDB):
+        db = setupDB.getDB()
+
+        userIdsToSearch = ['non_existant']
+        filters = [
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
+        ]
+        users = db.searchUser(filters)
+
+        assert len(users) == 0
+
+    def test_searchUserBy2UserIdsShouldReturn2UsersFromDB(self, setupDB):
+        db = setupDB.getDB()
+
+        userIdsToSearch = ['1', '2']
+        filters = [
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
+        ]
+        users = db.searchUser(filters)
+
+        assert len(users) == 2
+        for user in users:
+            assert user['userId'] in userIdsToSearch
+
+    def test_searchUserByNoFilterShouldReturnNoUsers(self, setupDB):
+        db = setupDB.getDB()
+
+        filters = []
+        users = db.searchUser(filters)
+
+        assert len(users) == 0
+
+    def test_searchUserByContradictingFiltersShouldReturnNoUsers(self, setupDB):
+        db = setupDB.getDB()
+
+        filters = [
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['1'] }),
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['2'] }),
+        ]
+        users = db.searchUser(filters)
+
+        assert len(users) == 0
+
+    def test_searchUserBy10UserIdWith5LimitShouldReturn5Users(self, setupDB):
+        db = setupDB.getDB()
+
+        userIdsToSearch = ['0', '1', '2', '3' ,'4', '5' ,'6' ,'7' ,'8' ,'9']
+        paging = Paging({ 'limit': 5 })
+        filters = [
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch }),
+        ]
+        users = db.searchUser(filters, paging)
+
+        assert len(users) == 5
+
+    def test_searchUserBy10UserIdWith5Limit8OffsetShouldReturn2Users(self, setupDB):
+        db = setupDB.getDB()
+
+        userIdsToSearch = ['0', '1', '2', '3' ,'4', '5' ,'6' ,'7' ,'8' ,'9']
+        paging = Paging({ 'limit': 5, 'offset': 8 })
+        filters = [
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch }),
+        ]
+        users = db.searchUser(filters, paging)
+
+        assert len(users) == 2
+
 class TestPostsAPI:
     def test_createPostShouldCreatePostInDB(self, setupDB):
         db = setupDB.getDB()

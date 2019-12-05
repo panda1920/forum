@@ -1,26 +1,10 @@
-import time
 import urllib.parse
-from flask import Blueprint, render_template, request, current_app, make_response
 
+from flask import Blueprint, request, current_app, make_response
 
-routes = Blueprint('routes', __name__,)
+from server.routes.routes_util import getDB
 
-@routes.route('/')
-@routes.route('/index')
-def hello_world():
-    return 'hello world!'
-
-@routes.route('/jsonstring')
-def jsonstring():
-    json = r'{ "name": "Danny", "age": "13", "families": ["mother", "father", "sister"]}'
-    return json
-
-@routes.route('/template')
-def template():
-    return render_template('hello.html', user='default')
-@routes.route('/template/<username>')
-def template1(username):
-    return render_template('hello.html', user=username)
+routes = Blueprint('postRoutes', __name__)
 
 @routes.route('/post')
 def examplepost():
@@ -31,7 +15,7 @@ def examplepost():
 def postCreate():
     try:
         postData = request.form
-        db = current_app.config['DATABASE_OBJECT']
+        db = getDB()
         db.createPost({
             'userId': postData['userId'],
             'post': postData['post'],
@@ -45,7 +29,7 @@ def postCreate():
 @routes.route('/api/post', methods=['GET'])
 def postSearch():
     try:
-        db = current_app.config['DATABASE_OBJECT']
+        db = getDB()
         searchCriteria = urllib.parse.parse_qs( request.query_string )
         db.searchPost(searchCriteria)
         return make_response('', 200)
@@ -55,7 +39,7 @@ def postSearch():
 @routes.route('/api/post', methods=['DELETE'])
 def postDelete():
     try:
-        db = current_app.config['DATABASE_OBJECT']
+        db = getDB()
         db.deletePost({
             'postId': request.form['postId']
         })
@@ -65,6 +49,12 @@ def postDelete():
 
 @routes.route('/api/post', methods=['PATCH'])
 def postUpdate():
-    db = current_app.config['DATABASE_OBJECT']
+    db = getDB()
 
     return make_response('Post was updated!', 200, {'content-type': 'text/plain'})
+
+# @routes.route('/v1/posts', methods=['GET'])
+# @routes.route('/v1/posts/create', methods=['POST'])
+# @routes.route('/v1/posts/<postId>', methods=['GET'])
+# @routes.route('/v1/posts/<postId>/update', methods=['PATCH'])
+# @routes.route('/v1/posts/<postId>/delete', methods=['DELETE'])

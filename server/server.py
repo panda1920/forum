@@ -4,8 +4,10 @@ from server.config import Config
 def setupApp():
     app = Flask(__name__)
     
-    from server.routes import routes
-    app.register_blueprint(routes)
+    import server.routes.misc_routes
+    import server.routes.posts_routes
+    app.register_blueprint(server.routes.misc_routes.routes)
+    app.register_blueprint(server.routes.posts_routes.routes)
 
     app.config.from_object(Config)
 

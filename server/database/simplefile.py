@@ -56,8 +56,20 @@ class SimpleFile(Database):
     def createUser(self, user):
         self._createUserImpl(user)
 
-    def searchUser(self, searchCritera, paging = Paging()):
-        pass
+    def searchUser(self, searchFilters, paging = Paging()):
+        if len(searchFilters) == 0:
+            return []
+
+        with self._usersFile.open('r', encoding='utf-8') as f:
+            users = json.load(f)
+
+        matchedUsers = []
+        for user in users[paging.offset:]:
+            matchedConditions = [ search.matches(user) for search in searchFilters ]
+            if all(matchedConditions):
+                matchedUsers.append(user)
+
+        return matchedUsers[:paging.limit]
 
     def deleteUser(self, userIds):
         self._deleteUserImpl(userIds)
