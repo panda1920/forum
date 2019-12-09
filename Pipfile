@@ -16,6 +16,6 @@ python_version = "3.7"
 
 [scripts]
 start = "flask run"
-testdata = "python -m server/database/datacreator"
+testdata = "python -m server.database.datacreator"
 random = "python -m server.randomcode"
 test = "python -m pytest"

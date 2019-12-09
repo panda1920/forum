@@ -32,8 +32,9 @@ class Paging:
         self.limit = parsed['limit']
 
     def parseQuerystring(self, querystringObj):
+        copy = querystringObj.copy()
         v = Validator(schema=self._schema, allow_unknown=True)
-        if v.validate(querystringObj):
+        if v.validate(copy):
             return v.document
 
         parsedQuerystring = v.document

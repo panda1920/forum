@@ -9,6 +9,7 @@ from server.database.simplefile import SimpleFile
 from server.database.datacreator import DataCreator
 from server.database.filter import Filter
 from server.database.paging import Paging
+from server.exceptions import EntityValidationError
 
 PROJECT_DIR = Path(__file__).resolve().parents[3]
 TESTDATA = PROJECT_DIR / 'server' / 'database' / 'tests' / 'testdata.json'
@@ -85,26 +86,67 @@ class TestFixture:
     def test_fixtureCreatedPosts(self, setupDB):
         setupDB.validateCreatedPosts()
 
-class TestUsersAPI:
+class TestUserCRUD:
+    DEFAULT_NEW_USER = {
+        'displayName': 'Timmy',
+        'userName': 'timmy@myforumwebapp.com',
+        'password': '222',
+    }
+
+    def createNewUserProps(self, **kwargs):
+        """
+        helper to create user props for testing
+        """
+        newUserProps = self.DEFAULT_NEW_USER
+        for prop in kwargs.keys():
+            newUserProps[prop] = kwargs[prop]
+
+        return newUserProps
+
     def test_createUserShouldCreateUserInDB(self, setupDB):
         db = setupDB.getDB()
 
-        userProps = {
-            'displayName': 'Timmy',
-            'userName': 'timmy@myforumwebapp.com'
-        }
-
-        db.createUser(userProps)
+        db.createUser(self.DEFAULT_NEW_USER)
 
         users = setupDB.getAllUsers()
         assert len(users) == len(setupDB.getOriginalUsers()) + 1
 
         createdUser = [
             user for user in users 
-            if user['displayName'] == userProps['displayName']
-            and user['userName'] == userProps['userName']
+            if user['displayName'] == self.DEFAULT_NEW_USER['displayName']
+            and user['userName'] == self.DEFAULT_NEW_USER['userName']
+            and user['password'] == self.DEFAULT_NEW_USER['password']
         ]
         assert len(createdUser) == 1
+
+    def test_createUserWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
+        db = setupDB.getDB()
+
+        userProps = [
+            self.createNewUserProps(userName=None),
+            self.createNewUserProps(displayName=None),
+            self.createNewUserProps(password=None),
+            self.createNewUserProps(userName=None, displayName=None, password=None),
+            self.createNewUserProps(address='5th street')
+        ]
+
+        with pytest.raises(EntityValidationError):
+            for userProp in userProps:
+                db.createUser(userProp)
+
+    def test_createUserByWrongPropertyTypeShouldRaiseException(self, setupDB):
+        db = setupDB.getDB()
+
+        userProps = [
+            self.createNewUserProps(userName=1),
+            self.createNewUserProps(userName='something'), # username must be email
+            self.createNewUserProps(displayName=1),
+            self.createNewUserProps(password=1),
+        ]
+
+        with pytest.raises(EntityValidationError):
+            for userProp in userProps:
+                db.createUser(userProp)
 
     def test_deleteUserShouldRemoveUserFromDB(self, setupDB):
         db = setupDB.getDB()
@@ -238,13 +280,13 @@ class TestUsersAPI:
 
         assert len(users) == 2
 
-class TestPostsAPI:
+class TestPostCRUD:
     def test_createPostShouldCreatePostInDB(self, setupDB):
         db = setupDB.getDB()
 
         postToCreate = {
             'userId': '1',
-            'post': 'This is a new post!'
+            'content': 'This is a new post!'
         }
         db.createPost(postToCreate)
 
@@ -254,9 +296,35 @@ class TestPostsAPI:
         createdPost = [
             post for post in posts
             if post['userId'] == postToCreate['userId']
-            and post['post'] == postToCreate['post']
+            and post['content'] == postToCreate['content']
         ]
         assert len(createdPost) == 1
+
+    def test_createPostWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
+        db = setupDB.getDB()
+
+        postsToCreate = [
+            { 'userId': '1' }, # only userId
+            { 'content': 'A test post' }, # only content
+            {}, # no property
+            { 'userId': '1', 'content': 'A test post', 'content2': 'A test post' }, # an unexpected property
+        ]
+
+        with pytest.raises(EntityValidationError):
+            for postToCreate in postsToCreate:
+                db.createPost(postToCreate)
+
+    def test_createPostWithWrongPropertyTypeShouldRaiseException(self, setupDB):
+        db = setupDB.getDB()
+
+        postsToCreate = [
+            { 'userId': 1, 'content': 'A test post' },
+            { 'userId': '1', 'content': 22 },
+        ]
+
+        with pytest.raises(EntityValidationError):
+            for postToCreate in postsToCreate:
+                db.createPost(postToCreate)
 
     def test_deletePostShouldRemovePostFromDB(self, setupDB):
         db = setupDB.getDB()
@@ -350,7 +418,7 @@ class TestPostsAPI:
         paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })
         searchFilters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['0', '1', '2'] }),
-            Filter.createFilter({ 'field': 'post', 'operator': 'fuzzy', 'value': [displayNameOfFirstUser] }),
+            Filter.createFilter({ 'field': 'content', 'operator': 'fuzzy', 'value': [displayNameOfFirstUser] }),
         ]
         posts = db.searchPost(searchFilters, paging)
 
@@ -367,7 +435,7 @@ class TestPostsAPI:
         db = setupDB.getDB()
         postToUpdate = {
             'postId': '1',
-            'post': 'Post 1 was updated for testing!'
+            'content': 'Post 1 was updated for testing!'
         }
         db.updatePost(postToUpdate)
 
@@ -375,4 +443,4 @@ class TestPostsAPI:
             post for post in setupDB.getAllPosts() 
             if post['postId'] == postToUpdate['postId']
         ][0]
-        assert postInDB['post'] == postToUpdate['post']
+        assert postInDB['content'] == postToUpdate['content']
