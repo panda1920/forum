@@ -16,7 +16,7 @@ class NewUser:
         },
         'displayName': {
             'type': 'string',
-            'required': False,
+            'required': True,
         },
         'password': {
             'type': 'string',

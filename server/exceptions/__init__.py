@@ -4,8 +4,7 @@ class MyAppException(Exception):
     """
     def getStatusCode(self):
         """
-        returns corresponding http status code
-        an integer
+        returns corresponding http status code as integer
         """
         raise NotImplementedError
 
@@ -30,17 +29,17 @@ class InvalidFilterOperatorError(MyAppException):
     def getStatusCode(self):
         return 400
 
+class EntityValidationError(MyAppException):
+    """
+    Raised when validation of entities fails.
+    """
+    def getStatusCode(self):
+        return 400
+
 # server-side error
 class ServerMiscError(MyAppException):
     """
     A general server-side exception 
-    """
-    def getStatusCode(self):
-        return 500
-
-class EntityValidationError(MyAppException):
-    """
-    Raised when validation of entities fails.
     """
     def getStatusCode(self):
         return 500

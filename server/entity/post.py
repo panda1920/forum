@@ -27,3 +27,23 @@ class NewPost:
     @classmethod
     def validate(cls, newPost):
         return cls._validator.validate(newPost)
+
+class UpdatePost:
+    """
+    A namespace for update-post related operations
+    """
+    _schema = {
+        'content': {
+            'type': 'string',
+            'required': True,
+        },
+        'postId': {
+            'type': 'string',
+            'required': True,
+        },
+    }
+    _validator = Validator(_schema, allow_unknown=True)
+
+    @classmethod
+    def validate(cls, newPost):
+        return cls._validator.validate(newPost)

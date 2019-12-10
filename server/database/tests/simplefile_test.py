@@ -92,21 +92,13 @@ class TestUserCRUD:
         'userName': 'timmy@myforumwebapp.com',
         'password': '222',
     }
-
     def createNewUserProps(self, **kwargs):
-        """
-        helper to create user props for testing
-        """
-        newUserProps = self.DEFAULT_NEW_USER
-        for prop in kwargs.keys():
-            newUserProps[prop] = kwargs[prop]
-
-        return newUserProps
+        return createNewProps(self.DEFAULT_NEW_USER, **kwargs)
 
     def test_createUserShouldCreateUserInDB(self, setupDB):
         db = setupDB.getDB()
 
-        db.createUser(self.DEFAULT_NEW_USER)
+        db.createUser(self.createNewUserProps())
 
         users = setupDB.getAllUsers()
         assert len(users) == len(setupDB.getOriginalUsers()) + 1
@@ -130,8 +122,8 @@ class TestUserCRUD:
             self.createNewUserProps(address='5th street')
         ]
 
-        with pytest.raises(EntityValidationError):
-            for userProp in userProps:
+        for userProp in userProps:
+            with pytest.raises(EntityValidationError):
                 db.createUser(userProp)
 
     def test_createUserByWrongPropertyTypeShouldRaiseException(self, setupDB):
@@ -139,13 +131,13 @@ class TestUserCRUD:
 
         userProps = [
             self.createNewUserProps(userName=1),
-            self.createNewUserProps(userName='something'), # username must be email
+            self.createNewUserProps(userName='something'), # non-email string
             self.createNewUserProps(displayName=1),
             self.createNewUserProps(password=1),
         ]
 
-        with pytest.raises(EntityValidationError):
-            for userProp in userProps:
+        for userProp in userProps:
+            with pytest.raises(EntityValidationError):
                 db.createUser(userProp)
 
     def test_deleteUserShouldRemoveUserFromDB(self, setupDB):
@@ -281,18 +273,28 @@ class TestUserCRUD:
         assert len(users) == 2
 
 class TestPostCRUD:
+    DEFAULT_NEW_POST = {
+        'userId': '1',
+        'content': 'This is a new post!'
+    }
+    DEFAULT_UPDATE_POST = {
+        'postId': '1',
+        'content': 'Post updated!'
+    }
+    
+    def createNewPostProps(self, **kwargs):
+        return createNewProps(self.DEFAULT_NEW_POST, **kwargs)
+    
+    def createUpdatePostProps(self, **kwargs):
+        return createNewProps(self.DEFAULT_UPDATE_POST, **kwargs)
+
     def test_createPostShouldCreatePostInDB(self, setupDB):
         db = setupDB.getDB()
-
-        postToCreate = {
-            'userId': '1',
-            'content': 'This is a new post!'
-        }
+        postToCreate = self.createNewPostProps()
         db.createPost(postToCreate)
 
         posts = setupDB.getAllPosts()
         assert len(posts) == len(setupDB.getOriginalPosts()) + 1
-
         createdPost = [
             post for post in posts
             if post['userId'] == postToCreate['userId']
@@ -302,28 +304,26 @@ class TestPostCRUD:
 
     def test_createPostWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
         db = setupDB.getDB()
-
         postsToCreate = [
-            { 'userId': '1' }, # only userId
-            { 'content': 'A test post' }, # only content
-            {}, # no property
-            { 'userId': '1', 'content': 'A test post', 'content2': 'A test post' }, # an unexpected property
+            self.createNewPostProps(content=None),
+            self.createNewPostProps(userId=None),
+            self.createNewPostProps(content2='A test post'),
         ]
 
-        with pytest.raises(EntityValidationError):
-            for postToCreate in postsToCreate:
+        for postToCreate in postsToCreate:
+            with pytest.raises(EntityValidationError):
                 db.createPost(postToCreate)
 
     def test_createPostWithWrongPropertyTypeShouldRaiseException(self, setupDB):
         db = setupDB.getDB()
 
         postsToCreate = [
-            { 'userId': 1, 'content': 'A test post' },
-            { 'userId': '1', 'content': 22 },
+            self.createNewPostProps(userId=1),
+            self.createNewPostProps(content=22),
         ]
 
-        with pytest.raises(EntityValidationError):
-            for postToCreate in postsToCreate:
+        for postToCreate in postsToCreate:
+            with pytest.raises(EntityValidationError):
                 db.createPost(postToCreate)
 
     def test_deletePostShouldRemovePostFromDB(self, setupDB):
@@ -433,10 +433,7 @@ class TestPostCRUD:
 
     def test_updatePostUpdatesPostOnDB(self, setupDB):
         db = setupDB.getDB()
-        postToUpdate = {
-            'postId': '1',
-            'content': 'Post 1 was updated for testing!'
-        }
+        postToUpdate = self.createUpdatePostProps()
         db.updatePost(postToUpdate)
 
         postInDB = [
@@ -444,3 +441,66 @@ class TestPostCRUD:
             if post['postId'] == postToUpdate['postId']
         ][0]
         assert postInDB['content'] == postToUpdate['content']
+
+    def test_updatePostUpdatesWithExtraPropertiesPermittedButNotUsed(self, setupDB):
+        db = setupDB.getDB()
+        updatePostPropertiesAndExtraPropertyNames = [
+            ( self.createUpdatePostProps(userId='112233'), 'userId' ),
+            ( self.createUpdatePostProps(createdAt='112233'), 'createdAt' ),
+            ( self.createUpdatePostProps(randomProp=2), 'randomProp' ),
+        ]
+
+        for postProps, extraPropName in updatePostPropertiesAndExtraPropertyNames:
+            db.updatePost(postProps)
+
+            postInDB = [
+                post for post in setupDB.getAllPosts() 
+                if post['postId'] == postProps['postId']
+            ][0]
+            assert postInDB['content'] == postProps['content']
+            assert (
+                extraPropName not in postInDB or
+                postInDB[extraPropName] != postProps[extraPropName]
+            )
+
+    def test_updatePostWithoutRequiredPropertiesRaisesError(self, setupDB):
+        db = setupDB.getDB()
+        updatePostProperties = [
+            self.createUpdatePostProps(content=None),
+            self.createUpdatePostProps(postId=None),
+        ]
+
+        for postProps in updatePostProperties:
+            with pytest.raises(EntityValidationError):
+                db.updatePost(postProps)
+
+    def test_updatePostWithWrongPropertyTypeRaisesException(self, setupDB):
+        db = setupDB.getDB()
+        updatePostProperties = [
+            self.createUpdatePostProps(content=1),
+            self.createUpdatePostProps(postId=2),
+        ]
+
+        for postProps in updatePostProperties:
+            with pytest.raises(EntityValidationError):
+                db.updatePost(postProps)
+
+
+### utility functions here
+
+def createNewProps(defaultProps, **kwargs):
+    """
+    helper to quickly create props for testing
+    all kwargs are added to defaultProps,
+    with exception to those with None, in which case the property is removed instead
+    """
+    props = defaultProps.copy()
+    
+    for prop in kwargs.keys():
+        propertyValue = kwargs[prop]
+        if propertyValue == None:
+            props.pop(prop, None)
+        else:
+            props[prop] = propertyValue
+
+    return props

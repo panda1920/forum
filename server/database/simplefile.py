@@ -5,7 +5,7 @@ from server.database.database import Database
 from server.database.filter import Filter
 from server.database.paging import Paging, PagingNoLimit
 from server.entity.user import NewUser
-from server.entity.post import NewPost
+from server.entity.post import NewPost, UpdatePost
 from server.exceptions import EntityValidationError, ServerMiscError
 
 def updateJSONFileContent(filenameAttr):
@@ -59,7 +59,7 @@ class SimpleFile(Database):
     def createUser(self, user):
         user['createdAt'] = time.time()
         if not NewUser.validate(user):
-            raise EntityValidationError('failed to validate new user')
+            raise EntityValidationError('failed to validate new user object')
         
         self._createUserImpl(user)
 
@@ -84,7 +84,7 @@ class SimpleFile(Database):
     def createPost(self, post):
         post['createdAt'] = time.time()
         if not NewPost.validate(post):
-            raise EntityValidationError('failed to validate new post')
+            raise EntityValidationError('failed to validate new post object')
 
         self._createPostImpl(post)
 
@@ -107,6 +107,9 @@ class SimpleFile(Database):
         self._deletePostImpl(postIds)
 
     def updatePost(self, post):
+        if not UpdatePost.validate(post):
+            raise EntityValidationError('failed to validate post update object')
+
         self._updatePostImpl(post)
 
     @updateJSONFileContent('_usersFile')
@@ -138,10 +141,11 @@ class SimpleFile(Database):
 
     @updateJSONFileContent('_postsFile')
     def _updatePostImpl(self, post, currentPosts = None):
-        postIdx = [
+        updatedPosts = [*currentPosts]
+        postIdxToUpdate = [
             idx for idx, p in enumerate(currentPosts)
             if p['postId'] == post['postId']
         ][0]
-        updatedPosts = [*currentPosts]
-        updatedPosts[postIdx]['content'] = post['content']
+        updatedPosts[postIdxToUpdate]['content'] = post['content']
+        
         return updatedPosts
