@@ -35,7 +35,7 @@ class UpdatePost:
     _schema = {
         'content': {
             'type': 'string',
-            'required': True,
+            'required': False,
         },
         'postId': {
             'type': 'string',
@@ -45,5 +45,14 @@ class UpdatePost:
     _validator = Validator(_schema, allow_unknown=True)
 
     @classmethod
-    def validate(cls, newPost):
-        return cls._validator.validate(newPost)
+    def validate(cls, updatePost):
+        return cls._validator.validate(updatePost)
+
+    @classmethod
+    def getUpdatableFields(cls):
+        fields = [
+            field for field in cls._schema.keys()
+            if cls._schema[field]['required'] == False
+        ]
+        
+        return fields

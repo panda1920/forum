@@ -12,6 +12,9 @@ class Database:
 
     def deleteUser(self, userIds):
         pass
+
+    def updateUser(self, user):
+        pass
     
     def createPost(self, post):
         pass

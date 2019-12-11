@@ -30,5 +30,38 @@ class NewUser:
     _validator = Validator(_schema, allow_unknown=False)
 
     @classmethod
-    def validate(cls, newPost):
-        return cls._validator.validate(newPost)
+    def validate(cls, newUser):
+        return cls._validator.validate(newUser)
+
+class UpdateUser:
+    """
+    A namespae for update-user related operations
+    """
+    _schema = {
+        'userId': {
+            'type': 'string',
+            'required': True,
+        },
+        'password': {
+            'type': 'string',
+            'required': False,
+        },
+        'displayName': {
+            'type': 'string',
+            'required': False,
+        },
+    }
+    _validator = Validator(_schema, allow_unknown=True)
+
+    @classmethod
+    def validate(cls, updateUser):
+        return cls._validator.validate(updateUser)
+
+    @classmethod
+    def getUpdatableFields(cls):
+        fields = [
+            field for field in cls._schema.keys()
+            if cls._schema[field]['required'] == False
+        ]
+        
+        return fields

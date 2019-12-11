@@ -31,10 +31,17 @@ class InvalidFilterOperatorError(MyAppException):
 
 class EntityValidationError(MyAppException):
     """
-    Raised when validation of entities fails.
+    Raised when validation of entities fails
     """
     def getStatusCode(self):
         return 400
+
+class RecordNotFoundError(MyAppException):
+    """
+    Raised when record was not found during db search
+    """
+    def getStatusCode(self):
+        return 404
 
 # server-side error
 class ServerMiscError(MyAppException):

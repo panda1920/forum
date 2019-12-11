@@ -4,9 +4,9 @@ import time
 from server.database.database import Database
 from server.database.filter import Filter
 from server.database.paging import Paging, PagingNoLimit
-from server.entity.user import NewUser
+from server.entity.user import NewUser, UpdateUser
 from server.entity.post import NewPost, UpdatePost
-from server.exceptions import EntityValidationError, ServerMiscError
+from server.exceptions import EntityValidationError, RecordNotFoundError
 
 def updateJSONFileContent(filenameAttr):
     """
@@ -81,6 +81,12 @@ class SimpleFile(Database):
     def deleteUser(self, userIds):
         self._deleteUserImpl(userIds)
 
+    def updateUser(self, user):
+        if not UpdateUser.validate(user):
+            raise EntityValidationError('Failed to validate user update object')
+        
+        self._updateUserImpl(user)
+
     def createPost(self, post):
         post['createdAt'] = time.time()
         if not NewPost.validate(post):
@@ -131,6 +137,23 @@ class SimpleFile(Database):
         ]
         return updatedUsers
 
+    @updateJSONFileContent('_usersFile')
+    def _updateUserImpl(self, user, currentUsers = None):
+        updatedUsers = [*currentUsers]
+        
+        try:
+            userIdxToUpdate = [
+                idx for idx, u in enumerate(currentUsers)
+                if u['userId'] == user['userId']
+            ][0]
+        except:
+            raise RecordNotFoundError(f'User with id of {user["userId"]} was not found.')
+        
+        for field in UpdateUser.getUpdatableFields():
+            updatedUsers[userIdxToUpdate][field] = user[field]
+        
+        return updatedUsers
+
     @updateJSONFileContent('_postsFile')
     def _createPostImpl(self, post, currentPosts = None):
         return [*currentPosts, post]
@@ -142,10 +165,15 @@ class SimpleFile(Database):
     @updateJSONFileContent('_postsFile')
     def _updatePostImpl(self, post, currentPosts = None):
         updatedPosts = [*currentPosts]
-        postIdxToUpdate = [
-            idx for idx, p in enumerate(currentPosts)
-            if p['postId'] == post['postId']
-        ][0]
-        updatedPosts[postIdxToUpdate]['content'] = post['content']
+        try:
+            postIdxToUpdate = [
+                idx for idx, p in enumerate(currentPosts)
+                if p['postId'] == post['postId']
+            ][0]
+        except:
+            raise RecordNotFoundError(f'Post by id of {post["postId"]} was not found')
+
+        for field in UpdatePost.getUpdatableFields():
+            updatedPosts[postIdxToUpdate][field] = post[field]
         
         return updatedPosts

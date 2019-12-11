@@ -1,5 +1,5 @@
-import json
 import urllib.parse
+import json
 from pathlib import Path
 import shutil
 import pytest
@@ -9,7 +9,8 @@ from server.database.simplefile import SimpleFile
 from server.database.datacreator import DataCreator
 from server.database.filter import Filter
 from server.database.paging import Paging
-from server.exceptions import EntityValidationError
+from server.exceptions import EntityValidationError, RecordNotFoundError
+from server.entity.user import UpdateUser
 
 PROJECT_DIR = Path(__file__).resolve().parents[3]
 TESTDATA = PROJECT_DIR / 'server' / 'database' / 'tests' / 'testdata.json'
@@ -92,8 +93,16 @@ class TestUserCRUD:
         'userName': 'timmy@myforumwebapp.com',
         'password': '222',
     }
+    DEFAULT_UPDATE_USER = {
+        'userId': '1',
+        'displayName': 'Timmy',
+        'password': '222'
+    }
+    
     def createNewUserProps(self, **kwargs):
         return createNewProps(self.DEFAULT_NEW_USER, **kwargs)
+    def createUpdateuserProps(self, **kwargs):
+        return createNewProps(self.DEFAULT_UPDATE_USER, **kwargs)
 
     def test_createUserShouldCreateUserInDB(self, setupDB):
         db = setupDB.getDB()
@@ -272,6 +281,64 @@ class TestUserCRUD:
 
         assert len(users) == 2
 
+    def test_updateUserUpdateUserOnDB(self, setupDB):
+        setupDB.getDB().updateUser( self.DEFAULT_UPDATE_USER )
+
+        updatedUser = [
+            user for user in setupDB.getAllUsers()
+            if user['userId'] == self.DEFAULT_UPDATE_USER['userId']
+        ][0]
+
+        for field in UpdateUser.getUpdatableFields():
+            assert updatedUser[field] == self.DEFAULT_UPDATE_USER[field]
+
+    def test_updateUserByNonExistantIdRaisesError(self, setupDB):
+        with pytest.raises(RecordNotFoundError):
+            setupDB.getDB().updateUser( self.createUpdateuserProps(userId='non_existant') )
+
+    def test_updateUserWithoutRequiredPropertiesThrowsAnError(self, setupDB):
+        userUpdateProperties = [
+            self.createUpdateuserProps(userId=None)
+        ]
+
+        for userUpdate in userUpdateProperties:
+            with pytest.raises(EntityValidationError):
+                setupDB.getDB().updateUser(userUpdate)
+
+    def test_updateUserByWrongUpdatePropertiesThrowsAnError(self, setupDB):
+        userUpdateProperties = [
+            self.createUpdateuserProps(userId=1),
+            self.createUpdateuserProps(displayName=1),
+            self.createUpdateuserProps(password=1),
+        ]
+
+        for userUpdate in userUpdateProperties:
+            with pytest.raises(EntityValidationError):
+                setupDB.getDB().updateUser(userUpdate)
+
+    def test_updateUserWithUnexpectedPropertiesHaveNoEffectOnUpdate(self, setupDB):
+        updatableFields = UpdateUser.getUpdatableFields()
+
+        userUpdatePropertiesAndUnExpectedPropertyName = [
+            ( self.createUpdateuserProps(createdAt=30.11), 'createdAt' ),
+            ( self.createUpdateuserProps(userName='Smithy'), 'userName' ),
+            ( self.createUpdateuserProps(someExtraProperty='SomeExtra'), 'someExtraProperty' ),
+        ]
+
+        for update, propertyName in userUpdatePropertiesAndUnExpectedPropertyName:
+            setupDB.getDB().updateUser(update)
+            updatedUser = [
+                user for user in setupDB.getAllUsers()
+                if user['userId'] == update['userId']
+            ][0]
+
+            for field in updatableFields:
+                assert updatedUser[field] == update[field]
+            assert (
+                propertyName not in updatedUser or
+                updatedUser[propertyName] != update[propertyName]
+            )
+
 class TestPostCRUD:
     DEFAULT_NEW_POST = {
         'userId': '1',
@@ -446,7 +513,7 @@ class TestPostCRUD:
         db = setupDB.getDB()
         updatePostPropertiesAndExtraPropertyNames = [
             ( self.createUpdatePostProps(userId='112233'), 'userId' ),
-            ( self.createUpdatePostProps(createdAt='112233'), 'createdAt' ),
+            ( self.createUpdatePostProps(createdAt=22.99), 'createdAt' ),
             ( self.createUpdatePostProps(randomProp=2), 'randomProp' ),
         ]
 
@@ -463,10 +530,9 @@ class TestPostCRUD:
                 postInDB[extraPropName] != postProps[extraPropName]
             )
 
-    def test_updatePostWithoutRequiredPropertiesRaisesError(self, setupDB):
+    def test_updatePostWithoutRequiredPropertiesRaisesException(self, setupDB):
         db = setupDB.getDB()
         updatePostProperties = [
-            self.createUpdatePostProps(content=None),
             self.createUpdatePostProps(postId=None),
         ]
 
@@ -474,7 +540,7 @@ class TestPostCRUD:
             with pytest.raises(EntityValidationError):
                 db.updatePost(postProps)
 
-    def test_updatePostWithWrongPropertyTypeRaisesException(self, setupDB):
+    def test_updatePostByWrongPropertyTypeRaisesException(self, setupDB):
         db = setupDB.getDB()
         updatePostProperties = [
             self.createUpdatePostProps(content=1),
@@ -484,6 +550,10 @@ class TestPostCRUD:
         for postProps in updatePostProperties:
             with pytest.raises(EntityValidationError):
                 db.updatePost(postProps)
+
+    def test_updatePostByNonExistantIdRaisesException(self, setupDB):
+        with pytest.raises(RecordNotFoundError):
+            setupDB.getDB().updatePost( self.createUpdatePostProps(postId='non_existant') )
 
 
 ### utility functions here
