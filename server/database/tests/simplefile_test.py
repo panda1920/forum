@@ -9,8 +9,9 @@ from server.database.simplefile import SimpleFile
 from server.database.datacreator import DataCreator
 from server.database.filter import Filter
 from server.database.paging import Paging
-from server.exceptions import EntityValidationError, RecordNotFoundError
 from server.entity.user import UpdateUser
+from server.entity.post import UpdatePost
+from server.exceptions import EntityValidationError, RecordNotFoundError
 
 PROJECT_DIR = Path(__file__).resolve().parents[3]
 TESTDATA = PROJECT_DIR / 'server' / 'database' / 'tests' / 'testdata.json'
@@ -507,7 +508,9 @@ class TestPostCRUD:
             post for post in setupDB.getAllPosts() 
             if post['postId'] == postToUpdate['postId']
         ][0]
-        assert postInDB['content'] == postToUpdate['content']
+
+        for field in UpdatePost.getUpdatableFields():
+            assert postInDB[field] == postToUpdate[field]
 
     def test_updatePostUpdatesWithExtraPropertiesPermittedButNotUsed(self, setupDB):
         db = setupDB.getDB()
@@ -519,12 +522,13 @@ class TestPostCRUD:
 
         for postProps, extraPropName in updatePostPropertiesAndExtraPropertyNames:
             db.updatePost(postProps)
-
             postInDB = [
                 post for post in setupDB.getAllPosts() 
                 if post['postId'] == postProps['postId']
             ][0]
-            assert postInDB['content'] == postProps['content']
+
+            for field in UpdatePost.getUpdatableFields():
+                assert postInDB[field] == postProps[field]
             assert (
                 extraPropName not in postInDB or
                 postInDB[extraPropName] != postProps[extraPropName]

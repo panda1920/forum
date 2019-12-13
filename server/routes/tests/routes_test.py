@@ -8,6 +8,7 @@ from server import server
 from server.database.database import Database
 from server.database.filter import Filter
 from server.database.paging import Paging
+from server.exceptions import *
 
 @pytest.fixture(scope='function')
 def app():
@@ -214,6 +215,24 @@ class TestPostsAPI:
             responseBodyJSON = response.get_json()
             assert responseBodyJSON['posts'] == []
 
+    def test_whenSearchPostsRaisesErrorReturnsError(self, app):
+        mockDB = getMockDB(app)
+        search = {
+            'search': '1 2 3 4'
+        }
+        exceptions = [
+            RecordNotFoundError('Some error'),
+            ServerMiscError('Some error')
+        ]
+
+        for e in exceptions:
+            mockDB.searchPost.side_effect = e
+            with app.test_client() as client:
+                response = client.get(self.POSTSAPI_BASE_URL, query_string=search)
+
+                assert response.status_code == e.getStatusCode()
+
+
     def test_searchPostsWithExplicitIDReturns1Post(self, app):
         postId = 'aaabbb90'
         url = f'{self.POSTSAPI_BASE_URL}/{postId}'
@@ -257,15 +276,22 @@ class TestPostsAPI:
             assert responseBodyJSON['posts'] == mockDB.searchPost.return_value
 
     def test_searchPostsWithExplcitIDThrowsExceptionReturnsError(self, app):
+        mockDB = getMockDB(app)
         postId = 'aaabbb90'
         url = f'{self.POSTSAPI_BASE_URL}/{postId}'
-        mockDB = getMockDB(app)
-        mockDB.searchPost.side_effect = Exception('Exception thrown')
+        
+        exceptions = [
+            RecordNotFoundError('Some error'),
+            ServerMiscError('Some error'),
+        ]
 
-        with app.test_client() as client:
-            response = client.get(url)
+        for e in exceptions:
+            mockDB.searchPost.side_effect = e
 
-            assert response.status_code == 400
+            with app.test_client() as client:
+                response = client.get(url)
+
+                assert response.status_code == e.getStatusCode()
 
     def test_createPostReturnCreatedPost(self, app):
         url = f'{self.POSTSAPI_BASE_URL}/create'
@@ -292,18 +318,79 @@ class TestPostsAPI:
             responseBodyJSON = response.get_json()
             assert responseBodyJSON['posts'] == [mockDB.createPost.return_value]
 
-    def test_whenCreatePostThrowExceptionReturns400(self, app):
+    def test_whenCreatePostRaisesExceptionReturnsError(self, app):
+        mockDB = getMockDB(app)
         url = f'{self.POSTSAPI_BASE_URL}/create'
         newPostData = {
             'userId': '0',
             'content': 'This is a test post',
         }
         headers = { 'content-type': 'application/x-www-form-urlencoded' }
+        exceptions = [
+            EntityValidationError('Some error happened'),
+            ServerMiscError('Some error happened')
+        ]
 
+        for e in exceptions:
+            mockDB.createPost.side_effect = e
+
+            with app.test_client() as client:
+                response = client.post(url, data=newPostData, headers=headers)
+
+                assert response.status_code == e.getStatusCode()
+
+    def test_updatePostReturnsStatus200(self, app):
         mockDB = getMockDB(app)
-        mockDB.createPost.side_effect = Exception('Some error happened')
+        mockDB.updatePost.return_value = 'this is a post'
+
+        postIdToUpdate = '1'
+        url = f'{self.POSTSAPI_BASE_URL}/{postIdToUpdate}/update'
+        updateData = {
+            'content': 'Updated content!'
+        }
 
         with app.test_client() as client:
-            response = client.post(url, data=newPostData, headers=headers)
+            response = client.patch(url, json=updateData)
+
+            assert response.status_code == 200
+
+            assert mockDB.updatePost.call_count == 1
+            passedPostProperties = mockDB.updatePost.call_args[0][0]
+            assert 'postId' in passedPostProperties
+            assert 'content' in passedPostProperties
+            assert passedPostProperties['postId'] == postIdToUpdate
+            assert passedPostProperties['content'] == updateData['content']
+
+    def test_updatePostByPostedMimeTypeNotJsonReturnsError(self, app):
+        mockDB = getMockDB(app)
+        mockDB.updatePost.return_value = 'this is a post'
+
+        postIdToUpdate = '1'
+        url = f'{self.POSTSAPI_BASE_URL}/{postIdToUpdate}/update'
+        updateData = 'content'
+        headers={ 'content-type': 'text/plain'}
+
+        with app.test_client() as client:
+            response = client.patch(url, data=updateData, headers=headers)
 
             assert response.status_code == 400
+
+    def test_whenUpdatePostRaisesExceptionReturnError(self, app):
+        postIdToUpdate = '1'
+        url = f'{self.POSTSAPI_BASE_URL}/{postIdToUpdate}/update'
+        updateData = {
+            'content': 'Updated content!'
+        }
+        exceptions = [
+            EntityValidationError('Some error'),
+            RecordNotFoundError('Some error'),
+            ServerMiscError('Some error'),
+        ]
+
+        for e in exceptions:
+            getMockDB(app).updatePost.side_effect = e
+            with app.test_client() as client:
+                response = client.patch(url, json=updateData)
+
+                assert response.status_code == e.getStatusCode()
+

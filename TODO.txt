@@ -1,13 +1,10 @@
 FORUM
     [DB]
-        - Implement user CRUD
         - Figure out the best way to hold password in db. why plain texts are bad
-        - Think through various scenarios where exceptions are raised
         - Add sorting
         - Implement CRUD operations in some sort of real DB system
             probably mongoDB
-        - Implement validation for incoming data in update/search
-        
+            
     [Flask]
         - Finish naive implementation of CRUD operation of post messages
         - Finish naive implemenation of CRUD operation of users

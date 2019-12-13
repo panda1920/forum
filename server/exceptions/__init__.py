@@ -36,6 +36,21 @@ class EntityValidationError(MyAppException):
     def getStatusCode(self):
         return 400
 
+class MissingQueryStringError(MyAppException):
+    """
+    Raised when API was not used properly;
+    expected query string was not found in endpoint
+    """
+    def getStatusCode(self):
+        return 400
+
+class RequestDataTypeMismatchError(MyAppException):
+    """
+    Raised when data in request did not contain expected data type
+    """
+    def getStatusCode(self):
+        return 400
+
 class RecordNotFoundError(MyAppException):
     """
     Raised when record was not found during db search

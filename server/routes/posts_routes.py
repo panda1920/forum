@@ -5,6 +5,7 @@ from flask import Blueprint, request, current_app, make_response
 from server.routes.routes_util import *
 from server.database.filter import Filter
 from server.database.paging import Paging
+from server.exceptions import MyAppException
 
 routes = Blueprint('postRoutes', __name__)
 
@@ -56,14 +57,14 @@ def postUpdate():
 
 @routes.route('/v1/posts', methods=['GET'])
 def searchPostsv1():
-    paging = getPaging()(request.args)
-    searchFilters = createSearchFilters(request.args, 'content')
-    if len(searchFilters) == 0:
-        return createJSONResponse( createPostsJson([]), 400 )
-    
-    posts = getDB().searchPost(searchFilters, paging)
+    try:
+        paging = getPaging()(request.args)
+        searchFilters = createSearchFilters(request.args, 'content')
+        posts = getDB().searchPost(searchFilters, paging)
+    except MyAppException as e:
+        return createJSONErrorResponse(e, [ createPostsObject([]) ])
 
-    return createJSONResponse( createPostsJson(posts), 200 )
+    return createJSONResponse([ createPostsObject(posts) ], 200)
 
 @routes.route('/v1/posts/<postId>', methods=['GET'])
 def searchPostsByIdv1(postId):
@@ -71,21 +72,36 @@ def searchPostsByIdv1(postId):
 
     try:
         posts = getDB().searchPost(searchFilters)
-    except:
-        return createJSONResponse( createPostsJson([]), 400)
+    except MyAppException as e:
+        return createJSONErrorResponse(e, [ createPostsObject([]) ])
 
-    return createJSONResponse( createPostsJson(posts), 200)
+    return createJSONResponse([ createPostsObject(posts) ], 200)
 
 @routes.route('/v1/posts/create', methods=['POST'])
 def createPostsv1():
     try:
         newPost = request.form
         createdPost = getDB().createPost(newPost)
-    except:
-        return createJSONResponse( createPostsJson([]), 400)
+    except MyAppException as e:
+        return createJSONErrorResponse(e, [ createPostsObject([]) ])
 
-    return createJSONResponse( createPostsJson([createdPost]), 201)
+    return createJSONResponse([ createPostsObject([createdPost]) ], 201)
 
-# @routes.route('/v1/posts/<postId>/update', methods=['PATCH'])
+@routes.route('/v1/posts/<postId>/update', methods=['PATCH'])
+def updatePostv1(postId):
+    try:
+        postUpdateProperties = { 'postId': postId }
+        postUpdateProperties.update( getJsonFromRequest(request) )
+        getDB().updatePost(postUpdateProperties)
+    except MyAppException as e:
+        return createJSONErrorResponse(e)
+    
+    return createJSONResponse([], 200)
 # @routes.route('/v1/posts/<postId>/delete', methods=['DELETE'])
+
+# error resposne
+# pass e
+# want to list the content to be included
+# optinally pass headers
+
 
