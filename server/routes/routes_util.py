@@ -25,18 +25,23 @@ def createPostsObject(posts):
         'posts': posts
     }
 
-def createJSONErrorResponse(error, infos = [], additionalHeaders = {}):
-    infos.append({
+def createUsersObject(users):
+    return {
+        'users': users
+    }
+
+def createJSONErrorResponse(error, datas = [], additionalHeaders = {}):
+    datas.append({
         'error': {
             'description': error.getErrorMsg()
         } 
     })
-    return createJSONResponse(infos, error.getStatusCode(), additionalHeaders)
+    return createJSONResponse(datas, error.getStatusCode(), additionalHeaders)
 
-def createJSONResponse(infos, statusCode, additionalHeaders = {}):
+def createJSONResponse(datas, statusCode, additionalHeaders = {}):
     responseBody = {}
-    for info in infos:
-        responseBody.update(info)
+    for data in datas:
+        responseBody.update(data)
     jsonBody = json.dumps(responseBody)
 
     headers = {'content-type': 'application/json'}
@@ -54,7 +59,7 @@ def createSearchFilters(requestArgs, fieldName):
     if not search:
         raise MissingQueryStringError('need search key and value as querystring')
     
-    searchTerms = searchTerms = search.split(' ')
+    searchTerms = search.split(' ')
     filters.append( createFuzzySearchFilter(searchTerms, fieldName) )
     return filters
 

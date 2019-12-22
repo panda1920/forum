@@ -97,7 +97,15 @@ def updatePostv1(postId):
         return createJSONErrorResponse(e)
     
     return createJSONResponse([], 200)
-# @routes.route('/v1/posts/<postId>/delete', methods=['DELETE'])
+
+@routes.route('/v1/posts/<postId>/delete', methods=['DELETE'])
+def deletePostv1(postId):
+    try:
+        getDB().deletePost([postId])
+    except MyAppException as e:
+        return createJSONErrorResponse(e)
+
+    return createTextResponse('delete successful!', 200)
 
 # error resposne
 # pass e
