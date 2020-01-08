@@ -19,17 +19,17 @@ class Filter:
         Filter.validateQuerystringObj(querystringObj)
         
         operator = querystringObj['operator']
-        if operator == FuzzyStringFilter.getOpString():
+        if operator == 'fuzzy':
             return FuzzyStringFilter(querystringObj)
-        elif operator == GTFilter.getOpString():
+        elif operator == 'gt':
             return GTFilter(querystringObj)
-        elif operator == GTEFilter.getOpString():
+        elif operator == 'gte':
             return GTEFilter(querystringObj)
-        elif operator == LTFilter.getOpString():
+        elif operator == 'lt':
             return LTFilter(querystringObj)
-        elif operator == LTEFilter.getOpString():
+        elif operator == 'lte':
             return LTEFilter(querystringObj)
-        elif operator == EQFilter.getOpString():
+        elif operator == 'eq':
             return EQFilter(querystringObj)
         elif operator == 'regex':
             return RegexFilter(querystringObj)
@@ -65,6 +65,13 @@ class Filter:
         self._field = querystringObj['field']
         self._values = querystringObj['value']
 
+    def getOpString(self):
+        """
+        get a string that represents filter operation
+        used and overrided by subclass
+        """
+        return NotImplementedError
+
     # def parse(self, querystringObj):
     #     raise NotImplementedError
 
@@ -77,12 +84,21 @@ class Filter:
         """
         raise NotImplementedError
 
+    def __eq__(self, other):
+        if not isinstance(other, Filter):
+            return NotImplemented
+
+        return all([
+            self.getOpString() == other.getOpString(),
+            self._field == other._field,
+            self._values == other._values,
+        ])
+
 class FuzzyStringFilter(Filter):
     """
     Allows fuzzy searches like searching for post that contains a certain substring
     """
-    @classmethod
-    def getOpString(cls):
+    def getOpString(self):
         """
         returns string value that represents this filter class
         """
@@ -102,11 +118,7 @@ class GTFilter(Filter):
     """
     Greater than filter
     """
-    @classmethod
-    def getOpString(cls):
-        """
-        returns string value that represents this filter class
-        """
+    def getOpString(self):
         return 'gt'
 
     def matches(self, record):
@@ -124,11 +136,7 @@ class GTEFilter(Filter):
     """
     Greater than or equal to filter
     """
-    @classmethod
-    def getOpString(cls):
-        """
-        returns string value that represents this filter class
-        """
+    def getOpString(self):
         return 'gte'
 
     def matches(self, record):
@@ -142,11 +150,7 @@ class LTFilter(Filter):
     """
     Less than filter
     """
-    @classmethod
-    def getOpString(cls):
-        """
-        returns string value that represents this filter class
-        """
+    def getOpString(self):
         return 'lt'
 
     def matches(self, record):
@@ -160,11 +164,7 @@ class LTEFilter(Filter):
     """
     Less than or equal to filter
     """
-    @classmethod
-    def getOpString(cls):
-        """
-        returns string value that represents this filter class
-        """
+    def getOpString(self):
         return 'lte'
 
     def matches(self, record):
@@ -178,11 +178,7 @@ class EQFilter(Filter):
     """
     Exact match filter
     """
-    @classmethod
-    def getOpString(cls):
-        """
-        returns string value that represents this filter class
-        """
+    def getOpString(self):
         return 'eq'
 
     def matches(self, record):

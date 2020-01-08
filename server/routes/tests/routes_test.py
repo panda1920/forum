@@ -2,12 +2,10 @@ import json
 import urllib.parse
 import pytest
 from flask import request
-from unittest.mock import create_autospec
 
 from server import server
-from server.database.database import Database
-from server.database.filter import Filter
-from server.database.paging import Paging
+import server.testing.mocks as mocks
+import server.app_utils as app_utils
 import server.exceptions as exceptions
 
 @pytest.fixture(scope='function')
@@ -18,21 +16,11 @@ def app():
     app.testing = True
 
     # replace with mock
-    app.config['DATABASE_OBJECT'] = create_autospec(Database)
-    app.config['SEARCH_FILTER'] = create_autospec(Filter)
-    app.config['PAGING'] = create_autospec(Paging)
+    app.config['DATABASE_OBJECT'] = mocks.createMockDB(app)
+    app.config['SEARCH_FILTER'] = mocks.createMockFilter()
+    app.config['PAGING'] = mocks.createMockPaging()
 
     yield app
-
-def getMockDB(app):
-    return app.config['DATABASE_OBJECT']
-
-def getMockFilter(app):
-    return app.config['SEARCH_FILTER']
-
-def getMockPaging(app):
-    return app.config['PAGING']
-
 
 class TestServerAPIs:
     def test_helloWorld(self, app):
@@ -70,7 +58,7 @@ class TestServerAPIs:
             'author': 'someone',
             'message': 'Hello world'
         }
-        db = getMockDB(app)
+        db = app_utils.getDB(app)
         db.createPost.side_effect = Exception('Went wrong')
 
         with app.test_client() as client:
@@ -114,7 +102,7 @@ class TestServerAPIs:
             response = client.post('/api/post', data=formData, headers=header)
             assert response.status_code == 200
             
-            mockDB = getMockDB(app)
+            mockDB = app_utils.getDB(app)
             assert mockDB.createPost.call_count == 1
 
             passedPost = mockDB.createPost.call_args[0][0]
@@ -132,7 +120,7 @@ class TestServerAPIs:
             response = client.delete('/api/post', data=formData, headers=header)
             assert response.status_code == 200
 
-            mockDB = getMockDB(app)
+            mockDB = app_utils.getDB(app)
             assert mockDB.deletePost.call_count == 1
 
     def test_postAPICallsSearchPostOnDBWhenGET(self, app):
@@ -144,7 +132,7 @@ class TestServerAPIs:
             response = client.get('/api/post', query_string=searchCriteria)
             assert response.status_code == 200
 
-            mockDB = getMockDB(app)
+            mockDB = app_utils.getDB(app)
             assert mockDB.searchPost.call_count == 1
 
     def test_postAPICallsUpdatePostOnDBWhenPATCH(self, app):
@@ -157,18 +145,18 @@ class TestServerAPIs:
             response = client.patch('/api/post', data=formData, headers=header)
             assert response.status_code == 200
             
-            # mockDB = getMockDB(app)
+            # mockDB = app_utils.getDB(app)
             # assert mockDB.updatePost.call_count == 1
 
 class TestPostsAPI:
     POSTSAPI_BASE_URL = '/v1/posts'
 
     def test_searchPostsAPI(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         mockDB.searchPost.return_value = ['post1', 'post2']
-        mockFilter = getMockFilter(app)
+        mockFilter = app_utils.getFilter(app)
         mockFilter.createFilter.return_value = 'mockfilter'
-        mockPaging = getMockPaging(app)
+        mockPaging = app_utils.getPaging(app)
         mockPaging.return_value = 'mockPaging'
 
         with app.test_client() as client:
@@ -216,7 +204,7 @@ class TestPostsAPI:
             assert responseBodyJSON['posts'] == []
 
     def test_whenSearchPostsRaisesErrorReturnsError(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         search = {
             'search': '1 2 3 4'
         }
@@ -236,9 +224,9 @@ class TestPostsAPI:
     def test_searchPostsByExplicitIDReturns1Post(self, app):
         postId = 'aaabbb90'
         url = f'{self.POSTSAPI_BASE_URL}/{postId}'
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         mockDB.searchPost.return_value = ['user1']
-        mockFilter = getMockFilter(app)
+        mockFilter = app_utils.getFilter(app)
         mockFilter.createFilter.return_value = 'testFilter'
 
         with app.test_client() as client:
@@ -261,7 +249,7 @@ class TestPostsAPI:
             assert responseBodyJSON['posts'] == mockDB.searchPost.return_value
 
     def test_searchPostsByExplicitIDReturnsErrorWhenExceptionRaised(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         postId = 'aaabbb90'
         url = f'{self.POSTSAPI_BASE_URL}/{postId}'
         
@@ -285,7 +273,7 @@ class TestPostsAPI:
         }
         headers = { 'content-type': 'application/x-www-form-urlencoded' }
 
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         mockDB.createPost.return_value = 'post created'
 
         with app.test_client() as client:
@@ -303,7 +291,7 @@ class TestPostsAPI:
             assert responseBodyJSON['posts'] == [mockDB.createPost.return_value]
 
     def test_whenCreatePostRaisesExceptionReturnsError(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         url = f'{self.POSTSAPI_BASE_URL}/create'
         newPostData = {
             'userId': '0',
@@ -323,7 +311,7 @@ class TestPostsAPI:
                 assert response.status_code == e.getStatusCode()
 
     def test_updatePostReturnsStatus200(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         mockDB.updatePost.return_value = 'this is a post'
 
         postIdToUpdate = '1'
@@ -345,7 +333,7 @@ class TestPostsAPI:
             assert passedPostProperties['content'] == updateData['content']
 
     def test_updatePostByPostedMimeTypeNotJsonReturnsError(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         mockDB.updatePost.return_value = 'this is a post'
 
         postIdToUpdate = '1'
@@ -371,7 +359,7 @@ class TestPostsAPI:
         ]
 
         for e in exceptionsToTest:
-            getMockDB(app).updatePost.side_effect = e
+            app_utils.getDB(app).updatePost.side_effect = e
             with app.test_client() as client:
                 response = client.patch(url, json=updateData)
 
@@ -380,7 +368,7 @@ class TestPostsAPI:
     def test_deletePostReturns200(self, app):
         postIdToDelete = '1'
         url = f'{self.POSTSAPI_BASE_URL}/{postIdToDelete}/delete'
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
 
         with app.test_client() as client:
             response = client.delete(url)
@@ -398,7 +386,7 @@ class TestPostsAPI:
             exceptions.RecordNotFoundError('Some error'),
             exceptions.ServerMiscError('Some error'),
         ]
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
 
         for e in exceptionsToTest:
             mockDB.deletePost.side_effect = e
@@ -412,8 +400,8 @@ class TestUserAPIs:
 
     def test_searchUsersReturnUsers(self, app):
         # setup mock behavior
-        mockDB = getMockDB(app)
-        mockFilter = getMockFilter(app)
+        mockDB = app_utils.getDB(app)
+        mockFilter = app_utils.getFilter(app)
         mockDB.searchUser.return_value = 'user found'
         mockFilter.createFilter.return_value = 'mock filter'
 
@@ -436,7 +424,7 @@ class TestUserAPIs:
 
     def test_searchUsersReturnsErrorWhenFilterCreationRaisesException(self, app):
         # setup mock
-        getMockFilter(app).createFilter.side_effect = exceptions.FilterParseError('some error')
+        app_utils.getFilter(app).createFilter.side_effect = exceptions.FilterParseError('some error')
         
         query = {
             'search': 'myusername hisusername herusername'
@@ -445,11 +433,11 @@ class TestUserAPIs:
         with app.test_client() as client:
             response = client.get(self.USERAPI_BASE_URL, query_string=query)
 
-            assert response.status_code ==  getMockFilter(app).createFilter.side_effect.getStatusCode()
+            assert response.status_code ==  app_utils.getFilter(app).createFilter.side_effect.getStatusCode()
 
     def test_searchUsersReturnErrorWhenSearchRaisesException(self, app):
         # setup mock
-        mockFilter = getMockFilter(app)
+        mockFilter = app_utils.getFilter(app)
         mockFilter.createFilter.return_value = 'mock filter'
 
         query = {
@@ -462,7 +450,7 @@ class TestUserAPIs:
         ]
 
         for e in exceptionsToTest:
-            getMockDB(app).searchUser.side_effect = e
+            app_utils.getDB(app).searchUser.side_effect = e
             with app.test_client() as client:
                 response = client.get(self.USERAPI_BASE_URL, query_string=query)
 
@@ -470,8 +458,8 @@ class TestUserAPIs:
 
     def test_searchUserReturnsErrorWhenNoQuerystringProvided(self, app):
         # setup mock behavior
-        mockDB = getMockDB(app)
-        mockFilter = getMockFilter(app)
+        mockDB = app_utils.getDB(app)
+        mockFilter = app_utils.getFilter(app)
         mockDB.searchUser.return_value = 'user found'
         mockFilter.createFilter.return_value = 'mock filter'
 
@@ -482,9 +470,9 @@ class TestUserAPIs:
 
     def test_searchUserByExplicitID(self, app):
         # setup mock
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         mockDB.searchUser.return_value = 'user found'
-        mockFilter = getMockFilter(app)
+        mockFilter = app_utils.getFilter(app)
         mockFilter.createFilter.return_value = 'mock filter'
 
         userId = '112233'
@@ -513,7 +501,7 @@ class TestUserAPIs:
         ]
 
         for e in exceptionsToTest:
-            getMockDB(app).searchUser.side_effect = e
+            app_utils.getDB(app).searchUser.side_effect = e
 
             with app.test_client() as client:
                 response = client.get(url)
@@ -523,7 +511,7 @@ class TestUserAPIs:
     def test_searchUserExplciitIDReturnsErrorWhenSearchFilterRaisesException(self, app):
         # setup mock
         exceptionToTest = exceptions.FilterParseError('some error')
-        mockFilter = getMockFilter(app)
+        mockFilter = app_utils.getFilter(app)
         mockFilter.createFilter.side_effect = exceptionToTest
 
         userId = '112233'
@@ -535,7 +523,7 @@ class TestUserAPIs:
             assert response.status_code == exceptionToTest.getStatusCode()
 
     def test_createUserReturns200(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         userProperties = {
             'userName': 'joe@myforumwebapp.com',
             'displayName': 'Joe',
@@ -557,7 +545,7 @@ class TestUserAPIs:
                 assert arg1Passed[prop] == userProperties[prop]
 
     def test_createUserReturnsErrorWhenCreateUserThrowsException(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         userProperties = {
             'userName': 'joe@myforumwebapp.com',
             'displayName': 'Joe',
@@ -580,7 +568,7 @@ class TestUserAPIs:
                 assert response.status_code == e.getStatusCode()
 
     def test_updateUserReturns200(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         userProperties = {
             'displayName': 'Jimmy',
         }
@@ -600,7 +588,7 @@ class TestUserAPIs:
 
     def test_updateUserReturnsErrorWhenNonJsonPassed(self, app):
         requestDataToTest = [
-            json.dumps({  'displayName': 'Jimmy' }),
+            json.dumps({ 'displayName': 'Jimmy' }),
             'some_random_string'
         ]
         headersToTest = [
@@ -617,7 +605,7 @@ class TestUserAPIs:
                 assert response.status_code == 400
 
     def test_updateUserReturnsErrorWhenUpdateUserRaisesException(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         userProperties = {
             'displayName': 'Jimmy',
         }
@@ -637,7 +625,7 @@ class TestUserAPIs:
                 assert response.status_code == e.getStatusCode()
 
     def test_deleteUserReturns200(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         userIdToDelete = '1'
         url = f'{self.USERAPI_BASE_URL}/{userIdToDelete}/delete'
 
@@ -651,7 +639,7 @@ class TestUserAPIs:
             assert arg1Passed == [userIdToDelete]
 
     def test_deleteUserReturnsErrorWhenDeleteUserRaisesException(self, app):
-        mockDB = getMockDB(app)
+        mockDB = app_utils.getDB(app)
         userIdToDelete = '1'
         url = f'{self.USERAPI_BASE_URL}/{userIdToDelete}/delete'
         exceptionsToTest = [

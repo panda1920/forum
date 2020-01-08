@@ -1,22 +1,22 @@
 FORUM
     [DB]
-        - Figure out the best way to hold password in db. why plain texts are bad
+        - Implement password encyrption
         - Add sorting
         - Implement CRUD operations in some sort of real DB system
             probably mongoDB
             
     [Flask]
-        - Finish naive implementation of CRUD operation of post messages
-        - Finish naive implemenation of CRUD operation of users
         - Implement user authentication system
-        - Add user authentication system to operations that need it
-        - Figure out how to encyrpt incoming information
-            JWT?
+            Consider SSL connection.
+            Need encryption?
+        - Implement user authentication system to operations that need it
+        - Impement user authorizaiton
+            Operations yields differing result depending on the current logged in user
+            Some operation may require additional login despite already logged in, e.g. password reset.
         - Implement sanitization mechanism for incoming data
-		- Sort out the api
-			reference WebAPI: the good parts
         - stop returning the saerch results directly; carefully select which information to disclose and which not to
-
+        - Handle entities inside the app as separate class instead of bare dictionary
+        - Consider using Flask-Session for server-side session management
     
     [Frontend]
         - Figure out how to carry around user information on the client side
@@ -29,6 +29,9 @@ FORUM
         - Try using docker
         - Get a CI system going
 
-    [MISC]
+    [TESTING]
         - Change layout of test files
             separating test from production code
+        - extract commonly used test helper methods as util
+        - extract commonly used test fixtures in a separate file
+        - figure out how to test session with flask

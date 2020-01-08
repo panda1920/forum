@@ -1,18 +1,10 @@
 import json
 
-from flask import current_app, make_response
+from flask import make_response, current_app
 
+import server.app_utils as app_utils
 from server.database.filter import Filter
 from server.exceptions import MissingQueryStringError, RequestDataTypeMismatchError
-
-def getDB():
-    return current_app.config['DATABASE_OBJECT']
-
-def getFilter():
-    return current_app.config['SEARCH_FILTER']
-
-def getPaging():
-    return current_app.config['PAGING']
 
 def getJsonFromRequest(req):
     jsonData = req.get_json(silent=True)
@@ -70,14 +62,14 @@ def createIDFilters(fieldName, idValue):
     return filters
 
 def createFuzzySearchFilter(searchTerms, fieldName):
-    return getFilter().createFilter({
+    return app_utils.getFilter(current_app).createFilter({
         'field': fieldName,
         'operator': 'fuzzy',
         'value': searchTerms,
     })
 
 def createEQSearchFilter(values, fieldName):
-    return getFilter().createFilter({
+    return app_utils.getFilter(current_app).createFilter({
         'field': fieldName,
         'operator': 'eq',
         'value': values,

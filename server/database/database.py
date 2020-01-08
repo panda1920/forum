@@ -7,7 +7,7 @@ class Database:
     def createUser(self, user):
         pass
 
-    def searchUser(self, searchCritera, paging = Paging()):
+    def searchUser(self, searchFilters, paging = Paging()):
         pass
 
     def deleteUser(self, userIds):

@@ -11,7 +11,7 @@ def fixture():
 class TestFilterCreation:
     def test_createFuzzyString(self):
         querystringObj = {
-            'operator': FuzzyStringFilter.getOpString(),
+            'operator': 'fuzzy',
             'value': [100],
             'field': 'content',
         }
@@ -21,7 +21,7 @@ class TestFilterCreation:
     
     def test_createGT(self):
         querystringObj = {
-            'operator': GTFilter.getOpString(),
+            'operator': 'gt',
             'value': [100],
             'field': 'content',
         }
@@ -31,7 +31,7 @@ class TestFilterCreation:
     
     def test_createGTE(self):
         querystringObj = {
-            'operator': GTEFilter.getOpString(),
+            'operator': 'gte',
             'value': [100],
             'field': 'content',
         }
@@ -41,7 +41,7 @@ class TestFilterCreation:
     
     def test_createLT(self):
         querystringObj = {
-            'operator': LTFilter.getOpString(),
+            'operator': 'lt',
             'value': [100],
             'field': 'content',
         }
@@ -51,7 +51,7 @@ class TestFilterCreation:
     
     def test_creatLTE(self):
         querystringObj = {
-            'operator': LTEFilter.getOpString(),
+            'operator': 'lte',
             'value': [100],
             'field': 'content',
         }
@@ -61,7 +61,7 @@ class TestFilterCreation:
     
     def test_createEQ(self):
         querystringObj = {
-            'operator': EQFilter.getOpString(),
+            'operator': 'eq',
             'value': [100],
             'field': 'content',
         }
@@ -71,8 +71,8 @@ class TestFilterCreation:
 
     def test_createFilterShouldThrowExceptionWhenMissingAttributes(self):
         querystringObjs = [
-            {'operator': EQFilter.getOpString(), 'value': [100]}, # missing field
-            {'operator': EQFilter.getOpString(), 'field': 'content'}, # missing value
+            {'operator': 'eq', 'value': [100]}, # missing field
+            {'operator': 'eq', 'field': 'content'}, # missing value
             {'value': [100], 'field': 'content'}, # missing operator
         ]
 
@@ -116,7 +116,7 @@ class TestFilterMatching:
         ]
 
         # fuzzy search for 'is' OR 'as'
-        f = self.createFilter(FuzzyStringFilter.getOpString(), ['is', 'as'])
+        f = self.createFilter('fuzzy', ['is', 'as'])
         for obj in objsShouldMatch:
             assert f.matches(obj)
         for obj in objsShouldNotMatch:
@@ -135,7 +135,7 @@ class TestFilterMatching:
             {'id': self.FIELD_VALUE + 1},
         ]
 
-        f = self.createFilter(GTFilter.getOpString())
+        f = self.createFilter('gt')
         for obj in objsShouldMatch:
             assert f.matches(obj)
         for obj in objsShouldNotMatch:
@@ -154,7 +154,7 @@ class TestFilterMatching:
             {'id': self.FIELD_VALUE + 1},
         ]
 
-        f = self.createFilter(GTEFilter.getOpString())
+        f = self.createFilter('gte')
         for obj in objsShouldMatch:
             assert f.matches(obj)
         for obj in objsShouldNotMatch:
@@ -173,7 +173,7 @@ class TestFilterMatching:
             {'id': self.FIELD_VALUE + 1},
         ]
 
-        f = self.createFilter(LTFilter.getOpString())
+        f = self.createFilter('lt')
         for obj in objsShouldMatch:
             assert f.matches(obj)
         for obj in objsShouldNotMatch:
@@ -192,7 +192,7 @@ class TestFilterMatching:
             {'id': self.FIELD_VALUE + 1},
         ]
 
-        f = self.createFilter(LTEFilter.getOpString())
+        f = self.createFilter('lte')
         for obj in objsShouldMatch:
             assert f.matches(obj)
         for obj in objsShouldNotMatch:
@@ -215,7 +215,7 @@ class TestFilterMatching:
         ]
 
         # search for either of the 2 by exact matches
-        f = self.createFilter(EQFilter.getOpString(), [self.FIELD_VALUE, 500])
+        f = self.createFilter('eq', [self.FIELD_VALUE, 500])
         for obj in objsShouldMatch:
             assert f.matches(obj)
         for obj in objsShouldNotMatch:
@@ -232,3 +232,54 @@ class TestFilterMatching:
             'value': fieldValue,
             }
         )
+
+class TestFilterComparison:
+    DEFAULT_FIELD = 'default_field'
+    DEFAULT_FIELD_VALUES = [1, 2, 3]
+
+    def createFilter(self, *args):
+        op = args[0]
+        field = args[1] if len(args) > 1 else self.DEFAULT_FIELD
+        fieldValue = args[2:] if len(args) > 2 else self.DEFAULT_FIELD_VALUES
+        
+        return Filter.createFilter(
+            {
+            'operator': op,
+            'field': field,
+            'value': fieldValue,
+            }
+        )
+
+    def test_EQFilterEquality(self):
+        eqfilter1 = self.createFilter('eq')
+        eqfilter2 = self.createFilter('eq')
+
+        assert eqfilter1 == eqfilter2
+        
+    def test_EQFilterNonEquality(self):
+        eqfilter1 = self.createFilter('eq')
+        eqfilter2 = self.createFilter('eq', 'other_field')
+        eqfilter3 = self.createFilter('eq', self.DEFAULT_FIELD, 1, 2)
+        fuzzyfilter1 = self.createFilter('fuzzy')
+
+        assert eqfilter1 != eqfilter2
+        assert eqfilter1 != eqfilter3
+        assert eqfilter2 != eqfilter3
+        assert eqfilter1 != fuzzyfilter1
+
+    def testFuzzyFilterEquality(self):
+        fuzzyfilter1 = self.createFilter('fuzzy')
+        fuzzyfilter2 = self.createFilter('fuzzy')
+
+        assert fuzzyfilter1 == fuzzyfilter2
+
+    def testFuzzyFilterNonEquality(self):
+        fuzzyfilter1 = self.createFilter('fuzzy')
+        fuzzyfilter2 = self.createFilter('fuzzy', 'other_field')
+        fuzzyfilter3 = self.createFilter('fuzzy', self.DEFAULT_FIELD, 1, 2)
+        eqfilter1 = self.createFilter('eq')
+
+        assert fuzzyfilter1 != fuzzyfilter2
+        assert fuzzyfilter1 != fuzzyfilter3
+        assert fuzzyfilter2 != fuzzyfilter3
+        assert fuzzyfilter1 != eqfilter1

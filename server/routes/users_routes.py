@@ -2,7 +2,8 @@ import urllib.parse
 
 from flask import Blueprint, request, current_app, make_response
 
-import server.routes.routes_util as util
+import server.app_utils as app_utils
+import server.routes.route_utils  as route_utils
 from server.database.filter import Filter
 from server.database.paging import Paging
 from server.exceptions import MyAppException
@@ -13,49 +14,49 @@ routes = Blueprint('userRoutes', __name__)
 def searchUserv1():
     # do i need this api?
     try:
-        searchCriteria = util.createSearchFilters(request.args, fieldName='userName')
-        users = util.getDB().searchUser(searchCriteria)
+        searchCriteria = route_utils.createSearchFilters(request.args, fieldName='userName')
+        users = app_utils.getDB(current_app).searchUser(searchCriteria)
     except MyAppException as e:
-        return util.createJSONErrorResponse(e)
+        return route_utils.createJSONErrorResponse(e)
     
-    return util.createJSONResponse([ util.createUsersObject(users) ], 200)
+    return route_utils.createJSONResponse([ route_utils.createUsersObject(users) ], 200)
 
 @routes.route('/v1/users/<userId>', methods=['GET'])
 def searchUserByIDv1(userId):
     try:
-        searchCriteria = util.createIDFilters(fieldName='userId', idValue=userId)
-        users = util.getDB().searchUser(searchCriteria)
+        searchCriteria = route_utils.createIDFilters(fieldName='userId', idValue=userId)
+        users = app_utils.getDB(current_app).searchUser(searchCriteria)
     except MyAppException as e:
-        return util.createJSONErrorResponse(e)
+        return route_utils.createJSONErrorResponse(e)
 
-    return util.createJSONResponse([ util.createUsersObject(users) ], 200)
+    return route_utils.createJSONResponse([ route_utils.createUsersObject(users) ], 200)
 
 @routes.route('/v1/users/create', methods=['POST'])
 def createUserv1():
     userProperties = request.form
     try:
-        util.getDB().createUser(userProperties)
+        app_utils.getDB(current_app).createUser(userProperties)
     except MyAppException as e:
-        return util.createJSONErrorResponse(e)
+        return route_utils.createJSONErrorResponse(e)
 
-    return util.createJSONResponse([], 200)
+    return route_utils.createJSONResponse([], 200)
 
 @routes.route('/v1/users/<userId>/update', methods=['PATCH'])
 def updateUserv1(userId):
     try:
-        userData = util.getJsonFromRequest(request)
+        userData = route_utils.getJsonFromRequest(request)
         userData.update({ 'userId': userId })
-        util.getDB().updateUser(userData)
+        app_utils.getDB(current_app).updateUser(userData)
     except MyAppException as e:
-        return util.createJSONErrorResponse(e)
+        return route_utils.createJSONErrorResponse(e)
 
-    return util.createJSONResponse([], 200)
+    return route_utils.createJSONResponse([], 200)
 
 @routes.route('/v1/users/<userId>/delete', methods=['DELETE'])
 def deleteUserv1(userId):
     try:
-        util.getDB().deleteUser([userId])
+        app_utils.getDB(current_app).deleteUser([userId])
     except MyAppException as e:
-        return util.createJSONErrorResponse(e)
+        return route_utils.createJSONErrorResponse(e)
 
-    return util.createJSONResponse([], 200)
+    return route_utils.createJSONResponse([], 200)

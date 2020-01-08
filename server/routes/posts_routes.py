@@ -2,7 +2,8 @@ import urllib.parse
 
 from flask import Blueprint, request, current_app, make_response
 
-from server.routes.routes_util import *
+import server.app_utils as app_utils
+import server.routes.route_utils  as route_utils 
 from server.database.filter import Filter
 from server.database.paging import Paging
 from server.exceptions import MyAppException
@@ -18,94 +19,95 @@ def examplepost():
 def postCreate():
     try:
         postData = request.form
-        db = getDB()
+        db = app_utils.getDB(current_app)
         db.createPost({
             'userId': postData['userId'],
             'content': postData['content'],
             'postId': '111111'
         })
     except Exception as e:
-        return createTextResponse(str(e), 500)
+        return route_utils .createTextResponse(str(e), 500)
 
-    return createTextResponse('Post was stored!', 200)
+    return route_utils .createTextResponse('Post was stored!', 200)
 
 @routes.route('/api/post', methods=['GET'])
 def postSearch():
     try:
-        db = getDB()
+        db = app_utils.getDB(current_app)
         searchCriteria = urllib.parse.parse_qs( request.query_string )
         db.searchPost(searchCriteria)
         return make_response('', 200)
     except Exception as e:
-        return createTextResponse(str(e), 500)
+        return route_utils .createTextResponse(str(e), 500)
     
 @routes.route('/api/post', methods=['DELETE'])
 def postDelete():
     try:
-        db = getDB()
+        db = app_utils.getDB(current_app)
         db.deletePost({
             'postId': request.form['postId']
         })
-        return createTextResponse('Post was deleted!', 200)
+        return route_utils .createTextResponse('Post was deleted!', 200)
     except Exception as e:
-        return createTextResponse(str(e), 500)
+        return route_utils .createTextResponse(str(e), 500)
 
 @routes.route('/api/post', methods=['PATCH'])
 def postUpdate():
 
-    return createTextResponse('Post was updated!', 200)
+    return route_utils .createTextResponse('Post was updated!', 200)
 
 @routes.route('/v1/posts', methods=['GET'])
 def searchPostsv1():
     try:
-        paging = getPaging()(request.args)
-        searchFilters = createSearchFilters(request.args, 'content')
-        posts = getDB().searchPost(searchFilters, paging)
+        paging = app_utils.getPaging(current_app)(request.args)
+        searchFilters = route_utils .createSearchFilters(request.args, 'content')
+        posts = app_utils.getDB(current_app).searchPost(searchFilters, paging)
     except MyAppException as e:
-        return createJSONErrorResponse(e, [ createPostsObject([]) ])
+        return route_utils .createJSONErrorResponse(e, [ route_utils .createPostsObject([]) ])
 
-    return createJSONResponse([ createPostsObject(posts) ], 200)
+    return route_utils .createJSONResponse([ route_utils .createPostsObject(posts) ], 200)
 
 @routes.route('/v1/posts/<postId>', methods=['GET'])
 def searchPostsByIdv1(postId):
-    searchFilters = createIDFilters(fieldName='postId', idValue=postId)
+    searchFilters = route_utils.createIDFilters(fieldName='postId', idValue=postId)
 
     try:
-        posts = getDB().searchPost(searchFilters)
+        posts = app_utils.getDB(current_app).searchPost(searchFilters)
     except MyAppException as e:
-        return createJSONErrorResponse(e, [ createPostsObject([]) ])
+        return route_utils .createJSONErrorResponse(e, [ route_utils .createPostsObject([]) ])
 
-    return createJSONResponse([ createPostsObject(posts) ], 200)
+    return route_utils .createJSONResponse([ route_utils .createPostsObject(posts) ], 200)
 
 @routes.route('/v1/posts/create', methods=['POST'])
 def createPostsv1():
     try:
         newPost = request.form
-        createdPost = getDB().createPost(newPost)
+        createdPost = app_utils.getDB(current_app).createPost(newPost)
     except MyAppException as e:
-        return createJSONErrorResponse(e, [ createPostsObject([]) ])
+        return route_utils .createJSONErrorResponse(e, [ route_utils .createPostsObject([]) ])
 
-    return createJSONResponse([ createPostsObject([createdPost]) ], 201)
+    return route_utils .createJSONResponse([ route_utils .createPostsObject([createdPost]) ], 201)
+
 
 @routes.route('/v1/posts/<postId>/update', methods=['PATCH'])
 def updatePostv1(postId):
     try:
         postUpdateProperties = { 'postId': postId }
-        postUpdateProperties.update( getJsonFromRequest(request) )
-        getDB().updatePost(postUpdateProperties)
+        postUpdateProperties.update( route_utils .getJsonFromRequest(request) )
+        app_utils.getDB(current_app).updatePost(postUpdateProperties)
     except MyAppException as e:
-        return createJSONErrorResponse(e)
+        return route_utils .createJSONErrorResponse(e)
     
-    return createJSONResponse([], 200)
+    return route_utils .createJSONResponse([], 200)
 
 @routes.route('/v1/posts/<postId>/delete', methods=['DELETE'])
 def deletePostv1(postId):
     try:
-        getDB().deletePost([postId])
+        app_utils.getDB(current_app).deletePost([postId])
     except MyAppException as e:
-        return createJSONErrorResponse(e)
+        return route_utils .createJSONErrorResponse(e)
 
-    return createTextResponse('delete successful!', 200)
+    return route_utils .createTextResponse('delete successful!', 200)
 
 # error resposne
 # pass e
