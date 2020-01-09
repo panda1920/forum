@@ -6,7 +6,7 @@ import pytest
 import pdb
 
 from server.database.simplefile import SimpleFile
-from server.database.datacreator import DataCreator
+from tests.database.datacreator import DataCreator
 from server.database.filter import Filter
 from server.database.paging import Paging
 from server.entity.user import UpdateUser
@@ -82,9 +82,11 @@ class SetupDB_SimpleFile:
             return json.load(f)
 
 class TestFixture:
+    @pytest.mark.slow
     def test_fixtureCreatedUsers(self, setupDB):
         setupDB.validateCreatedUsers()
-        
+
+    @pytest.mark.slow        
     def test_fixtureCreatedPosts(self, setupDB):
         setupDB.validateCreatedPosts()
 
@@ -105,6 +107,7 @@ class TestUserCRUD:
     def createUpdateuserProps(self, **kwargs):
         return createNewProps(self.DEFAULT_UPDATE_USER, **kwargs)
 
+    @pytest.mark.slow
     def test_createUserShouldCreateUserInDB(self, setupDB):
         db = setupDB.getDB()
 
@@ -121,6 +124,7 @@ class TestUserCRUD:
         ]
         assert len(createdUser) == 1
 
+    @pytest.mark.slow
     def test_createUserWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
         db = setupDB.getDB()
 
@@ -136,6 +140,7 @@ class TestUserCRUD:
             with pytest.raises(EntityValidationError):
                 db.createUser(userProp)
 
+    @pytest.mark.slow
     def test_createUserByWrongPropertyTypeShouldRaiseException(self, setupDB):
         db = setupDB.getDB()
 
@@ -150,6 +155,7 @@ class TestUserCRUD:
             with pytest.raises(EntityValidationError):
                 db.createUser(userProp)
 
+    @pytest.mark.slow
     def test_deleteUserShouldRemoveUserFromDB(self, setupDB):
         db = setupDB.getDB()
 
@@ -165,6 +171,7 @@ class TestUserCRUD:
         ]
         assert len(usersShouldHaveBeenDeleted) == 0
 
+    @pytest.mark.slow
     def test_deleteUserShouldRemoveMultipleUsersFromDB(self, setupDB):
         db = setupDB.getDB()
 
@@ -180,6 +187,7 @@ class TestUserCRUD:
         ]
         assert len(usersShouldHaveBeenDeleted) == 0
 
+    @pytest.mark.slow
     def test_deleteUserShouldDeleteAllPostsAssociated(self, setupDB):
         db = setupDB.getDB()
 
@@ -195,6 +203,7 @@ class TestUserCRUD:
         ]
         assert len(postsBelongingToDeletedUser) == 0
 
+    @pytest.mark.slow
     def test_deleteUserWithNonExistantIdShouldDoNothing(self, setupDB):
         db = setupDB.getDB()
 
@@ -203,6 +212,7 @@ class TestUserCRUD:
 
         setupDB.validateCreatedUsers()
 
+    @pytest.mark.slow
     def test_searchUserByUserIdShouldReturnUserFromDB(self, setupDB):
         db = setupDB.getDB()
 
@@ -215,6 +225,7 @@ class TestUserCRUD:
         assert len(users) == 1
         assert users[0]['userId'] == userIdsToSearch[0]
 
+    @pytest.mark.slow
     def test_searchUserByNonExistantUserIdShouldReturnZeroUsersFromDB(self, setupDB):
         db = setupDB.getDB()
 
@@ -226,6 +237,7 @@ class TestUserCRUD:
 
         assert len(users) == 0
 
+    @pytest.mark.slow
     def test_searchUserBy2UserIdsShouldReturn2UsersFromDB(self, setupDB):
         db = setupDB.getDB()
 
@@ -239,6 +251,7 @@ class TestUserCRUD:
         for user in users:
             assert user['userId'] in userIdsToSearch
 
+    @pytest.mark.slow
     def test_searchUserByNoFilterShouldReturnNoUsers(self, setupDB):
         db = setupDB.getDB()
 
@@ -247,6 +260,7 @@ class TestUserCRUD:
 
         assert len(users) == 0
 
+    @pytest.mark.slow
     def test_searchUserByContradictingFiltersShouldReturnNoUsers(self, setupDB):
         db = setupDB.getDB()
 
@@ -258,6 +272,7 @@ class TestUserCRUD:
 
         assert len(users) == 0
 
+    @pytest.mark.slow
     def test_searchUserBy10UserIdWith5LimitShouldReturn5Users(self, setupDB):
         db = setupDB.getDB()
 
@@ -270,6 +285,7 @@ class TestUserCRUD:
 
         assert len(users) == 5
 
+    @pytest.mark.slow
     def test_searchUserBy10UserIdWith5Limit8OffsetShouldReturn2Users(self, setupDB):
         db = setupDB.getDB()
 
@@ -282,6 +298,7 @@ class TestUserCRUD:
 
         assert len(users) == 2
 
+    @pytest.mark.slow
     def test_updateUserUpdateUserOnDB(self, setupDB):
         setupDB.getDB().updateUser( self.DEFAULT_UPDATE_USER )
 
@@ -293,10 +310,12 @@ class TestUserCRUD:
         for field in UpdateUser.getUpdatableFields():
             assert updatedUser[field] == self.DEFAULT_UPDATE_USER[field]
 
+    @pytest.mark.slow
     def test_updateUserByNonExistantIdRaisesError(self, setupDB):
         with pytest.raises(RecordNotFoundError):
             setupDB.getDB().updateUser( self.createUpdateuserProps(userId='non_existant') )
 
+    @pytest.mark.slow
     def test_updateUserWithoutRequiredPropertiesThrowsAnError(self, setupDB):
         userUpdateProperties = [
             self.createUpdateuserProps(userId=None)
@@ -306,6 +325,7 @@ class TestUserCRUD:
             with pytest.raises(EntityValidationError):
                 setupDB.getDB().updateUser(userUpdate)
 
+    @pytest.mark.slow
     def test_updateUserByWrongUpdatePropertiesThrowsAnError(self, setupDB):
         userUpdateProperties = [
             self.createUpdateuserProps(userId=1),
@@ -317,6 +337,7 @@ class TestUserCRUD:
             with pytest.raises(EntityValidationError):
                 setupDB.getDB().updateUser(userUpdate)
 
+    @pytest.mark.slow
     def test_updateUserWithUnexpectedPropertiesHaveNoEffectOnUpdate(self, setupDB):
         updatableFields = UpdateUser.getUpdatableFields()
 
@@ -356,6 +377,7 @@ class TestPostCRUD:
     def createUpdatePostProps(self, **kwargs):
         return createNewProps(self.DEFAULT_UPDATE_POST, **kwargs)
 
+    @pytest.mark.slow
     def test_createPostShouldCreatePostInDB(self, setupDB):
         db = setupDB.getDB()
         postToCreate = self.createNewPostProps()
@@ -370,6 +392,7 @@ class TestPostCRUD:
         ]
         assert len(createdPost) == 1
 
+    @pytest.mark.slow
     def test_createPostWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
         db = setupDB.getDB()
         postsToCreate = [
@@ -382,6 +405,7 @@ class TestPostCRUD:
             with pytest.raises(EntityValidationError):
                 db.createPost(postToCreate)
 
+    @pytest.mark.slow
     def test_createPostWithWrongPropertyTypeShouldRaiseException(self, setupDB):
         db = setupDB.getDB()
 
@@ -394,6 +418,7 @@ class TestPostCRUD:
             with pytest.raises(EntityValidationError):
                 db.createPost(postToCreate)
 
+    @pytest.mark.slow
     def test_deletePostShouldRemovePostFromDB(self, setupDB):
         db = setupDB.getDB()
 
@@ -409,6 +434,7 @@ class TestPostCRUD:
         ]
         assert len(postsShouldHaveBeenDeleted) == 0
 
+    @pytest.mark.slow
     def test_deletePostShouldRemoveMultiplePostFromDB(self, setupDB):
         db = setupDB.getDB()
 
@@ -424,6 +450,7 @@ class TestPostCRUD:
         ]
         assert len(postsShouldHaveBeenDeleted) == 0
 
+    @pytest.mark.slow
     def test_deletePostWithNonExistantIdShouldDoNothing(self, setupDB):
         db = setupDB.getDB()
         postIdToDelete = 'non_existant'
@@ -431,6 +458,7 @@ class TestPostCRUD:
 
         setupDB.validateCreatedPosts()
 
+    @pytest.mark.slow
     def test_searchPostByPostIdsShouldReturnPostFromDB(self, setupDB):
         db = setupDB.getDB()
         searchFilters = [
@@ -441,6 +469,7 @@ class TestPostCRUD:
         assert len(posts) == 1
         assert posts[0]['postId'] in ['1']
 
+    @pytest.mark.slow
     def test_searchPostByMultiplePostIdsShouldReturnPostFromDB(self, setupDB):
         db = setupDB.getDB()
         searchFilters = [
@@ -452,6 +481,7 @@ class TestPostCRUD:
         for post in posts:
             assert post['postId'] in ['1', '2']
 
+    @pytest.mark.slow
     def test_searchPostByNonExitantPostIdShouldReturnNothing(self, setupDB):
         db = setupDB.getDB()
         searchFilters = [
@@ -461,6 +491,7 @@ class TestPostCRUD:
 
         assert len(posts) == 0
 
+    @pytest.mark.slow
     def test_searchPostWithoutExplicitPagingShouldReturnDefaultAmount(self, setupDB):
         db = setupDB.getDB()
         searchFilters = [
@@ -470,6 +501,7 @@ class TestPostCRUD:
 
         assert len(posts) == Paging.DEFAULT_LIMIT
 
+    @pytest.mark.slow
     def test_searchPostWithExplicitPagingShouldBeLimited(self, setupDB):
         db = setupDB.getDB()
         paging = Paging({ 'offset': DataCreator.POSTCOUNT_PER_USER * 2 + 1, 'limit': DataCreator.POSTCOUNT_PER_USER })
@@ -480,6 +512,7 @@ class TestPostCRUD:
 
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER - 1
 
+    @pytest.mark.slow
     def test_searchPostByMultipleFiltersIsSearchedByAND(self, setupDB):
         db = setupDB.getDB()
         displayNameOfFirstUser = setupDB.getOriginalUsers()[0]['displayName']
@@ -492,6 +525,7 @@ class TestPostCRUD:
 
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER
 
+    @pytest.mark.slow
     def test_searchPostWithEmptyFiltersShouldReturNothing(self, setupDB):
         db = setupDB.getDB()
         searchFilters = []
@@ -499,6 +533,7 @@ class TestPostCRUD:
 
         assert len(posts) == 0
 
+    @pytest.mark.slow
     def test_updatePostUpdatesPostOnDB(self, setupDB):
         db = setupDB.getDB()
         postToUpdate = self.createUpdatePostProps()
@@ -512,6 +547,7 @@ class TestPostCRUD:
         for field in UpdatePost.getUpdatableFields():
             assert postInDB[field] == postToUpdate[field]
 
+    @pytest.mark.slow
     def test_updatePostUpdatesWithExtraPropertiesPermittedButNotUsed(self, setupDB):
         db = setupDB.getDB()
         updatePostPropertiesAndExtraPropertyNames = [
@@ -534,6 +570,7 @@ class TestPostCRUD:
                 postInDB[extraPropName] != postProps[extraPropName]
             )
 
+    @pytest.mark.slow
     def test_updatePostWithoutRequiredPropertiesRaisesException(self, setupDB):
         db = setupDB.getDB()
         updatePostProperties = [
@@ -544,6 +581,7 @@ class TestPostCRUD:
             with pytest.raises(EntityValidationError):
                 db.updatePost(postProps)
 
+    @pytest.mark.slow
     def test_updatePostByWrongPropertyTypeRaisesException(self, setupDB):
         db = setupDB.getDB()
         updatePostProperties = [
@@ -555,6 +593,7 @@ class TestPostCRUD:
             with pytest.raises(EntityValidationError):
                 db.updatePost(postProps)
 
+    @pytest.mark.slow
     def test_updatePostByNonExistantIdRaisesException(self, setupDB):
         with pytest.raises(RecordNotFoundError):
             setupDB.getDB().updatePost( self.createUpdatePostProps(postId='non_existant') )

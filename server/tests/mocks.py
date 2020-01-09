@@ -6,7 +6,7 @@ from server.database.database import Database
 from server.database.filter import Filter
 from server.database.paging import Paging
 
-def createMockDB(app):
+def createMockDB():
     return create_autospec(Database)
 
 def createMockFilter():
@@ -21,7 +21,7 @@ def createMockRequest():
 def createMockG():
     return create_autospec(g, instance=True)
 
-def createMockSession(obj = {}):
+def createMockSession(sessionInfo = {}):
     defaults = {
         'new': False,
         'modified': False,
@@ -29,5 +29,5 @@ def createMockSession(obj = {}):
     }
     mock = {}
     mock.update(defaults)
-    mock.update(obj)
+    mock.update(sessionInfo)
     return mock

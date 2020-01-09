@@ -12,6 +12,7 @@ class SessionManager:
     def setCurrentUserFromSession(g, session):
         if session['new']:
             userId = '0'
+            session['userId'] = '0'
         else:
             try:
                 userId = session['userId']

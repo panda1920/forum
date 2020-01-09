@@ -2,7 +2,7 @@ import pytest
 from contextlib import contextmanager
 
 from server import server
-import server.testing.mocks as mocks
+import tests.mocks as mocks
 import server.exceptions as exceptions
 from server.database import database
 from server.database.filter import Filter
@@ -47,6 +47,18 @@ class Test_authenticateUserDecorator:
         session.setCurrentUserFromSession(mockGlobal, mockSession)
 
         assert mockGlobal.currentUser == { 'userId': '0' }
+
+    def test_setCurrentUserFromSessionPutsAnonymousUserInSessionWhenNewSession(self, app):
+        mockSession = mocks.createMockSession({
+            'new': True,
+        })
+        mockGlobal = mocks.createMockG()
+        mockGlobal.currentUser = None
+        
+        session.setCurrentUserFromSession(mockGlobal, mockSession)
+
+        assert 'userId' in mockSession
+        assert mockSession['userId'] == '0'
 
     def test_setCurrentUserRaisesExceptionWhenSessionNotNewAndNoUserInfo(self, app):
         mockSession = mocks.createMockSession({

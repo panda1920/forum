@@ -85,5 +85,5 @@ class DataCreator:
         return len(cls.USERS) * cls.POSTCOUNT_PER_USER
 
 if __name__ == '__main__':
-    DEFAULT_FILENAME = Path(__file__).resolve().parents[0] / 'tests' / 'testdata.json'
+    DEFAULT_FILENAME = Path(__file__).resolve().parents[0] / 'testdata.json'
     DataCreator(DEFAULT_FILENAME).createTestData()

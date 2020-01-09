@@ -4,7 +4,7 @@ import pytest
 from flask import request
 
 from server import server
-import server.testing.mocks as mocks
+import tests.mocks as mocks
 import server.app_utils as app_utils
 import server.exceptions as exceptions
 
@@ -16,7 +16,7 @@ def app():
     app.testing = True
 
     # replace with mock
-    app.config['DATABASE_OBJECT'] = mocks.createMockDB(app)
+    app.config['DATABASE_OBJECT'] = mocks.createMockDB()
     app.config['SEARCH_FILTER'] = mocks.createMockFilter()
     app.config['PAGING'] = mocks.createMockPaging()
 

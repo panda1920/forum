@@ -5,7 +5,6 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
-pylint = "*"
 
 [packages]
 flask = "*"
@@ -16,7 +15,7 @@ python_version = "3.7"
 
 [scripts]
 start = "flask run"
-testdata = "python -m server.database.datacreator"
+testdata = "python server/tests/database/datacreator.py"
 random = "python -m server.randomcode"
 test = "python -m pytest -ra"
-testl = "python -m pytest -ra --ignore server/database/tests/simplefile_test.py"
+testl = "python -m pytest -ra -m \"not slow\""
