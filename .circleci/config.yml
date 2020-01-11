@@ -27,5 +27,6 @@ jobs:
       - run:
           name: Run tests
           command: |
+            echo $PWD
             cd ./server
             ls -al
