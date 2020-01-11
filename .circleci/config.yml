@@ -4,8 +4,13 @@ jobs:
     docker:
       - image: alpine:3.7
     steps:
+      - checkout
       - run:
           name: The First Step
           command: |
-            echo 'Hello World!'
-            echo 'This is the delivery pipeline'
+            echo "hello World"
+      - run:
+          name: random commands
+          command: |
+            echo $PWD
+            ls -al
