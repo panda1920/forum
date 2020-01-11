@@ -3,25 +3,28 @@ jobs:
   build:
     docker:
       - image: circleci/python:3.7.0
+        environment:
+          PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
       - run:
-          name: The First Step
-          command: |
-            echo "hello World"
+        name: The First Step
+        command: |
+          echo "hello World"
       - run:
-          name: random commands
-          command: |
-            echo $PWD
-            ls -al
+        name: Check environment variables exist
+        command: |
+          echo $SECRET_KEY
+          echo $DATA_LOCATION
+          echo $PIPENV_VENV_IN_PROJECT
       - run:
-          name: Check environment variables exist
-          command: |
-            echo $SECRET_KEY
-            echo $DATA_LOCATION
-      # - run:
-      #     name: Install dependencies
-      #     command: |
-      #       pip install pipenv
-      #       pipenv install -d
-      #       pipenv shell
+        name: Install dependencies
+        command: |
+          pip install pipenv
+          pipenv install -d
+      - run:
+        name: random commands
+        command: |
+          echo $PWD
+          ls -al
+          ls ./virtualenvs
