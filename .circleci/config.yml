@@ -1,17 +1,14 @@
 version: 2.1
 jobs:
   build:
-    working_directory: ~/project/server
+    # working_directory: ~/project/server
+    # the default working directory is ~/project
     docker:
       - image: circleci/python:3.7.0
         environment:
             PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
-      - run:
-          name: The First Step
-          command: |
-            echo "hello World"
       - run:
           name: Check environment variables exist
           command: |
@@ -27,6 +24,5 @@ jobs:
       - run:
           name: Run tests
           command: |
-            echo $PWD
             cd ./server
-            ls -al
+            pipenv run testl
