@@ -51,6 +51,8 @@ class SimpleFile(Database):
 
     def createIfNotExist(self, filePath):
         if not filePath.exists():
+            directoryPath = filePath.parents[0]
+            directoryPath.mkdir(parents=True, exist_ok=True)
             with filePath.open('w', encoding='utf-8') as f:
                 json.dump([], f)
 
