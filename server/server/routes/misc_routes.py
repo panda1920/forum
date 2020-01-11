@@ -1,16 +1,16 @@
 from flask import Blueprint, request, current_app, render_template, g, session, jsonify
 
-from server.middleware.session import SessionManager
+# from server.middleware.session import SessionManager
 
 routes = Blueprint('miscRoutes', __name__)
 
 @routes.route('/')
 @routes.route('/index')
 def hello_world():
-    currentUser = session.get('userId', 'None')
-    SessionManager.setCurrentUserFromSession(g, session)
-    return f'You have a userId of {currentUser}!'
-    # return 'hello world!'
+    # currentUser = session.get('userId', 'None')
+    # SessionManager.setCurrentUserFromSession(g, session)
+    # return f'You have a userId of {currentUser}!'
+    return 'hello world!'
 
 @routes.route('/clear')
 def clear():
