@@ -20,6 +20,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            cd ./server
             pip install pipenv
             pipenv install -d
       - run:
@@ -27,4 +28,3 @@ jobs:
           command: |
             echo $PWD
             ls -al
-            ls ./virtualenvs
