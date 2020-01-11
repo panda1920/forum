@@ -1,6 +1,7 @@
 version: 2.1
 jobs:
   build:
+    working_directory: ~/project/server
     docker:
       - image: circleci/python:3.7.0
         environment:
@@ -24,7 +25,7 @@ jobs:
             pip install pipenv
             pipenv install -d
       - run:
-          name: random commands
+          name: Run tests
           command: |
-            echo $PWD
+            cd ./server
             ls -al
