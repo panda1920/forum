@@ -14,7 +14,7 @@ cerberus = "*"
 python_version = "3.7"
 
 [scripts]
-start = "flask run"
+start = "python -m flask run"
 testdata = "python server/tests/database/datacreator.py"
 random = "python -m server.randomcode"
 test = "python -m pytest -ra"

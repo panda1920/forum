@@ -8,16 +8,13 @@ class SessionManager:
     """
     A namespace to put all session related functions
     """
+    ANONYMOUS_USERID = '0'
     @staticmethod
     def setCurrentUserFromSession(g, session):
-        if session['new']:
-            userId = '0'
-            session['userId'] = '0'
-        else:
-            try:
-                userId = session['userId']
-            except:
-                raise exceptions.InvalidSession('Invalid session')
+        userId = session.get('userId', None)
+        if userId == None:
+            session['userId'] = SessionManager.ANONYMOUS_USERID
+            userId = SessionManager.ANONYMOUS_USERID
         
         g.currentUser = {
             'userId': userId

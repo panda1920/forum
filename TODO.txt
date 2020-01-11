@@ -17,12 +17,16 @@ FORUM
         - stop returning the saerch results directly; carefully select which information to disclose and which not to
         - Handle entities inside the app as separate class instead of bare dictionary
         - Consider using Flask-Session for server-side session management
+        - Consider CORS restriction from frontend-to-backend during development
     
     [Frontend]
         - Figure out how to carry around user information on the client side
             sessionstorage, localstorage?
         - Create a simple page to signup user
         - Create a simple page to write posts
+        - Figure out routing of SPA that utilizes HTML5 history
+            https://github.com/ReactTraining/react-router/blob/master/FAQ.md#how-do-i-access-the-history-object-outside-of-components
+            https://codeburst.io/full-stack-single-page-application-with-vue-js-and-flask-b1e036315532
 
     [Deployment]
         - Deploy on amazon
@@ -30,8 +34,4 @@ FORUM
         - Get a CI system going
 
     [TESTING]
-        - Change layout of test files
-            separating test from production code
-        - extract commonly used test helper methods as util
-        - extract commonly used test fixtures in a separate file
         - figure out how to test session with flask

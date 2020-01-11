@@ -1,6 +1,6 @@
 from unittest.mock import create_autospec
 
-from flask import g, request
+from flask import g, request, session
 
 from server.database.database import Database
 from server.database.filter import Filter

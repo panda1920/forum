@@ -1,4 +1,4 @@
-from server import setupApp
+from server.server import setupApp
 
 app = setupApp()
-print(app.config)
+# app.run()

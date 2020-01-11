@@ -8,16 +8,6 @@ from server.database import database
 from server.database.filter import Filter
 from server.middleware.session import SessionManager as session
     
-@pytest.fixture(scope='module')
-def app():
-    app = server.setupApp()
-    yield app
-
-@contextmanager
-def requestContext(app, **kwargs):
-    with app.test_request_context(**kwargs):
-        yield
-
 class Test_authenticateUserDecorator:
     TEST_USER = {
         'userId': '1',
@@ -28,7 +18,6 @@ class Test_authenticateUserDecorator:
     def test_setCurrentUserFromSessionPutsSessionUserInGlobal(self, app):
         mockSession = mocks.createMockSession({
             'userId': self.TEST_USER['userId'],
-            'new': False,
         })
         mockGlobal = mocks.createMockG()
         mockGlobal.currentUser = None
@@ -37,10 +26,8 @@ class Test_authenticateUserDecorator:
 
         assert mockGlobal.currentUser == { 'userId': self.TEST_USER['userId'] }
 
-    def test_setCurrentUserFromSessionPutsAnonymousUserInGlobalWhenNewSession(self, app):
-        mockSession = mocks.createMockSession({
-            'new': True,
-        })
+    def test_setCurrentUserFromSessionPutsAnonymousUserInGlobalWhenNoUserInfo(self, app):
+        mockSession = mocks.createMockSession()
         mockGlobal = mocks.createMockG()
         mockGlobal.currentUser = None
         
@@ -48,10 +35,8 @@ class Test_authenticateUserDecorator:
 
         assert mockGlobal.currentUser == { 'userId': '0' }
 
-    def test_setCurrentUserFromSessionPutsAnonymousUserInSessionWhenNewSession(self, app):
-        mockSession = mocks.createMockSession({
-            'new': True,
-        })
+    def test_setCurrentUserFromSessionPutsAnonymousUserInSessionWhenNoUserInfo(self, app):
+        mockSession = mocks.createMockSession()
         mockGlobal = mocks.createMockG()
         mockGlobal.currentUser = None
         
@@ -59,14 +44,3 @@ class Test_authenticateUserDecorator:
 
         assert 'userId' in mockSession
         assert mockSession['userId'] == '0'
-
-    def test_setCurrentUserRaisesExceptionWhenSessionNotNewAndNoUserInfo(self, app):
-        mockSession = mocks.createMockSession({
-            # 'userId': self.TEST_USER['userId'], # no user info
-            'new': False,
-        })
-        mockGlobal = mocks.createMockG()
-        mockGlobal.currentUser = None
-
-        with pytest.raises(exceptions.InvalidSession):
-            session.setCurrentUserFromSession(mockGlobal, mockSession)
