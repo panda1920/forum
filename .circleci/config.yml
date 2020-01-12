@@ -43,7 +43,7 @@ jobs:
 
 workflows:
   version: 2.1
-    test_codebase:
-      jobs:
-        - test_server
-        - test_client
+  test_codebase:
+    jobs:
+      - test_server
+      - test_client
