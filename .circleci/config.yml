@@ -1,12 +1,12 @@
 version: 2.1
 jobs:
-  build:
+  test_server:
     # working_directory: ~/project/server
     # the default working directory is ~/project
     docker:
       - image: circleci/python:3.7.0
         environment:
-            PIPENV_VENV_IN_PROJECT: true
+          PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
       - run:
@@ -19,10 +19,34 @@ jobs:
           name: Install dependencies
           command: |
             cd ./server
-            pip install pipenv
+            sudo pip install pipenv
             pipenv install -d
       - run:
           name: Run tests
           command: |
             cd ./server
             pipenv run testl
+  
+  test_client:
+    docker:
+      - image: circleci/node:12.2
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            cd ./client
+            sudo npm install -g jest
+            sudo npm install
+      - run:
+          name: Run tests
+          command: |
+            cd client
+            jest
+
+workflows:
+  version: 2.1
+  test_codebase:
+    jobs:
+      - test_server
+      - test_client
