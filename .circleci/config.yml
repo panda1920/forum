@@ -35,11 +35,13 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            cd ./test_client
+            cd ./client
             npm install
       - run:
           name: Run tests
-          command: 'jest || true'
+          command: |
+            cd client
+            jest
 
 workflows:
   version: 2.1
