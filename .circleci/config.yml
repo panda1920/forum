@@ -6,7 +6,7 @@ jobs:
     docker:
       - image: circleci/python:3.7.0
       - environment:
-            PIPENV_VENV_IN_PROJECT: true
+          PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
       - run:
