@@ -28,15 +28,15 @@ jobs:
             pipenv run testl
   
   test_client:
-      docker:
-        - image: circleci/node:12.2
-      steps:
-        - checkout
-        - run:
-            name: Install dependencies
-            command: |
-              cd ./test_client
-              npm install
-        - run:
-            name: Run tests
-            command: 'jest || true'
+    docker:
+      - image: circleci/node:12.2
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            cd ./test_client
+            npm install
+      - run:
+          name: Run tests
+          command: 'jest || true'
