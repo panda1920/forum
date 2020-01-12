@@ -36,6 +36,7 @@ jobs:
           name: Install dependencies
           command: |
             cd ./client
+            npm install -g jest
             npm install
       - run:
           name: Run tests
