@@ -40,3 +40,10 @@ jobs:
       - run:
           name: Run tests
           command: 'jest || true'
+
+workflows:
+  version: 2.1
+    test_codebase:
+      jobs:
+        - test_server
+        - test_client
