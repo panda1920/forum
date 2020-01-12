@@ -1,28 +1,42 @@
 version: 2.1
 jobs:
-  build:
+  test_server:
     # working_directory: ~/project/server
     # the default working directory is ~/project
     docker:
       - image: circleci/python:3.7.0
-        environment:
-            PIPENV_VENV_IN_PROJECT: true
+      - environment:
+          PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
       - run:
-          name: Check environment variables exist
-          command: |
-            echo $SECRET_KEY
-            echo $DATA_LOCATION
-            echo $PIPENV_VENV_IN_PROJECT
+        name: Check environment variables exist
+        command: |
+          echo $SECRET_KEY
+          echo $DATA_LOCATION
+          echo $PIPENV_VENV_IN_PROJECT
       - run:
+        name: Install dependencies
+        command: |
+          cd ./server
+          pip install pipenv
+          pipenv install -d
+      - run:
+        name: Run tests
+        command: |
+          cd ./server
+          pipenv run testl
+  
+  test_client:
+      docker:
+        - image: circleci/node:12.2
+      steps:
+        - checkout
+        - run:
           name: Install dependencies
           command: |
-            cd ./server
-            pip install pipenv
-            pipenv install -d
-      - run:
+            cd ./test_client
+            npm install
+        - run:
           name: Run tests
-          command: |
-            cd ./server
-            pipenv run testl
+          command: "Jest || true"
