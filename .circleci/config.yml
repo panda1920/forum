@@ -13,7 +13,8 @@ jobs:
           command: |
             sudo pip install pipenv
             ls -al /usr/local/bin
-            ls -al /usr/local/lib/
+            ls -al /usr/local/lib
+            ls -al /usr/local/lib/python3.7/site_packages
       # - run:
       #     name: Check environment variables exist
       #     command: |
