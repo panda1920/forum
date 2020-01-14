@@ -29,7 +29,7 @@ jobs:
           name: Saving dependency cache if needed
           key: deps-v1-{{ checksum "./server/Pipfile.lock"}}
           paths:
-            - "/server/.venv"
+            - "./server/.venv"
             - "/usr/local/bin"
             - "/usr/local/bin/python3.7/site-packages"
       - run:
