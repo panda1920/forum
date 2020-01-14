@@ -27,26 +27,25 @@ jobs:
             cd ./server
             pipenv run testl
   
-  test_client:
-    docker:
-      - image: circleci/node:12.2
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            cd ./client
-            sudo npm install -g jest
-            sudo npm install
-      - run:
-          name: Run tests
-          command: |
-            cd client
-            jest
+  # test_client:
+  #   docker:
+  #     - image: circleci/node:12.2
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Install dependencies
+  #         command: |
+  #           cd ./client
+  #           sudo npm install
+  #     - run:
+  #         name: Run tests
+  #         command: |
+  #           cd ./client
+  #           npm run test
 
 workflows:
   version: 2.1
   test_codebase:
     jobs:
       - test_server
-      - test_client
+      # - test_client
