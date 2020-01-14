@@ -31,12 +31,12 @@ jobs:
             cd ./server
             pipenv run testl
       - save_cache:
-        name: Saving dependency cache if needed
-        key: deps-v2-{{ checksum "./server/Pipfile.lock"}}
-        paths:
-          - "./server/.venv"
-          - "/usr/local/bin"
-          - "/usr/local/bin/python3.7/site-packages"
+          name: Saving dependency cache if needed
+          key: deps-v2-{{ checksum "./server/Pipfile.lock"}}
+          paths:
+            - "./server/.venv"
+            - "/usr/local/bin"
+            - "/usr/local/bin/python3.7/site-packages"
   
   # test_client:
   #   docker:
