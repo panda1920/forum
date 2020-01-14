@@ -11,8 +11,9 @@ jobs:
       - checkout
       - run:
           command: |
-            ls -al
-            echo $PWD
+            sudo pip install pipenv
+            ls -al /usr/local/bin
+            ls -al /usr/local/lib/
       # - run:
       #     name: Check environment variables exist
       #     command: |
