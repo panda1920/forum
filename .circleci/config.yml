@@ -9,6 +9,11 @@ jobs:
           PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
+      - run:
+          name: Changing permission of files for the following cache restore
+          command: |
+            sudo chown -R circleci:circleci /usr/local/bin
+            sudo chown -R circleci:circleci /usr/local/lib/python3.7/site-packages
       - restore_cache:
           name: Restoring dependency cache if possible
           keys:
@@ -21,7 +26,7 @@ jobs:
             sudo pip install pipenv
             pipenv install -d
       - save_cache:
-          name: Saving dependency cache
+          name: Saving dependency cache if needed
           key: deps-v1-{{ checksum "./server/Pipfile.lock"}}
           paths:
             - "/server/.venv"
