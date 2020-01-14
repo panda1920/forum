@@ -21,7 +21,7 @@ jobs:
             sudo pip install pipenv
             pipenv install -d
       - save_cache:
-          name: Saving dependency cache if needed
+          name: Saving dependency cache
           key: deps-v1-{{ checksum "./server/Pipfile.lock"}}
           paths:
             - "/server/.venv"
