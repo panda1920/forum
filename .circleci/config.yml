@@ -1,7 +1,7 @@
 version: 2.1
 jobs:
   test_server:
-    working_directory: ~/project/server
+    # working_directory: ~/project/server
     # the default working directory is ~/project
     docker:
       - image: circleci/python:3.7.0
@@ -9,29 +9,29 @@ jobs:
           PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
+      - restore_cache:
+          name: Restoring dependency cache if possible
+          keys:
+            - deps-v1-{{ checksum "./server/Pipfile.lock"}}
+            - deps-v1-
       - run:
+          name: Install dependencies
           command: |
+            cd ./server
             sudo pip install pipenv
-            ls -al /usr/local/bin
-            ls -al /usr/local/lib
-            ls -al /usr/local/lib/python3.7/site-packages
-      # - run:
-      #     name: Check environment variables exist
-      #     command: |
-      #       echo $SECRET_KEY
-      #       echo $DATA_LOCATION
-      #       echo $PIPENV_VENV_IN_PROJECT
-      # - run:
-      #     name: Install dependencies
-      #     command: |
-      #       cd ./server
-      #       sudo pip install pipenv
-      #       pipenv install -d
-      # - run:
-      #     name: Run tests
-      #     command: |
-      #       cd ./server
-      #       pipenv run testl
+            pipenv install -d
+      - save_cache:
+          name: Saving dependency cache if needed
+          key: deps-v1-{{ checksum "./server/Pipfile.lock"}}
+          paths:
+            - "/server/.venv"
+            - "/usr/local/bin"
+            - "/usr/local/bin/python3.7/site-packages"
+      - run:
+          name: Run tests
+          command: |
+            cd ./server
+            pipenv run testl
   
   # test_client:
   #   docker:
