@@ -17,8 +17,8 @@ jobs:
       - restore_cache:
           name: Restoring dependency cache if possible
           keys:
-            - deps-v1-{{ checksum "./server/Pipfile.lock"}}
-            - deps-v1-
+            - deps-v2-{{ checksum "./server/Pipfile.lock"}}
+            - deps-v2-
       - run:
           name: Install dependencies
           command: |
@@ -27,7 +27,7 @@ jobs:
             pipenv install -d
       - save_cache:
           name: Saving dependency cache if needed
-          key: deps-v1-{{ checksum "./server/Pipfile.lock"}}
+          key: deps-v2-{{ checksum "./server/Pipfile.lock"}}
           paths:
             - "./server/.venv"
             - "/usr/local/bin"
