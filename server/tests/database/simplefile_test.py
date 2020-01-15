@@ -19,9 +19,7 @@ TESTDATA = PROJECT_DIR / 'server' / 'tests' / 'database' / 'testdata.json'
 
 @pytest.fixture(scope='module')
 def createDB():
-    db = SetupDB_SimpleFile()
-    yield db
-    db.cleanup()
+    yield SetupDB_SimpleFile()
 
 @pytest.fixture(scope='function')
 def setupDB(createDB):
