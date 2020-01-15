@@ -4,6 +4,7 @@ from pathlib import Path
 from server.database.simplefile import SimpleFile
 from server.database.filter import Filter
 from server.database.paging import Paging
+from server.middleware.userauth import UserAuthentication
 
 class Config:
     # when using file-based db, this is where data gets stored
@@ -11,7 +12,8 @@ class Config:
 
     # define classes/objects that are referenced in the app
     # can be replaced during tests
-    DATABASE_OBJECT = SimpleFile(Path(DATA_LOCATION))
+    USER_AUTHENTICATION = UserAuthentication
+    DATABASE_OBJECT = SimpleFile(Path(DATA_LOCATION), USER_AUTHENTICATION)
     SEARCH_FILTER = Filter
     PAGING = Paging
 
@@ -20,5 +22,5 @@ class Config:
     # define how long persisting session information would be held by client
     # PERMANENT_SESSION_LIFETIME = os.environ.get('')
 
-    # for ssl
+    # cookies are only sent over SSL connection
     SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', False)

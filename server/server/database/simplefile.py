@@ -43,11 +43,12 @@ class SimpleFile(Database):
     POSTS_FILENAME = 'posts.json'
     THREADS_FILENAME = 'threads.json'
 
-    def __init__(self, filePath):
+    def __init__(self, filePath, userauth):
         self._saveLocation = filePath
         self._usersFile = self.createIfNotExist(self._saveLocation / self.USERS_FILENAME)
         self._postsFile = self.createIfNotExist(self._saveLocation / self.POSTS_FILENAME)
         self._threadsFile = self.createIfNotExist(self._saveLocation / self.THREADS_FILENAME)
+        self._userauth = userauth
 
     def createIfNotExist(self, filePath):
         if not filePath.exists():
@@ -122,6 +123,7 @@ class SimpleFile(Database):
 
     @updateJSONFileContent('_usersFile')
     def _createUserImpl(self, user, currentUsers = None):
+        user['password'] = self._userauth.hashPassword( user['password'] )
         return [*currentUsers, user]
 
     @updateJSONFileContent('_usersFile')
@@ -152,7 +154,10 @@ class SimpleFile(Database):
             raise RecordNotFoundError(f'User with id of {user["userId"]} was not found.')
         
         for field in UpdateUser.getUpdatableFields():
-            updatedUsers[userIdxToUpdate][field] = user[field]
+            if field == 'password':
+                updatedUsers[userIdxToUpdate][field] = self._userauth.hashPassword( user[field] )
+            else:
+                updatedUsers[userIdxToUpdate][field] = user[field]
         
         return updatedUsers
 

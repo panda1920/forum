@@ -5,6 +5,7 @@ from flask import g, request, session
 from server.database.database import Database
 from server.database.filter import Filter
 from server.database.paging import Paging
+from server.middleware.userauth import UserAuthentication
 
 def createMockDB():
     return create_autospec(Database)
@@ -14,6 +15,9 @@ def createMockFilter():
 
 def createMockPaging():
     return create_autospec(Paging)
+
+def createMockUserAuth():
+    return create_autospec(UserAuthentication)
 
 def createMockRequest():
     return create_autospec(request, instance=True)
