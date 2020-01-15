@@ -10,11 +10,15 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Check environment variables exist
+          name: Changing file permissiosn for later steps
           command: |
-            echo $SECRET_KEY
-            echo $DATA_LOCATION
-            echo $PIPENV_VENV_IN_PROJECT
+            sudo chown -R circleci:circleci /usr/local/bin
+            sudo chown -R circleci:circleci /usr/local/lib/python3.7/site-packages
+      - restore_cache:
+          name: Restoring dependency cache if possible
+          keys:
+            - deps-v2-{{ checksum "./server/Pipfile.lock"}}
+            - deps-v2-
       - run:
           name: Install dependencies
           command: |
@@ -26,12 +30,24 @@ jobs:
           command: |
             cd ./server
             pipenv run testl
+      - save_cache:
+          name: Saving dependency cache
+          key: deps-v2-{{ checksum "./server/Pipfile.lock"}}
+          paths:
+            - "./server/.venv"
+            - "/usr/local/bin"
+            - "/usr/local/bin/python3.7/site-packages"
   
   # test_client:
   #   docker:
   #     - image: circleci/node:12.2
   #   steps:
   #     - checkout
+  #     - restore_cache:
+  #       name: Restoring dependency cache if possible
+  #       keys:
+  #         - deps-client-v1-{{ checksum "./client/package-lock.json"}}
+  #         - deps-client-v1-
   #     - run:
   #         name: Install dependencies
   #         command: |
@@ -42,6 +58,11 @@ jobs:
   #         command: |
   #           cd ./client
   #           npm run test
+  #     - save_cache:
+  #         name: Saving dependency cache
+  #         key: deps-client-v1-{{ checksum "./client/package-lock.json"}}
+  #         paths:
+  #           - "./node_modules"
 
 workflows:
   version: 2.1
