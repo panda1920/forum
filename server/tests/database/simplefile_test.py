@@ -17,44 +17,34 @@ import tests.mocks as mocks
 PROJECT_DIR = Path(__file__).resolve().parents[3]
 TESTDATA = PROJECT_DIR / 'server' / 'tests' / 'database' / 'testdata.json'
 
-@pytest.fixture(scope='function')
-def setupDB():
+@pytest.fixture(scope='module')
+def createDB():
     db = SetupDB_SimpleFile()
     yield db
     db.cleanup()
 
+@pytest.fixture(scope='function')
+def setupDB(createDB):
+    createDB.setupData()
+    yield createDB
+    createDB.cleanup()
+
 class SetupDB_SimpleFile:
     def __init__(self):
         self._saveLocation = Path(__file__).resolve().parents[0] / 'temp'
-        shutil.rmtree(self._saveLocation, ignore_errors=True)
-        self._saveLocation.mkdir(exist_ok=True)
-        
         self._usersFile = self._saveLocation / SimpleFile.USERS_FILENAME
         self._postsFile = self._saveLocation / SimpleFile.POSTS_FILENAME
-        self._originalUsers = self.setupSampleUsers(self._usersFile)
-        self._originalPosts = self.setupSamplePosts(self._postsFile)
+        self._testdata = self._readTestData()
         self._userauth = mocks.createMockUserAuth()
         self._db = SimpleFile(self._saveLocation, self._userauth)
 
-    def setupSampleUsers(self, fileName):
-        with TESTDATA.open('r', encoding='utf-8') as f:
-            data = json.load(f)
+    def setupData(self):
+        self._saveLocation.mkdir(exist_ok=True)
+        self._writeObjToFile(self._testdata['users'], self._usersFile)
+        self._writeObjToFile(self._testdata['posts'], self._postsFile)
 
-        fileName.touch()
-        with fileName.open('w', encoding='utf-8') as f:
-            json.dump(data['users'], f)
-
-        return data['users']
-
-    def setupSamplePosts(self, fileName):
-        with TESTDATA.open('r', encoding='utf-8') as f:
-            data = json.load(f)
-
-        fileName.touch()
-        with fileName.open('w', encoding='utf-8') as f:
-            json.dump(data['posts'], f)
-
-        return data['posts']
+    def cleanup(self):
+        shutil.rmtree(self._saveLocation, ignore_errors=True)
 
     def validateCreatedUsers(self):
         createdUsers = self.getAllUsers()
@@ -66,16 +56,16 @@ class SetupDB_SimpleFile:
         assert len(self.getAllPosts()) == len(self.getOriginalPosts())
 
     def getAllUsers(self):
-        return self.readJson( self._usersFile )
+        return self._readJson( self._usersFile )
 
     def getOriginalUsers(self):
-        return self._originalUsers
+        return self._testdata['users']
 
     def getAllPosts(self):
-        return self.readJson( self._postsFile )
+        return self._readJson( self._postsFile )
 
     def getOriginalPosts(self):
-        return self._originalPosts
+        return self._testdata['posts']
 
     def getDB(self):
         return self._db
@@ -83,12 +73,18 @@ class SetupDB_SimpleFile:
     def getMockUserAuth(self):
         return self._userauth
 
-    def readJson(self, filepath):
-        with filepath.open('r', encoding='utf-8') as f:
+    def _readTestData(self):
+        with TESTDATA.open('r', encoding='utf-8') as f:
             return json.load(f)
 
-    def cleanup(self):
-        pass
+    def _writeObjToFile(self, obj, fileName):
+        fileName.touch()
+        with fileName.open('w', encoding='utf-8') as f:
+            json.dump(obj, f)
+
+    def _readJson(self, filepath):
+        with filepath.open('r', encoding='utf-8') as f:
+            return json.load(f)
 
 @pytest.mark.slow
 class TestFixture:
