@@ -10,7 +10,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Changing permission of files for the following cache restore
+          name: Changing file permissiosn for later steps
           command: |
             sudo chown -R circleci:circleci /usr/local/bin
             sudo chown -R circleci:circleci /usr/local/lib/python3.7/site-packages
@@ -31,7 +31,7 @@ jobs:
             cd ./server
             pipenv run testl
       - save_cache:
-          name: Saving dependency cache if needed
+          name: Saving dependency cache
           key: deps-v2-{{ checksum "./server/Pipfile.lock"}}
           paths:
             - "./server/.venv"
@@ -43,6 +43,11 @@ jobs:
   #     - image: circleci/node:12.2
   #   steps:
   #     - checkout
+  #     - restore_cache:
+  #       name: Restoring dependency cache if possible
+  #       keys:
+  #         - deps-client-v1-{{ checksum "./client/package-lock.json"}}
+  #         - deps-client-v1-
   #     - run:
   #         name: Install dependencies
   #         command: |
@@ -53,6 +58,11 @@ jobs:
   #         command: |
   #           cd ./client
   #           npm run test
+  #     - save_cache:
+  #         name: Saving dependency cache
+  #         key: deps-client-v1-{{ checksum "./client/package-lock.json"}}
+  #         paths:
+  #           - "./node_modules"
 
 workflows:
   version: 2.1

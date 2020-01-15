@@ -1,6 +1,14 @@
-.env 
-.vscode
+# editor setting files
+.vscode/
 *.code-workspace
+
+# environment variables
+.env
+
+# dependency files
+node_modules/
+.venv/
+
+# some temporary data
 server/data/
 server/**/temp/
-node_modules
