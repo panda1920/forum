@@ -55,22 +55,34 @@ class DataCreator:
         now = time()
 
         for userCount, user in enumerate(users):
-            for n in range(self.POSTCOUNT_PER_USER_ENG):
-                posts.append({
-                    'postId': str(userCount * self.POSTCOUNT_PER_USER + n),
-                    'userId': user['userId'],
-                    'content': f'{user["displayName"]}\'s post {n}',
-                    'createdAt': now
-                })
-            for n in range(self.POSTCOUNT_PER_USER_JPN):
-                posts.append({
-                    'postId': str(userCount * self.POSTCOUNT_PER_USER + self.POSTCOUNT_PER_USER_ENG + n),
-                    'userId': user['userId'],
-                    'content': f'ユーザ名：{user["displayName"]}による{n}番目の投稿です',
-                    'createdAt': now
-                })
+            for n in range(self.POSTCOUNT_PER_USER):
+                postId = str(userCount * self.POSTCOUNT_PER_USER + n)
+
+                if n < self.POSTCOUNT_PER_USER_ENG:
+                    posts.append(self.createEnglishPost(
+                        user, n, postId, now
+                    ))
+                else:
+                    posts.append(self.createJapanesePost(
+                        user, n, postId, now
+                    ))
 
         return posts
+
+    def createEnglishPost(self, user, postNum, postId, createdAt):
+        return {
+            'postId': postId,
+            'userId': user['userId'],
+            'content': f'{user["displayName"]}\'s post {postNum}',
+            'createdAt': createdAt
+        }
+    def createJapanesePost(self, user, postNum, postId, createdAt):
+        return {
+            'postId': postId,
+            'userId': user['userId'],
+            'content': f'ユーザ名：{user["displayName"]}による{postNum}番目の投稿です',
+            'createdAt': createdAt
+        }
 
     @classmethod
     def getUsernames(cls):
