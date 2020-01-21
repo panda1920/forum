@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from server.database.simplefile import SimpleFile
+from server.database.file_crudmanager import FileCrudManager
 from server.database.filter import Filter
 from server.database.paging import Paging
 from server.middleware.userauth import UserAuthentication
@@ -13,7 +13,7 @@ class Config:
     # define classes/objects that are referenced in the app
     # can be replaced during tests
     USER_AUTHENTICATION = UserAuthentication
-    DATABASE_OBJECT = SimpleFile(Path(DATA_LOCATION), USER_AUTHENTICATION)
+    DATABASE_OBJECT = FileCrudManager(Path(DATA_LOCATION), USER_AUTHENTICATION)
     SEARCH_FILTER = Filter
     PAGING = Paging
 

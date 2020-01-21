@@ -10,7 +10,7 @@ from pathlib import Path
 
 from pymongo import MongoClient
 
-from server.database.simplefile import SimpleFile
+from server.database.file_crudmanager import FileCrudManager
 from server.database.mongo_crudmanager import MongoCrudManager
 import tests.mocks as mocks
 
@@ -81,6 +81,18 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
+    def getPostCount(self):
+        """
+        returns the number of posts in the current db
+        """
+        raise NotImplementedError
+
+    def findPosts(self, fieldname, fieldvalues):
+        """
+        returns all posts that match the criteria
+        """
+        raise NotImplementedError
+
     def getOriginalPosts(self):
         """
         returns a list of objects
@@ -102,14 +114,14 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
-class Setup_SimpleFile(SetupCrudManager):
+class Setup_FileCrudManager(SetupCrudManager):
     def __init__(self):
         self._saveLocation = Path(__file__).resolve().parents[0] / 'temp'
-        self._usersFile = self._saveLocation / SimpleFile.USERS_FILENAME
-        self._postsFile = self._saveLocation / SimpleFile.POSTS_FILENAME
+        self._usersFile = self._saveLocation / FileCrudManager.USERS_FILENAME
+        self._postsFile = self._saveLocation / FileCrudManager.POSTS_FILENAME
         self._testdata = self._readTestData()
         self._userauth = mocks.createMockUserAuth()
-        self._db = SimpleFile(self._saveLocation, self._userauth)
+        self._db = FileCrudManager(self._saveLocation, self._userauth)
 
     def setup(self):
         self._saveLocation.mkdir(exist_ok=True)
@@ -149,6 +161,15 @@ class Setup_SimpleFile(SetupCrudManager):
     def getAllPosts(self):
         return self._readJson( self._postsFile )
 
+    def getPostCount(self):
+        return len( self.getAllPosts() )
+
+    def findPosts(self, fieldname, fieldvalues):
+        return [
+            post for post in self.getAllPosts()
+            if post[fieldname] in fieldvalues
+        ]
+
     def getOriginalPosts(self):
         return self._testdata['posts']
 
@@ -171,7 +192,7 @@ class Setup_SimpleFile(SetupCrudManager):
         with filepath.open('r', encoding='utf-8') as f:
             return json.load(f)
 
-class SetupCrudManager_MongoDB:
+class Setup_MongoCrudManager(SetupCrudManager):
     TEST_DBNAME = 'test_mongo'
     def __init__(self):
         self._userauth = mocks.createMockUserAuth()
@@ -211,11 +232,17 @@ class SetupCrudManager_MongoDB:
 
     def findUsers(self, fieldname, fieldvalues):
         query = { fieldname: { '$in': fieldvalues } }
-        users = self._getDB()['users'].find(query)
-        return list(users)
+        return list( self._getDB()['users'].find(query) )
 
     def getAllPosts(self):
         return list( self._getDB()['posts'].find() )
+
+    def getPostCount(self):
+        return self._getDB()['posts'].count_documents({})
+
+    def findPosts(self, fieldname, fieldvalues):
+        query = { fieldname: { '$in': fieldvalues } }
+        return list( self._getDB()['posts'].find(query) )
 
     def getOriginalPosts(self):
         return self._testdata['posts']

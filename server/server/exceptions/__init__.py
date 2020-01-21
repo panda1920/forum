@@ -89,3 +89,11 @@ class ServerMiscError(MyAppException):
     @classmethod
     def getStatusCode(cls):
         return 500
+
+class FailedMongoOperation(MyAppException):
+    """
+    Failed to perform CRUD operation
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 500

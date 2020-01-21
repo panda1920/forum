@@ -10,6 +10,7 @@ from pymongo import MongoClient
 from server.database.crudmanager import CrudManager
 from server.database.paging import Paging
 from server.entity.user import NewUser, UpdateUser
+from server.entity.post import NewPost, UpdatePost
 import server.exceptions as exceptions
 
 class MongoCrudManager(CrudManager):
@@ -26,54 +27,84 @@ class MongoCrudManager(CrudManager):
         self._userauth = userauth
 
     def createUser(self, user):
-        if not NewUser.validate(user):
-            raise exceptions.EntityValidationError('failed to validate new user object')
+        self._validateEntity(NewUser, user)
 
         self._db['users'].insert_one( self._hashUserPassword(user) )
 
     def searchUser(self, searchFilters, paging = Paging()):
         if len(searchFilters) == 0:
             return []
-        query = {
-            '$and': [ searchFilter.getMongoFilter() for searchFilter in searchFilters ]
-        }
+        query = self._combineSearchFilterAnd(searchFilters)
         start = paging.offset
         end = None if paging.limit == None else start + paging.limit
 
         return list( self._db['users'].find(query)[start:end] )
 
     def deleteUser(self, userIds):
-        query = { 'userId': {'$in': userIds} }
-        self._db['users'].delete_many(query)
+        userQuery = { 'userId': { '$in': userIds } }
+        postQuery = userQuery
+
+        self._db['users'].delete_many(userQuery)
+        self._db['posts'].delete_many(postQuery)
 
     def updateUser(self, user):
-        if not UpdateUser.validate(user):
-            raise exceptions.EntityValidationError('failed to validate update user object')
-
+        self._validateEntity(UpdateUser, user)
         query = { 'userId': { '$eq': user['userId'] } }
-        update = { '$set': {} }
-        hashedUser = self._hashUserPassword(user)
-        for field in UpdateUser.getUpdatableFields():
-            update['$set'][field] = hashedUser[field]
+        passwordHashedUser = self._hashUserPassword(user)
+        update = self._createMongoUpdate(UpdateUser, passwordHashedUser)
         
         result = self._db['users'].update_one(query, update)
-
-        if result.matched_count == 0 or result.matched_count == 0:
-            raise exceptions.RecordNotFoundError('failed to find the document to update')
+        if result.matched_count == 0:
+            raise exceptions.RecordNotFoundError('failed to find document')
+        if result.modified_count == 0:
+            raise exceptions.FailedMongoOperation('failed to update document')
     
     def createPost(self, post):
-        pass
+        self._validateEntity(NewPost, post)
+        
+        result = self._db['posts'].insert_one(post)
     
     def searchPost(self, searchFilters, paging = Paging()):
-        pass
+        if len(searchFilters) == 0:
+            return []
+        query = self._combineSearchFilterAnd(searchFilters)
+        start = paging.offset
+        end = None if paging.limit == None else start + paging.limit
+
+        return list( self._db['posts'].find(query)[start:end] )
 
     def deletePost(self, postIds):
-        pass
+        query = { 'postId': { '$in': postIds } }
+
+        result = self._db['posts'].delete_many(query)
 
     def updatePost(self, post):
-        pass
+        self._validateEntity(UpdatePost, post)
+        query = { 'postId': { '$eq' : post['postId'] } }
+        update = self._createMongoUpdate(UpdatePost, post)
+
+        result = self._db['posts'].update_one(query, update)
+        if result.matched_count == 0:
+            raise exceptions.RecordNotFoundError('failed to find document')
+        if result.modified_count == 0:
+            raise exceptions.FailedMongoOperation('failed to update document')
 
     def _hashUserPassword(self, user):
         copy = user.copy()
         copy['password'] = self._userauth.hashPassword( copy['password'] )
         return copy
+
+    def _createMongoUpdate(self, entitySchema, updateProps):
+        update = { '$set': {} }
+        for field in entitySchema.getUpdatableFields():
+            update['$set'][field] = updateProps[field]
+        return update
+
+    def _combineSearchFilterAnd(self, searchFilters):
+        return {
+            '$and': [ searchFilter.getMongoFilter() for searchFilter in searchFilters ]
+        }
+
+    def _validateEntity(self, entitySchema, entity):
+        if not entitySchema.validate(entity):
+            raise exceptions.EntityValidationError(f'failed to validate {entitySchema.__name__}')

@@ -1,6 +1,6 @@
 import pytest
 
-from tests.database.setup_crudmanager import Setup_SimpleFile, SetupCrudManager_MongoDB
+from tests.database.setup_crudmanager import Setup_FileCrudManager, Setup_MongoCrudManager
 from tests.database.datacreator import DataCreator
 from server.database.filter import Filter
 from server.database.paging import Paging
@@ -9,7 +9,7 @@ from server.entity.post import UpdatePost
 from server.exceptions import EntityValidationError, RecordNotFoundError
 
 @pytest.mark.slow
-@pytest.mark.parametrize('createDB', [Setup_SimpleFile, SetupCrudManager_MongoDB], indirect=True)
+@pytest.mark.parametrize('createDB', [Setup_FileCrudManager, Setup_MongoCrudManager], indirect=True)
 class TestFixture:
     def test_fixtureCreatedUsers(self, setupDB):
         setupDB.validateCreatedUsers()
@@ -18,7 +18,7 @@ class TestFixture:
         setupDB.validateCreatedPosts()
 
 @pytest.mark.slow
-@pytest.mark.parametrize('createDB', [Setup_SimpleFile, SetupCrudManager_MongoDB], indirect=True)
+@pytest.mark.parametrize('createDB', [Setup_FileCrudManager, Setup_MongoCrudManager], indirect=True)
 class TestUserCRUD:
     DEFAULT_NEW_USER = {
         'displayName': 'Timmy',
@@ -37,12 +37,11 @@ class TestUserCRUD:
         return createNewProps(self.DEFAULT_UPDATE_USER, **kwargs)
 
     def test_createUserShouldCreateUserInDB(self, setupDB):
-        db = setupDB.getDB()
         mockuserauth = setupDB.getMockUserAuth()
         mockuserauth.hashPassword.return_value = 'hashed'
         userProps = self.createNewUserProps()
 
-        db.createUser(userProps)
+        setupDB.getDB().createUser(userProps)
 
         assert setupDB.getUserCount() == len( setupDB.getOriginalUsers() ) + 1
         createdUsers = setupDB.findUsers('userName', [ userProps['userName'] ])
@@ -55,7 +54,6 @@ class TestUserCRUD:
         assert mockuserauth.hashPassword.call_count == 1
 
     def test_createUserWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
-        db = setupDB.getDB()
         userProps = [
             self.createNewUserProps(userName=None),
             self.createNewUserProps(displayName=None),
@@ -66,10 +64,9 @@ class TestUserCRUD:
 
         for userProp in userProps:
             with pytest.raises(EntityValidationError):
-                db.createUser(userProp)
+                setupDB.getDB().createUser(userProp)
 
     def test_createUserByWrongPropertyTypeShouldRaiseException(self, setupDB):
-        db = setupDB.getDB()
         userProps = [
             self.createNewUserProps(userName=1),
             self.createNewUserProps(userName='something'), # non-email string
@@ -79,35 +76,32 @@ class TestUserCRUD:
 
         for userProp in userProps:
             with pytest.raises(EntityValidationError):
-                db.createUser(userProp)
+                setupDB.getDB().createUser(userProp)
 
     def test_deleteUserShouldRemoveUserFromDB(self, setupDB):
-        db = setupDB.getDB()
         userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
 
-        db.deleteUser([userIdToDelete])
+        setupDB.getDB().deleteUser([userIdToDelete])
 
         assert setupDB.getUserCount() == len(setupDB.getOriginalUsers()) - 1
         usersWithIdToDelete = setupDB.findUsers('userId', [userIdToDelete])
         assert len(usersWithIdToDelete) == 0
 
     def test_deleteUserShouldRemoveMultipleUsersFromDB(self, setupDB):
-        db = setupDB.getDB()
         userIdsToDelete = [
             user['userId'] for user in setupDB.getOriginalUsers()[:3]
         ]
 
-        db.deleteUser(userIdsToDelete)
+        setupDB.getDB().deleteUser(userIdsToDelete)
 
         assert setupDB.getUserCount() == len(setupDB.getOriginalUsers()) - len(userIdsToDelete)
         usersWithIdToDelete = setupDB.findUsers('userId', userIdsToDelete)
         assert len(usersWithIdToDelete) == 0
 
     def test_deleteUserShouldDeleteAllPostsAssociated(self, setupDB):
-        db = setupDB.getDB()
         userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
 
-        db.deleteUser([userIdToDelete])
+        setupDB.getDB().deleteUser([userIdToDelete])
 
         posts = setupDB.getAllPosts()
         assert len(posts) == len(setupDB.getOriginalPosts()) - DataCreator.getPostCountPerUser()
@@ -119,38 +113,34 @@ class TestUserCRUD:
         assert len(postsBelongingToDeletedUser) == 0
 
     def test_deleteUserWithNonExistantIdShouldDoNothing(self, setupDB):
-        db = setupDB.getDB()
         userIdToDelete = 'non_existant'
 
-        db.deleteUser([userIdToDelete])
+        setupDB.getDB().deleteUser([userIdToDelete])
 
         setupDB.validateCreatedUsers()
 
     def test_searchUserByUserIdShouldReturnUserFromDB(self, setupDB):
-        db = setupDB.getDB()
-
         userIdsToSearch = [ setupDB.getOriginalUsers()[0]['userId'] ]
         filters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
         ]
-        users = db.searchUser(filters)
+
+        users = setupDB.getDB().searchUser(filters)
 
         assert len(users) == 1
         assert users[0]['userId'] == userIdsToSearch[0]
 
     def test_searchUserByNonExistantUserIdShouldReturnZeroUsersFromDB(self, setupDB):
-        db = setupDB.getDB()
         userIdsToSearch = ['non_existant']
         filters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
         ]
 
-        users = db.searchUser(filters)
+        users = setupDB.getDB().searchUser(filters)
 
         assert len(users) == 0
 
     def test_searchUserBy2UserIdsShouldReturn2UsersFromDB(self, setupDB):
-        db = setupDB.getDB()
         userIdsToSearch = [
             user['userId'] for user in setupDB.getOriginalUsers()[:2]
         ]
@@ -158,33 +148,29 @@ class TestUserCRUD:
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
         ]
 
-        users = db.searchUser(filters)
+        users = setupDB.getDB().searchUser(filters)
 
         assert len(users) == 2
         for user in users:
             assert user['userId'] in userIdsToSearch
 
     def test_searchUserByNoFilterShouldReturnNoUsers(self, setupDB):
-        db = setupDB.getDB()
         filters = []
         
-        users = db.searchUser(filters)
+        users = setupDB.getDB().searchUser(filters)
 
         assert len(users) == 0
 
     def test_searchUserByContradictingFiltersShouldReturnNoUsers(self, setupDB):
-        db = setupDB.getDB()
-
         filters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['1'] }),
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['2'] }),
         ]
-        users = db.searchUser(filters)
+        users = setupDB.getDB().searchUser(filters)
 
         assert len(users) == 0
 
     def test_searchUserBy10UserIdWith5LimitShouldReturn5Users(self, setupDB):
-        db = setupDB.getDB()
         userIdsToSearch = [
             user['userId'] for user in setupDB.getOriginalUsers()[:10]
         ]
@@ -193,12 +179,11 @@ class TestUserCRUD:
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch }),
         ]
 
-        users = db.searchUser(filters, paging)
+        users = setupDB.getDB().searchUser(filters, paging)
 
         assert len(users) == 5
 
     def test_searchUserBy10UserIdWith5Limit8OffsetShouldReturn2Users(self, setupDB):
-        db = setupDB.getDB()
         userIdsToSearch = [
             user['userId'] for user in setupDB.getOriginalUsers()[:10]
         ]
@@ -207,7 +192,7 @@ class TestUserCRUD:
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch }),
         ]
 
-        users = db.searchUser(filters, paging)
+        users = setupDB.getDB().searchUser(filters, paging)
 
         assert len(users) == 2
 
@@ -225,11 +210,11 @@ class TestUserCRUD:
             else:
                 assert updatedUser[field] == value
 
-    def test_updateUserByNonExistantIdRaisesError(self, setupDB):
+    def test_updateUserByNonExistantIdRaisesException(self, setupDB):
         with pytest.raises(RecordNotFoundError):
             setupDB.getDB().updateUser( self.createUpdateUserProps(userId='non_existant') )
 
-    def test_updateUserWithoutRequiredPropertiesThrowsAnError(self, setupDB):
+    def test_updateUserWithoutRequiredPropertiesRaisesException(self, setupDB):
         userUpdateProperties = [
             self.createUpdateUserProps(userId=None)
         ]
@@ -238,7 +223,7 @@ class TestUserCRUD:
             with pytest.raises(EntityValidationError):
                 setupDB.getDB().updateUser(userUpdate)
 
-    def test_updateUserByWrongUpdatePropertiesThrowsAnError(self, setupDB):
+    def test_updateUserByWrongUpdatePropertiesRaisesException(self, setupDB):
         userUpdateProperties = [
             self.createUpdateUserProps(userId=1),
             self.createUpdateUserProps(displayName=1),
@@ -249,33 +234,22 @@ class TestUserCRUD:
             with pytest.raises(EntityValidationError):
                 setupDB.getDB().updateUser(userUpdate)
 
-    def test_updateUserWithUnexpectedPropertiesHaveNoEffectOnUpdate(self, setupDB):
+    def test_updateUserWithUnexpectedPropertiesRaisesException(self, setupDB):
         mock = setupDB.getMockUserAuth()
         mock.hashPassword.return_value = 'hashed'
-        updatableFields = UpdateUser.getUpdatableFields()
 
-        userUpdatePropertiesAndUnExpectedPropertyName = [
-            ( self.createUpdateUserProps(createdAt=30.11), 'createdAt' ),
-            ( self.createUpdateUserProps(userName='Smithy'), 'userName' ),
-            ( self.createUpdateUserProps(someExtraProperty='SomeExtra'), 'someExtraProperty' ),
+        userUpdateProperties = [
+            self.createUpdateUserProps(createdAt=30.11),
+            self.createUpdateUserProps(userName='Smithy'),
+            self.createUpdateUserProps(someExtraProperty='SomeExtra'),
         ]
 
-        for props, unexpectedProp in userUpdatePropertiesAndUnExpectedPropertyName:
-            setupDB.getDB().updateUser(props)
-
-            updatedUser = setupDB.findUsers('userId', [ props['userId'] ])[0]
-            for field in UpdateUser.getUpdatableFields():
-                if field == 'password':
-                    assert updatedUser[field] == 'hashed'
-                else:
-                    assert updatedUser[field] == props[field]
-            assert (
-                unexpectedProp not in updatedUser or
-                updatedUser[unexpectedProp] != props[unexpectedProp]
-            )
+        for userUpdate in userUpdateProperties:
+            with pytest.raises(EntityValidationError):
+                setupDB.getDB().updateUser(userUpdate)
 
 @pytest.mark.slow
-@pytest.mark.parametrize('createDB', [Setup_SimpleFile], indirect=True)
+@pytest.mark.parametrize('createDB', [Setup_FileCrudManager, Setup_MongoCrudManager], indirect=True)
 class TestPostCRUD:
     DEFAULT_NEW_POST = {
         'userId': '1',
@@ -293,21 +267,17 @@ class TestPostCRUD:
         return createNewProps(self.DEFAULT_UPDATE_POST, **kwargs)
 
     def test_createPostShouldCreatePostInDB(self, setupDB):
-        db = setupDB.getDB()
-        postToCreate = self.createNewPostProps()
-        db.createPost(postToCreate)
+        postProps = self.createNewPostProps()
 
-        posts = setupDB.getAllPosts()
-        assert len(posts) == len(setupDB.getOriginalPosts()) + 1
-        createdPost = [
-            post for post in posts
-            if post['userId'] == postToCreate['userId']
-            and post['content'] == postToCreate['content']
-        ]
+        setupDB.getDB().createPost(postProps)
+
+        assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) + 1
+        createdPost = setupDB.findPosts('content', [ postProps['content'] ])
         assert len(createdPost) == 1
+        for field, value in postProps.items():
+            assert createdPost[0][field] == value
 
     def test_createPostWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
-        db = setupDB.getDB()
         postsToCreate = [
             self.createNewPostProps(content=None),
             self.createNewPostProps(userId=None),
@@ -316,11 +286,9 @@ class TestPostCRUD:
 
         for postToCreate in postsToCreate:
             with pytest.raises(EntityValidationError):
-                db.createPost(postToCreate)
+                setupDB.getDB().createPost(postToCreate)
 
     def test_createPostWithWrongPropertyTypeShouldRaiseException(self, setupDB):
-        db = setupDB.getDB()
-
         postsToCreate = [
             self.createNewPostProps(userId=1),
             self.createNewPostProps(content=22),
@@ -328,160 +296,137 @@ class TestPostCRUD:
 
         for postToCreate in postsToCreate:
             with pytest.raises(EntityValidationError):
-                db.createPost(postToCreate)
+                setupDB.getDB().createPost(postToCreate)
 
     def test_deletePostShouldRemovePostFromDB(self, setupDB):
-        db = setupDB.getDB()
+        postIdToDelete = setupDB.getOriginalPosts()[0]['postId']
 
-        postIdToDelete = '1'
-        db.deletePost([postIdToDelete])
+        setupDB.getDB().deletePost([postIdToDelete])
 
-        posts = setupDB.getAllPosts()
-        assert len(posts) == len(setupDB.getOriginalPosts()) - 1
-        
-        postsShouldHaveBeenDeleted = [
-            post for post in posts
-            if post['postId'] == postIdToDelete
-        ]
+        assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) - 1
+        postsShouldHaveBeenDeleted = setupDB.findPosts('postId', [postIdToDelete])
         assert len(postsShouldHaveBeenDeleted) == 0
 
     def test_deletePostShouldRemoveMultiplePostFromDB(self, setupDB):
-        db = setupDB.getDB()
-
-        postIdsToDelete = ['1', '2', '3']
-        db.deletePost(postIdsToDelete)
-
-        posts = setupDB.getAllPosts()
-        assert len(posts) == len(setupDB.getOriginalPosts()) - len(postIdsToDelete)
-        
-        postsShouldHaveBeenDeleted = [
-            post for post in posts
-            if post['postId'] in postIdsToDelete
+        postIdsToDelete = [
+            post['postId'] for post in setupDB.getOriginalPosts()[:3]
         ]
+
+        setupDB.getDB().deletePost(postIdsToDelete)
+
+        assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) - len(postIdsToDelete)
+        postsShouldHaveBeenDeleted = setupDB.findPosts('postId', postIdsToDelete)
         assert len(postsShouldHaveBeenDeleted) == 0
 
     def test_deletePostWithNonExistantIdShouldDoNothing(self, setupDB):
-        db = setupDB.getDB()
         postIdToDelete = 'non_existant'
-        db.deletePost([postIdToDelete])
+
+        setupDB.getDB().deletePost([postIdToDelete])
 
         setupDB.validateCreatedPosts()
 
     def test_searchPostByPostIdsShouldReturnPostFromDB(self, setupDB):
-        db = setupDB.getDB()
-        searchFilters = [
-            Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': ['1'] }),
+        postIdsToSearch = [
+            post['postId'] for post in setupDB.getOriginalPosts()[:1]
         ]
-        posts = db.searchPost(searchFilters)
+        searchFilters = [
+            Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': postIdsToSearch }),
+        ]
+
+        posts = setupDB.getDB().searchPost(searchFilters)
 
         assert len(posts) == 1
-        assert posts[0]['postId'] in ['1']
+        assert posts[0]['postId'] in postIdsToSearch
 
     def test_searchPostByMultiplePostIdsShouldReturnPostFromDB(self, setupDB):
-        db = setupDB.getDB()
-        searchFilters = [
-            Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': ['1', '2'] }),
+        postIdsToSearch = [
+            post['postId'] for post in setupDB.getOriginalPosts()[:2]
         ]
-        posts = db.searchPost(searchFilters)
+        searchFilters = [
+            Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': postIdsToSearch }),
+        ]
+
+        posts = setupDB.getDB().searchPost(searchFilters)
 
         assert len(posts) == 2
         for post in posts:
-            assert post['postId'] in ['1', '2']
+            assert post['postId'] in postIdsToSearch
 
     def test_searchPostByNonExitantPostIdShouldReturnNothing(self, setupDB):
-        db = setupDB.getDB()
         searchFilters = [
             Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': ['non_existant'] }),
         ]
-        posts = db.searchPost(searchFilters)
+        posts = setupDB.getDB().searchPost(searchFilters)
 
         assert len(posts) == 0
 
     def test_searchPostWithoutExplicitPagingShouldReturnDefaultAmount(self, setupDB):
-        db = setupDB.getDB()
         searchFilters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['0', '1', '2'] }),
         ]
-        posts = db.searchPost(searchFilters)
+        posts = setupDB.getDB().searchPost(searchFilters)
 
         assert len(posts) == Paging.DEFAULT_LIMIT
 
     def test_searchPostWithExplicitPagingShouldBeLimited(self, setupDB):
-        db = setupDB.getDB()
         paging = Paging({ 'offset': DataCreator.POSTCOUNT_PER_USER * 2 + 1, 'limit': DataCreator.POSTCOUNT_PER_USER })
         searchFilters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['0', '1', '2'] }),
         ]
-        posts = db.searchPost(searchFilters, paging)
+
+        posts = setupDB.getDB().searchPost(searchFilters, paging)
 
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER - 1
 
     def test_searchPostByMultipleFiltersIsSearchedByAND(self, setupDB):
-        db = setupDB.getDB()
         displayNameOfFirstUser = setupDB.getOriginalUsers()[0]['displayName']
         paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })
         searchFilters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['0', '1', '2'] }),
             Filter.createFilter({ 'field': 'content', 'operator': 'fuzzy', 'value': [displayNameOfFirstUser] }),
         ]
-        posts = db.searchPost(searchFilters, paging)
+
+        posts = setupDB.getDB().searchPost(searchFilters, paging)
 
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER
 
     def test_searchPostWithEmptyFiltersShouldReturNothing(self, setupDB):
-        db = setupDB.getDB()
         searchFilters = []
-        posts = db.searchPost(searchFilters)
+
+        posts = setupDB.getDB().searchPost(searchFilters)
 
         assert len(posts) == 0
 
     def test_updatePostUpdatesPostOnDB(self, setupDB):
-        db = setupDB.getDB()
         postToUpdate = self.createUpdatePostProps()
-        db.updatePost(postToUpdate)
 
-        postInDB = [
-            post for post in setupDB.getAllPosts() 
-            if post['postId'] == postToUpdate['postId']
-        ][0]
+        setupDB.getDB().updatePost(postToUpdate)
 
+        postInDB = setupDB.findPosts('postId', [ postToUpdate['postId'] ])[0]
         for field in UpdatePost.getUpdatableFields():
             assert postInDB[field] == postToUpdate[field]
 
-    def test_updatePostUpdatesWithExtraPropertiesPermittedButNotUsed(self, setupDB):
-        db = setupDB.getDB()
-        updatePostPropertiesAndExtraPropertyNames = [
-            ( self.createUpdatePostProps(userId='112233'), 'userId' ),
-            ( self.createUpdatePostProps(createdAt=22.99), 'createdAt' ),
-            ( self.createUpdatePostProps(randomProp=2), 'randomProp' ),
+    def test_updatePostUpdatesWithNonUpdatablePropertyRaisesException(self, setupDB):
+        updatePostProperties = [
+            self.createUpdatePostProps(userId='112233'),
+            self.createUpdatePostProps(createdAt=22.99),
+            self.createUpdatePostProps(randomProp=2),
         ]
 
-        for postProps, extraPropName in updatePostPropertiesAndExtraPropertyNames:
-            db.updatePost(postProps)
-            postInDB = [
-                post for post in setupDB.getAllPosts() 
-                if post['postId'] == postProps['postId']
-            ][0]
-
-            for field in UpdatePost.getUpdatableFields():
-                assert postInDB[field] == postProps[field]
-            assert (
-                extraPropName not in postInDB or
-                postInDB[extraPropName] != postProps[extraPropName]
-            )
+        for postProps in updatePostProperties:
+            with pytest.raises(EntityValidationError):
+                setupDB.getDB().updatePost(postProps)
 
     def test_updatePostWithoutRequiredPropertiesRaisesException(self, setupDB):
-        db = setupDB.getDB()
         updatePostProperties = [
             self.createUpdatePostProps(postId=None),
         ]
 
         for postProps in updatePostProperties:
             with pytest.raises(EntityValidationError):
-                db.updatePost(postProps)
+                setupDB.getDB().updatePost(postProps)
 
     def test_updatePostByWrongPropertyTypeRaisesException(self, setupDB):
-        db = setupDB.getDB()
         updatePostProperties = [
             self.createUpdatePostProps(content=1),
             self.createUpdatePostProps(postId=2),
@@ -489,7 +434,7 @@ class TestPostCRUD:
 
         for postProps in updatePostProperties:
             with pytest.raises(EntityValidationError):
-                db.updatePost(postProps)
+                setupDB.getDB().updatePost(postProps)
 
     def test_updatePostByNonExistantIdRaisesException(self, setupDB):
         with pytest.raises(RecordNotFoundError):

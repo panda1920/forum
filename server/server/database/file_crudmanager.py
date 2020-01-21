@@ -38,7 +38,7 @@ def updateJSONFileContent(filenameAttr):
         return wrapper
     return updateJSONFileContentDecorator
 
-class SimpleFile(CrudManager):
+class FileCrudManager(CrudManager):
     USERS_FILENAME = 'users.json'
     POSTS_FILENAME = 'posts.json'
     THREADS_FILENAME = 'threads.json'
