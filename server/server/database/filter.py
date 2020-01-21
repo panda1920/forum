@@ -70,7 +70,13 @@ class Filter:
         get a string that represents filter operation
         used and overrided by subclass
         """
-        return NotImplementedError
+        raise NotImplementedError
+
+    def getMongoFilter(self):
+        """
+        forumlates a mongo filter that can be used for searching documents
+        """
+        raise NotImplementedError
 
     # def parse(self, querystringObj):
     #     raise NotImplementedError
@@ -99,10 +105,13 @@ class FuzzyStringFilter(Filter):
     Allows fuzzy searches like searching for post that contains a certain substring
     """
     def getOpString(self):
-        """
-        returns string value that represents this filter class
-        """
         return 'fuzzy'
+
+    def getMongoFilter(self):
+        concattedWithPipe = '|'.join(self._values)
+        return {
+            self._field: { '$regex': f'{concattedWithPipe}', '$options': 'i'} 
+        }
 
     def matches(self, record):
         if not self.isFieldInRecord(record):
@@ -180,6 +189,11 @@ class EQFilter(Filter):
     """
     def getOpString(self):
         return 'eq'
+
+    def getMongoFilter(self):
+        return {
+            self._field: { '$in': self._values } 
+        }
 
     def matches(self, record):
         if not self.isFieldInRecord(record):

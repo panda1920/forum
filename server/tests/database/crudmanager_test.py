@@ -1,6 +1,6 @@
 import pytest
 
-from tests.database.setupDB import SetupDB_SimpleFile, SetupDB_MongoDB
+from tests.database.setup_crudmanager import Setup_SimpleFile, SetupCrudManager_MongoDB
 from tests.database.datacreator import DataCreator
 from server.database.filter import Filter
 from server.database.paging import Paging
@@ -9,7 +9,7 @@ from server.entity.post import UpdatePost
 from server.exceptions import EntityValidationError, RecordNotFoundError
 
 @pytest.mark.slow
-@pytest.mark.parametrize('createDB', [SetupDB_SimpleFile, SetupDB_MongoDB], indirect=True)
+@pytest.mark.parametrize('createDB', [Setup_SimpleFile, SetupCrudManager_MongoDB], indirect=True)
 class TestFixture:
     def test_fixtureCreatedUsers(self, setupDB):
         setupDB.validateCreatedUsers()
@@ -18,7 +18,7 @@ class TestFixture:
         setupDB.validateCreatedPosts()
 
 @pytest.mark.slow
-@pytest.mark.parametrize('createDB', [SetupDB_SimpleFile], indirect=True)
+@pytest.mark.parametrize('createDB', [Setup_SimpleFile, SetupCrudManager_MongoDB], indirect=True)
 class TestUserCRUD:
     DEFAULT_NEW_USER = {
         'displayName': 'Timmy',
@@ -33,31 +33,29 @@ class TestUserCRUD:
     
     def createNewUserProps(self, **kwargs):
         return createNewProps(self.DEFAULT_NEW_USER, **kwargs)
-    def createUpdateuserProps(self, **kwargs):
+    def createUpdateUserProps(self, **kwargs):
         return createNewProps(self.DEFAULT_UPDATE_USER, **kwargs)
 
     def test_createUserShouldCreateUserInDB(self, setupDB):
         db = setupDB.getDB()
-        mock = setupDB.getMockUserAuth()
-        mock.hashPassword.return_value = 'hashed'
+        mockuserauth = setupDB.getMockUserAuth()
+        mockuserauth.hashPassword.return_value = 'hashed'
+        userProps = self.createNewUserProps()
 
-        db.createUser(self.createNewUserProps())
+        db.createUser(userProps)
 
-        users = setupDB.getAllUsers()
-        assert len(users) == len(setupDB.getOriginalUsers()) + 1
-
-        createdUser = [
-            user for user in users 
-            if user['displayName'] == self.DEFAULT_NEW_USER['displayName']
-            and user['userName'] == self.DEFAULT_NEW_USER['userName']
-            and user['password'] == 'hashed'
-        ]
-        assert len(createdUser) == 1
-        assert mock.hashPassword.call_count == 1
+        assert setupDB.getUserCount() == len( setupDB.getOriginalUsers() ) + 1
+        createdUsers = setupDB.findUsers('userName', [ userProps['userName'] ])
+        assert len(createdUsers) == 1
+        for prop, value in userProps.items():
+            if prop == 'password':
+                assert createdUsers[0][prop] == 'hashed'
+            else:
+                assert createdUsers[0][prop] == value
+        assert mockuserauth.hashPassword.call_count == 1
 
     def test_createUserWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
         db = setupDB.getDB()
-
         userProps = [
             self.createNewUserProps(userName=None),
             self.createNewUserProps(displayName=None),
@@ -72,7 +70,6 @@ class TestUserCRUD:
 
     def test_createUserByWrongPropertyTypeShouldRaiseException(self, setupDB):
         db = setupDB.getDB()
-
         userProps = [
             self.createNewUserProps(userName=1),
             self.createNewUserProps(userName='something'), # non-email string
@@ -86,38 +83,30 @@ class TestUserCRUD:
 
     def test_deleteUserShouldRemoveUserFromDB(self, setupDB):
         db = setupDB.getDB()
+        userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
 
-        userIdToDelete = '1'
         db.deleteUser([userIdToDelete])
 
-        users = setupDB.getAllUsers()
-        assert len(users) == len(setupDB.getOriginalUsers()) - 1
-
-        usersShouldHaveBeenDeleted = [
-            user for user in users 
-            if user['userId'] == userIdToDelete
-        ]
-        assert len(usersShouldHaveBeenDeleted) == 0
+        assert setupDB.getUserCount() == len(setupDB.getOriginalUsers()) - 1
+        usersWithIdToDelete = setupDB.findUsers('userId', [userIdToDelete])
+        assert len(usersWithIdToDelete) == 0
 
     def test_deleteUserShouldRemoveMultipleUsersFromDB(self, setupDB):
         db = setupDB.getDB()
+        userIdsToDelete = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:3]
+        ]
 
-        userIdsToDelete = ['1', '2', '3']
         db.deleteUser(userIdsToDelete)
 
-        users = setupDB.getAllUsers()
-        assert len(users) == len(setupDB.getOriginalUsers()) - len(userIdsToDelete)
-
-        usersShouldHaveBeenDeleted = [
-            user for user in users 
-            if user['userId'] in userIdsToDelete
-        ]
-        assert len(usersShouldHaveBeenDeleted) == 0
+        assert setupDB.getUserCount() == len(setupDB.getOriginalUsers()) - len(userIdsToDelete)
+        usersWithIdToDelete = setupDB.findUsers('userId', userIdsToDelete)
+        assert len(usersWithIdToDelete) == 0
 
     def test_deleteUserShouldDeleteAllPostsAssociated(self, setupDB):
         db = setupDB.getDB()
+        userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
 
-        userIdToDelete = '1'
         db.deleteUser([userIdToDelete])
 
         posts = setupDB.getAllPosts()
@@ -131,8 +120,8 @@ class TestUserCRUD:
 
     def test_deleteUserWithNonExistantIdShouldDoNothing(self, setupDB):
         db = setupDB.getDB()
-
         userIdToDelete = 'non_existant'
+
         db.deleteUser([userIdToDelete])
 
         setupDB.validateCreatedUsers()
@@ -140,7 +129,7 @@ class TestUserCRUD:
     def test_searchUserByUserIdShouldReturnUserFromDB(self, setupDB):
         db = setupDB.getDB()
 
-        userIdsToSearch = ['1']
+        userIdsToSearch = [ setupDB.getOriginalUsers()[0]['userId'] ]
         filters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
         ]
@@ -151,22 +140,24 @@ class TestUserCRUD:
 
     def test_searchUserByNonExistantUserIdShouldReturnZeroUsersFromDB(self, setupDB):
         db = setupDB.getDB()
-
         userIdsToSearch = ['non_existant']
         filters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
         ]
+
         users = db.searchUser(filters)
 
         assert len(users) == 0
 
     def test_searchUserBy2UserIdsShouldReturn2UsersFromDB(self, setupDB):
         db = setupDB.getDB()
-
-        userIdsToSearch = ['1', '2']
+        userIdsToSearch = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:2]
+        ]
         filters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
         ]
+
         users = db.searchUser(filters)
 
         assert len(users) == 2
@@ -175,8 +166,8 @@ class TestUserCRUD:
 
     def test_searchUserByNoFilterShouldReturnNoUsers(self, setupDB):
         db = setupDB.getDB()
-
         filters = []
+        
         users = db.searchUser(filters)
 
         assert len(users) == 0
@@ -194,51 +185,53 @@ class TestUserCRUD:
 
     def test_searchUserBy10UserIdWith5LimitShouldReturn5Users(self, setupDB):
         db = setupDB.getDB()
-
-        userIdsToSearch = ['0', '1', '2', '3' ,'4', '5' ,'6' ,'7' ,'8' ,'9']
+        userIdsToSearch = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:10]
+        ]
         paging = Paging({ 'limit': 5 })
         filters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch }),
         ]
+
         users = db.searchUser(filters, paging)
 
         assert len(users) == 5
 
     def test_searchUserBy10UserIdWith5Limit8OffsetShouldReturn2Users(self, setupDB):
         db = setupDB.getDB()
-
-        userIdsToSearch = ['0', '1', '2', '3' ,'4', '5' ,'6' ,'7' ,'8' ,'9']
+        userIdsToSearch = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:10]
+        ]
         paging = Paging({ 'limit': 5, 'offset': 8 })
         filters = [
             Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch }),
         ]
+
         users = db.searchUser(filters, paging)
 
         assert len(users) == 2
 
-    def test_updateUserUpdateUserOnDB(self, setupDB):
+    def test_updateUserUpdatesUserOnDB(self, setupDB):
         mock = setupDB.getMockUserAuth()
         mock.hashPassword.return_value = 'hashed'
-        setupDB.getDB().updateUser( self.DEFAULT_UPDATE_USER )
+        userProps = self.createUpdateUserProps()
 
-        updatedUser = [
-            user for user in setupDB.getAllUsers()
-            if user['userId'] == self.DEFAULT_UPDATE_USER['userId']
-        ][0]
+        setupDB.getDB().updateUser(userProps)
 
-        for field in UpdateUser.getUpdatableFields():
-            if (field) == 'password':
+        updatedUser = setupDB.findUsers('userId', [ userProps['userId'] ])[0]
+        for field, value in userProps.items():
+            if field == 'password':
                 assert updatedUser[field] == 'hashed'
             else:
-                assert updatedUser[field] == self.DEFAULT_UPDATE_USER[field]
+                assert updatedUser[field] == value
 
     def test_updateUserByNonExistantIdRaisesError(self, setupDB):
         with pytest.raises(RecordNotFoundError):
-            setupDB.getDB().updateUser( self.createUpdateuserProps(userId='non_existant') )
+            setupDB.getDB().updateUser( self.createUpdateUserProps(userId='non_existant') )
 
     def test_updateUserWithoutRequiredPropertiesThrowsAnError(self, setupDB):
         userUpdateProperties = [
-            self.createUpdateuserProps(userId=None)
+            self.createUpdateUserProps(userId=None)
         ]
 
         for userUpdate in userUpdateProperties:
@@ -247,9 +240,9 @@ class TestUserCRUD:
 
     def test_updateUserByWrongUpdatePropertiesThrowsAnError(self, setupDB):
         userUpdateProperties = [
-            self.createUpdateuserProps(userId=1),
-            self.createUpdateuserProps(displayName=1),
-            self.createUpdateuserProps(password=1),
+            self.createUpdateUserProps(userId=1),
+            self.createUpdateUserProps(displayName=1),
+            self.createUpdateUserProps(password=1),
         ]
 
         for userUpdate in userUpdateProperties:
@@ -262,19 +255,16 @@ class TestUserCRUD:
         updatableFields = UpdateUser.getUpdatableFields()
 
         userUpdatePropertiesAndUnExpectedPropertyName = [
-            ( self.createUpdateuserProps(createdAt=30.11), 'createdAt' ),
-            ( self.createUpdateuserProps(userName='Smithy'), 'userName' ),
-            ( self.createUpdateuserProps(someExtraProperty='SomeExtra'), 'someExtraProperty' ),
+            ( self.createUpdateUserProps(createdAt=30.11), 'createdAt' ),
+            ( self.createUpdateUserProps(userName='Smithy'), 'userName' ),
+            ( self.createUpdateUserProps(someExtraProperty='SomeExtra'), 'someExtraProperty' ),
         ]
 
         for props, unexpectedProp in userUpdatePropertiesAndUnExpectedPropertyName:
             setupDB.getDB().updateUser(props)
-            updatedUser = [
-                user for user in setupDB.getAllUsers()
-                if user['userId'] == props['userId']
-            ][0]
 
-            for field in updatableFields:
+            updatedUser = setupDB.findUsers('userId', [ props['userId'] ])[0]
+            for field in UpdateUser.getUpdatableFields():
                 if field == 'password':
                     assert updatedUser[field] == 'hashed'
                 else:
@@ -285,7 +275,7 @@ class TestUserCRUD:
             )
 
 @pytest.mark.slow
-@pytest.mark.parametrize('createDB', [SetupDB_SimpleFile], indirect=True)
+@pytest.mark.parametrize('createDB', [Setup_SimpleFile], indirect=True)
 class TestPostCRUD:
     DEFAULT_NEW_POST = {
         'userId': '1',

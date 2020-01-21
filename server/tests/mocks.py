@@ -2,13 +2,13 @@ from unittest.mock import create_autospec
 
 from flask import g, request, session
 
-from server.database.database import Database
+from server.database.crudmanager import CrudManager
 from server.database.filter import Filter
 from server.database.paging import Paging
 from server.middleware.userauth import UserAuthentication
 
 def createMockDB():
-    return create_autospec(Database)
+    return create_autospec(CrudManager)
 
 def createMockFilter():
     return create_autospec(Filter)

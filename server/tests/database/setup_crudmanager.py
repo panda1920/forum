@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This file contains classes to help setup/cleanup needed for
-testing database management classes
+testing database CRUD management classes
 """
 
 import json
@@ -11,12 +11,13 @@ from pathlib import Path
 from pymongo import MongoClient
 
 from server.database.simplefile import SimpleFile
+from server.database.mongo_crudmanager import MongoCrudManager
 import tests.mocks as mocks
 
 PROJECT_DIR = Path(__file__).resolve().parents[3]
 TESTDATA = PROJECT_DIR / 'server' / 'tests' / 'database' / 'testdata.json'
 
-class SetupDB:
+class SetupCrudManager:
     def setup(self):
         """
         Method to setup database management class
@@ -51,6 +52,18 @@ class SetupDB:
         """
         returns a list of objects
         retrieves all users in database
+        """
+        raise NotImplementedError
+
+    def getUserCount(self):
+        """
+        returns the number of users in the current db
+        """
+        raise NotImplementedError
+
+    def findUsers(self, fieldname, fieldvalues):
+        """
+        returns all users that match the criteria
         """
         raise NotImplementedError
 
@@ -89,7 +102,7 @@ class SetupDB:
         """
         raise NotImplementedError
 
-class SetupDB_SimpleFile(SetupDB):
+class Setup_SimpleFile(SetupCrudManager):
     def __init__(self):
         self._saveLocation = Path(__file__).resolve().parents[0] / 'temp'
         self._usersFile = self._saveLocation / SimpleFile.USERS_FILENAME
@@ -121,8 +134,17 @@ class SetupDB_SimpleFile(SetupDB):
     def getAllUsers(self):
         return self._readJson( self._usersFile )
 
+    def getUserCount(self):
+        return len( self.getAllUsers() )
+
     def getOriginalUsers(self):
         return self._testdata['users']
+
+    def findUsers(self, fieldname, fieldvalues):
+        return [
+            user for user in self.getAllUsers()
+            if user[fieldname] in fieldvalues
+        ]
 
     def getAllPosts(self):
         return self._readJson( self._postsFile )
@@ -149,13 +171,13 @@ class SetupDB_SimpleFile(SetupDB):
         with filepath.open('r', encoding='utf-8') as f:
             return json.load(f)
 
-class SetupDB_MongoDB:
+class SetupCrudManager_MongoDB:
+    TEST_DBNAME = 'test_mongo'
     def __init__(self):
-        # self._userauth = mocks.createMockUserAuth()
-        self._db = None
+        self._userauth = mocks.createMockUserAuth()
+        self._db = MongoCrudManager(self.TEST_DBNAME, self._userauth)
 
         self._mongo = MongoClient(host='localhost', port=3000)
-        self._dbname = 'test_mongo'
         self._testdata = self._readJson(TESTDATA)
 
     def setup(self):
@@ -169,7 +191,7 @@ class SetupDB_MongoDB:
         db.drop_collection('posts')
 
     def teardown(self):
-        self._mongo.drop_database(self._dbname)
+        self._mongo.drop_database(self.TEST_DBNAME)
         self._mongo.close()
 
     def validateCreatedUsers(self):
@@ -181,8 +203,16 @@ class SetupDB_MongoDB:
     def getAllUsers(self):
         return list( self._getDB()['users'].find() )
 
+    def getUserCount(self):
+        return self._getDB()['users'].count_documents({})
+
     def getOriginalUsers(self):
         return self._testdata['users']
+
+    def findUsers(self, fieldname, fieldvalues):
+        query = { fieldname: { '$in': fieldvalues } }
+        users = self._getDB()['users'].find(query)
+        return list(users)
 
     def getAllPosts(self):
         return list( self._getDB()['posts'].find() )
@@ -203,4 +233,4 @@ class SetupDB_MongoDB:
     def _getDB(self):
         # not to be confused with getDB (without the underscore)
         # this acquires the database instance from pymongo
-        return self._mongo[self._dbname]
+        return self._mongo[self.TEST_DBNAME]

@@ -1,7 +1,7 @@
 import json
 import time
 
-from server.database.database import Database
+from server.database.crudmanager import CrudManager
 from server.database.filter import Filter
 from server.database.paging import Paging, PagingNoLimit
 from server.entity.user import NewUser, UpdateUser
@@ -38,7 +38,7 @@ def updateJSONFileContent(filenameAttr):
         return wrapper
     return updateJSONFileContentDecorator
 
-class SimpleFile(Database):
+class SimpleFile(CrudManager):
     USERS_FILENAME = 'users.json'
     POSTS_FILENAME = 'posts.json'
     THREADS_FILENAME = 'threads.json'

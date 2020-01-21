@@ -16,7 +16,7 @@ class DataCreator:
         'Johnson',
     ]
     EMAIL_DOMAIN = '@myforumwebapp.com'
-    POSTCOUNT_PER_USER_ENG = 198
+    POSTCOUNT_PER_USER_ENG = 48
     POSTCOUNT_PER_USER_JPN = 2
     POSTCOUNT_PER_USER = POSTCOUNT_PER_USER_ENG + POSTCOUNT_PER_USER_JPN
 

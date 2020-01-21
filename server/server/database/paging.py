@@ -10,7 +10,7 @@ class Paging:
             amount of records to display in 1 page
     """
     DEFAULT_OFFSET = 0
-    DEFAULT_LIMIT = 100
+    DEFAULT_LIMIT = 50
     _schema = {
         'offset': {
             'type': 'integer',
