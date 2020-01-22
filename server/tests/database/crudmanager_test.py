@@ -41,7 +41,7 @@ class TestUserCRUD:
         mockuserauth.hashPassword.return_value = 'hashed'
         userProps = self.createNewUserProps()
 
-        assert len( setupDB.findUsers('userName', [ userProps['userName'] ]) ) == 0
+        assert len( setupDB.findUsers('userName', [ userProps['userName'] ]) ) == 1
         
         setupDB.getDB().createUser(userProps)
 
