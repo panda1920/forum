@@ -41,6 +41,8 @@ class TestUserCRUD:
         mockuserauth.hashPassword.return_value = 'hashed'
         userProps = self.createNewUserProps()
 
+        assert len( setupDB.findUsers('userName', [ userProps['userName'] ]) ) == 0
+        
         setupDB.getDB().createUser(userProps)
 
         assert setupDB.getUserCount() == len( setupDB.getOriginalUsers() ) + 1
@@ -81,36 +83,32 @@ class TestUserCRUD:
     def test_deleteUserShouldRemoveUserFromDB(self, setupDB):
         userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
 
+        assert len( setupDB.findUsers('userId', [userIdToDelete]) ) == 1
+        
         setupDB.getDB().deleteUser([userIdToDelete])
 
         assert setupDB.getUserCount() == len(setupDB.getOriginalUsers()) - 1
-        usersWithIdToDelete = setupDB.findUsers('userId', [userIdToDelete])
-        assert len(usersWithIdToDelete) == 0
+        assert len( setupDB.findUsers('userId', [userIdToDelete]) ) == 0
 
     def test_deleteUserShouldRemoveMultipleUsersFromDB(self, setupDB):
         userIdsToDelete = [
             user['userId'] for user in setupDB.getOriginalUsers()[:3]
         ]
 
+        assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 3
+
         setupDB.getDB().deleteUser(userIdsToDelete)
 
-        assert setupDB.getUserCount() == len(setupDB.getOriginalUsers()) - len(userIdsToDelete)
-        usersWithIdToDelete = setupDB.findUsers('userId', userIdsToDelete)
-        assert len(usersWithIdToDelete) == 0
+        assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 0
 
     def test_deleteUserShouldDeleteAllPostsAssociated(self, setupDB):
         userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
 
+        assert len( setupDB.findPosts('userId', [userIdToDelete]) ) == DataCreator.getPostCountPerUser()
+
         setupDB.getDB().deleteUser([userIdToDelete])
 
-        posts = setupDB.getAllPosts()
-        assert len(posts) == len(setupDB.getOriginalPosts()) - DataCreator.getPostCountPerUser()
-
-        postsBelongingToDeletedUser = [
-            post for post in posts
-            if post['userId'] == userIdToDelete
-        ]
-        assert len(postsBelongingToDeletedUser) == 0
+        assert len( setupDB.findPosts('userId', [userIdToDelete]) ) == 0
 
     def test_deleteUserWithNonExistantIdShouldDoNothing(self, setupDB):
         userIdToDelete = 'non_existant'
@@ -122,7 +120,7 @@ class TestUserCRUD:
     def test_searchUserByUserIdShouldReturnUserFromDB(self, setupDB):
         userIdsToSearch = [ setupDB.getOriginalUsers()[0]['userId'] ]
         filters = [
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
+            createSearchFilter('userId', 'eq', userIdsToSearch)
         ]
 
         users = setupDB.getDB().searchUser(filters)
@@ -133,7 +131,7 @@ class TestUserCRUD:
     def test_searchUserByNonExistantUserIdShouldReturnZeroUsersFromDB(self, setupDB):
         userIdsToSearch = ['non_existant']
         filters = [
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
+            createSearchFilter('userId', 'eq', userIdsToSearch)
         ]
 
         users = setupDB.getDB().searchUser(filters)
@@ -145,7 +143,7 @@ class TestUserCRUD:
             user['userId'] for user in setupDB.getOriginalUsers()[:2]
         ]
         filters = [
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch })
+            createSearchFilter('userId', 'eq', userIdsToSearch)
         ]
 
         users = setupDB.getDB().searchUser(filters)
@@ -163,8 +161,8 @@ class TestUserCRUD:
 
     def test_searchUserByContradictingFiltersShouldReturnNoUsers(self, setupDB):
         filters = [
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['1'] }),
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['2'] }),
+            createSearchFilter('userId', 'eq', ['1']),
+            createSearchFilter('userId', 'eq', ['2']),
         ]
         users = setupDB.getDB().searchUser(filters)
 
@@ -176,7 +174,7 @@ class TestUserCRUD:
         ]
         paging = Paging({ 'limit': 5 })
         filters = [
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch }),
+            createSearchFilter('userId', 'eq', userIdsToSearch),
         ]
 
         users = setupDB.getDB().searchUser(filters, paging)
@@ -189,7 +187,7 @@ class TestUserCRUD:
         ]
         paging = Paging({ 'limit': 5, 'offset': 8 })
         filters = [
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIdsToSearch }),
+            createSearchFilter('userId', 'eq', userIdsToSearch),
         ]
 
         users = setupDB.getDB().searchUser(filters, paging)
@@ -330,7 +328,7 @@ class TestPostCRUD:
             post['postId'] for post in setupDB.getOriginalPosts()[:1]
         ]
         searchFilters = [
-            Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': postIdsToSearch }),
+            createSearchFilter('postId', 'eq', postIdsToSearch),
         ]
 
         posts = setupDB.getDB().searchPost(searchFilters)
@@ -343,7 +341,7 @@ class TestPostCRUD:
             post['postId'] for post in setupDB.getOriginalPosts()[:2]
         ]
         searchFilters = [
-            Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': postIdsToSearch }),
+            createSearchFilter('postId', 'eq', postIdsToSearch),
         ]
 
         posts = setupDB.getDB().searchPost(searchFilters)
@@ -354,7 +352,7 @@ class TestPostCRUD:
 
     def test_searchPostByNonExitantPostIdShouldReturnNothing(self, setupDB):
         searchFilters = [
-            Filter.createFilter({ 'field': 'postId', 'operator': 'eq', 'value': ['non_existant'] }),
+            createSearchFilter('postId', 'eq', ['non_existant']),
         ]
         posts = setupDB.getDB().searchPost(searchFilters)
 
@@ -362,7 +360,7 @@ class TestPostCRUD:
 
     def test_searchPostWithoutExplicitPagingShouldReturnDefaultAmount(self, setupDB):
         searchFilters = [
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['0', '1', '2'] }),
+            createSearchFilter('userId', 'eq', ['0', '1', '2']),
         ]
         posts = setupDB.getDB().searchPost(searchFilters)
 
@@ -371,7 +369,7 @@ class TestPostCRUD:
     def test_searchPostWithExplicitPagingShouldBeLimited(self, setupDB):
         paging = Paging({ 'offset': DataCreator.POSTCOUNT_PER_USER * 2 + 1, 'limit': DataCreator.POSTCOUNT_PER_USER })
         searchFilters = [
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['0', '1', '2'] }),
+            createSearchFilter('userId', 'eq', ['0', '1', '2']),
         ]
 
         posts = setupDB.getDB().searchPost(searchFilters, paging)
@@ -382,8 +380,8 @@ class TestPostCRUD:
         displayNameOfFirstUser = setupDB.getOriginalUsers()[0]['displayName']
         paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })
         searchFilters = [
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': ['0', '1', '2'] }),
-            Filter.createFilter({ 'field': 'content', 'operator': 'fuzzy', 'value': [displayNameOfFirstUser] }),
+            createSearchFilter('userId', 'eq', ['0', '1', '2']),
+            createSearchFilter('content', 'fuzzy', [displayNameOfFirstUser]),
         ]
 
         posts = setupDB.getDB().searchPost(searchFilters, paging)
@@ -459,3 +457,10 @@ def createNewProps(defaultProps, **kwargs):
             props[prop] = propertyValue
 
     return props
+
+def createSearchFilter(field, operator, values):
+    return Filter.createFilter({
+         'field': field,
+         'operator': operator,
+         'value': values
+    })

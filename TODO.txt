@@ -1,9 +1,12 @@
 FORUM
     [DB]
-        - Implement password encyrption
         - Add sorting
-        - Implement CRUD operations in some sort of real DB system
-            probably mongoDB
+        - Figure out how to make transactional operation
+            Seems like I need to configure replicas for the mongoDB
+            Figure out how to do this, especially with docker.
+        - Figure out how to make SSL connection from backend to DB
+            Password authentication necessary?
+        - Make sure exceptions are thrown at failed attempt on CRUD operation
             
     [Flask]
         - Implement user authentication system
@@ -29,7 +32,6 @@ FORUM
         - Deploy on amazon
             Figure out how to import secrets in the app.
         - Try using docker
-        
 
     [TESTING]
         - figure out how to test session with flask
