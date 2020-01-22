@@ -29,7 +29,7 @@ jobs:
           name: Run tests
           command: |
             cd ./server
-            pipenv run testl
+            pipenv run test
       - save_cache:
           name: Saving dependency cache
           key: deps-v2-{{ checksum "./server/Pipfile.lock"}}
