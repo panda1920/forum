@@ -4,6 +4,7 @@ This file contains classes to help setup/cleanup needed for
 testing database CRUD management classes
 """
 
+import os
 import json
 import shutil
 from pathlib import Path
