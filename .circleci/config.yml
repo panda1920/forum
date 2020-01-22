@@ -12,7 +12,6 @@ jobs:
       
       # docker image for test db
       - image: circleci/mongo:4.2
-        name: localhost
 
     steps:
       - checkout
