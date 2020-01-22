@@ -35,7 +35,7 @@ jobs:
           name: Run tests
           command: |
             cd ./server
-            pipenv run python -m pytest -ra --tb=short tests/database/crudmanager_test.py::TestUserCRUD::test_createUserShouldCreateUserInDB
+            pipenv run test
       - save_cache:
           name: Saving dependency cache
           key: deps-v2-{{ checksum "./server/Pipfile.lock"}}
