@@ -198,7 +198,9 @@ class Setup_MongoCrudManager(SetupCrudManager):
         self._userauth = mocks.createMockUserAuth()
         self._db = MongoCrudManager(self.TEST_DBNAME, self._userauth)
 
-        self._mongo = MongoClient(host='localhost', port=3000)
+        hostname = os.getenv('MONGO_HOSTNAME')
+        port = int( os.getenv('MONGO_PORT') )
+        self._mongo = MongoClient(host=hostname, port=port)
         self._testdata = self._readJson(TESTDATA)
 
     def setup(self):
