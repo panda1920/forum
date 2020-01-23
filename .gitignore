@@ -10,5 +10,5 @@ node_modules/
 .venv/
 
 # some temporary data
-server/data/
+server/server/data/
 server/**/temp/

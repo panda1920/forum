@@ -11,7 +11,6 @@ FORUM
             
     [Flask]
         - Implement user authentication system
-            Consider SSL connection.
         - Implement user authentication system to operations that need it
         - Impement user authorizaiton
             Operations yields differing result depending on the current logged in user
@@ -36,6 +35,6 @@ FORUM
 
     [TESTING]
         - figure out how to test session with flask
-        - figure out how to configure CI testing with DB dependency
         - figure out how to automate client side testing which requires
             launching the backend
+        - figure out why dependency install takes so long on the CI despite caching
