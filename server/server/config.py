@@ -16,7 +16,10 @@ class Config:
     # can be replaced during tests
     USER_AUTHENTICATION = UserAuthentication
     # DATABASE_OBJECT = FileCrudManager(Path(DATA_LOCATION), USER_AUTHENTICATION)
-    DATABASE_OBJECT = MongoCrudManager(os.environ.get('MONGO_DBNAME'), USER_AUTHENTICATION)
+    DATABASE_OBJECT = MongoCrudManager(
+        os.environ.get('MONGO_DBNAME', 'TEST_MYFORUMWEBAPP'),
+        USER_AUTHENTICATION
+    )
     SEARCH_FILTER = Filter
     PAGING = Paging
     SIGNUP = Signup
