@@ -35,11 +35,12 @@ def searchUserByIDv1(userId):
 def createUserv1():
     userProperties = request.form
     try:
-        app_utils.getDB(current_app).createUser(userProperties)
+        app_utils.getSignup(current_app).signup(userProperties)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
 
     return route_utils.createJSONResponse([], 200)
+
 
 @routes.route('/v1/users/<userId>/update', methods=['PATCH'])
 def updateUserv1(userId):

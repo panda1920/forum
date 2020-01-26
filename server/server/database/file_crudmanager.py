@@ -67,9 +67,6 @@ class FileCrudManager(CrudManager):
         self._createUserImpl(user)
 
     def searchUser(self, searchFilters, paging = Paging()):
-        if len(searchFilters) == 0:
-            return []
-
         with self._usersFile.open('r', encoding='utf-8') as f:
             users = json.load(f)
 

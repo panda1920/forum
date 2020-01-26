@@ -1,4 +1,7 @@
-
+# -*- coding: utf-8 -*-
+"""
+Utility class for the entire app
+"""
 
 def getDB(app):
     return app.config['DATABASE_OBJECT']
@@ -8,3 +11,9 @@ def getFilter(app):
 
 def getPaging(app):
     return app.config['PAGING']
+
+def getuserAuth(app):
+    return app.config['USER_AUTHENTICATION']
+
+def getSignup(app):
+    return app.config['SIGNUP']

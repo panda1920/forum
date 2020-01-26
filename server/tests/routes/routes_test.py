@@ -14,6 +14,7 @@ def mockApp(app):
     app.config['DATABASE_OBJECT'] = mocks.createMockDB()
     app.config['SEARCH_FILTER'] = mocks.createMockFilter()
     app.config['PAGING'] = mocks.createMockPaging()
+    app.config['SIGNUP'] = mocks.createMockSignup()
 
     yield app
 
@@ -138,6 +139,16 @@ class TestServerAPIs:
             
             # mockDB = app_utils.getDB(mockApp)
             # assert mockDB.updatePost.call_count == 1
+
+    def test_userlistReturnsAllUsers(self, mockApp, client):
+        users = [{'userName': '1'}, {'userName': '2'}]
+        mockDB = app_utils.getDB(mockApp)
+        mockDB.searchUser.return_value = users
+
+        response = client.get('/userlist')
+        assert response.status_code == 200
+        jsonBody = response.get_json()
+        assert jsonBody['users'] == users
 
 class TestPostsAPI:
     POSTSAPI_BASE_URL = '/v1/posts'
@@ -514,10 +525,10 @@ class TestUserAPIs:
             assert response.status_code == exceptionToTest.getStatusCode()
 
     def test_createUserReturns200(self, mockApp):
-        mockDB = app_utils.getDB(mockApp)
+        mockSignup = app_utils.getSignup(mockApp)
         userProperties = {
             'userName': 'joe@myforumwebapp.com',
-            'displayName': 'Joe',
+            'displayName': 'joe',
             'password': '12345678'
         }
         headers = {
@@ -529,17 +540,17 @@ class TestUserAPIs:
             response = client.post(url, data=userProperties, headers=headers)
 
             assert response.status_code == 200
+            assert mockSignup.signup.call_count == 1
+            argPassed = mockSignup.signup.call_args[0][0]
+            for field, value in argPassed.items():
+                assert value == userProperties[field]
             
-            assert mockDB.createUser.call_count == 1
-            arg1Passed = mockDB.createUser.call_args[0][0]
-            for prop in userProperties.keys():
-                assert arg1Passed[prop] == userProperties[prop]
 
-    def test_createUserReturnsErrorWhenCreateUserThrowsException(self, mockApp):
-        mockDB = app_utils.getDB(mockApp)
+    def test_createUserReturnsErrorWhenSignupThrowsException(self, mockApp):
+        mockSignup = app_utils.getSignup(mockApp)
         userProperties = {
             'userName': 'joe@myforumwebapp.com',
-            'displayName': 'Joe',
+            'displayName': 'joe',
             'password': '12345678'
         }
         headers = {
@@ -552,7 +563,7 @@ class TestUserAPIs:
         ]
 
         for e in exceptionsToTest:
-            mockDB.createUser.side_effect = e
+            mockSignup.signup.side_effect = e
             with mockApp.test_client() as client:
                 response = client.post(url, data=userProperties, headers=headers)
 

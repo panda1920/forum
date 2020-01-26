@@ -152,12 +152,12 @@ class TestUserCRUD:
         for user in users:
             assert user['userId'] in userIdsToSearch
 
-    def test_searchUserByNoFilterShouldReturnNoUsers(self, setupDB):
+    def test_searchUserByNoFilterShouldReturnAllUsers(self, setupDB):
         filters = []
         
         users = setupDB.getDB().searchUser(filters)
 
-        assert len(users) == 0
+        assert len(users) == len( setupDB.getOriginalUsers() )
 
     def test_searchUserByContradictingFiltersShouldReturnNoUsers(self, setupDB):
         filters = [

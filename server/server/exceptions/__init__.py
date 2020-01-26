@@ -97,3 +97,11 @@ class FailedMongoOperation(MyAppException):
     @classmethod
     def getStatusCode(cls):
         return 500
+
+class DuplicateUserError(MyAppException):
+    """
+    User was found when signup
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 500    

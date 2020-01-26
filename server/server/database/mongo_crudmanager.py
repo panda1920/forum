@@ -32,9 +32,11 @@ class MongoCrudManager(CrudManager):
         self._db['users'].insert_one( self._hashUserPassword(user) )
 
     def searchUser(self, searchFilters, paging = Paging()):
-        if len(searchFilters) == 0:
-            return []
-        query = self._combineSearchFilterAnd(searchFilters)
+        # if len(searchFilters) == 0:
+        #     return []
+        query = {}
+        if len(searchFilters) > 0:
+            query = self._combineSearchFilterAnd(searchFilters)
         start = paging.offset
         end = None if paging.limit == None else start + paging.limit
 
