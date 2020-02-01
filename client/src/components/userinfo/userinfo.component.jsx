@@ -1,15 +1,21 @@
-import React from 'react';
+import React, { useContext } from 'react';
 
-import './userinfo.component.scss';
+import TestEntity from '../testentity/testentity.component';
+
+import UsersContext from '../../contexts/users/users.context';
+import { userApi } from '../../paths';
 
 const UserInfo = (props) => {
-  const { userId, userName, displayName, password } = props;
+  const { userId } = props;
+  const { fetchUsers } = useContext(UsersContext);
   return (
     <div className='userinfo'>
-      <p>userId: {userId}</p>
-      <p>userName: {userName}</p>
-      <p>displayName: {displayName}</p>
-      <p>password: {password}</p>
+      <TestEntity
+        entity={{ ...props }}
+        apiPath={userApi}
+        refresh={fetchUsers}
+        id={userId}
+      />
     </div>
   );
 }

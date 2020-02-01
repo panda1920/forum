@@ -1,0 +1,30 @@
+.testentity-container {
+    position: relative;
+    padding: 10px;
+    height: 100px;
+    width: 80vw;
+    border-radius: .5em;
+    box-shadow: 8px 8px 8px 0 rgba(255, 255, 255, .25);
+    box-shadow: 8px 8px 8px 0 rgba(0, 0, 0, .25);
+
+    .testentity {
+        overflow-y: hidden;
+
+        .testentity-display {
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            white-space: nowrap;
+
+            p {
+                margin-block-start: 0em;
+                margin-block-end: 0em;
+            }
+        }
+    }
+
+    .clearbutton-container {
+        position: absolute;
+        right: 0px;
+    }
+}

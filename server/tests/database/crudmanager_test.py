@@ -350,7 +350,7 @@ class TestPostCRUD:
         for post in posts:
             assert post['postId'] in postIdsToSearch
 
-    def test_searchPostByNonExitantPostIdShouldReturnNothing(self, setupDB):
+    def test_searchPostByNonExitantPostIdShouldReturnNoPosts(self, setupDB):
         searchFilters = [
             createSearchFilter('postId', 'eq', ['non_existant']),
         ]
@@ -388,12 +388,12 @@ class TestPostCRUD:
 
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER
 
-    def test_searchPostWithEmptyFiltersShouldReturNothing(self, setupDB):
+    def test_searchPostWithEmptyFiltersShouldReturnDefaultCount(self, setupDB):
         searchFilters = []
 
         posts = setupDB.getDB().searchPost(searchFilters)
 
-        assert len(posts) == 0
+        assert len(posts) == Paging.DEFAULT_LIMIT
 
     def test_updatePostUpdatesPostOnDB(self, setupDB):
         postToUpdate = self.createUpdatePostProps()

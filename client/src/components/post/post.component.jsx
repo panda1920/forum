@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { useContext } from 'react';
 
-const Post = (props) => (
-  <div className='post'>
-    <p>{props.title}</p>
-    <p>{props.body}</p>
-  </div>
-);
+import TestEntity from '../../components/testentity/testentity.component';
+
+import PostsContext from '../../contexts/posts/posts.context';
+import { postApi } from '../../paths';
+
+const Post = (props) => {
+  const { postId } = props;
+  const { fetchPosts } = useContext(PostsContext);
+  return (
+    <div className='post'>
+      <TestEntity
+        entity={{ ...props }}
+        apiPath={postApi}
+        refresh={fetchPosts}
+        id={postId}
+      />
+    </div>
+  );
+};
 
 export default Post;

@@ -19,14 +19,17 @@ FORUM
         - stop returning the saerch results directly; carefully select which information to disclose and which not to
         - Handle entities inside the app as separate class instead of bare dictionary
         - Consider using Flask-Session for server-side session management
-        - Consider CORS restriction from frontend-to-backend during development
+        - Implement business logic in middleware; separate it from the routes
+        - Currently user session is being dealth by cookies;
+            change this to a token-based solution so that AJAX request/mobile apps(potentially)
+            can also leverage the session information.
     
     [Frontend]
-        - Create a simple page to signup user
         - Create a simple page to write posts
         - Figure out routing of SPA that utilizes HTML5 history
             https://github.com/ReactTraining/react-router/blob/master/FAQ.md#how-do-i-access-the-history-object-outside-of-components
             https://codeburst.io/full-stack-single-page-application-with-vue-js-and-flask-b1e036315532
+        - Figure out react testing library
 
     [Deployment]
         - Deploy on amazon
@@ -35,6 +38,4 @@ FORUM
 
     [TESTING]
         - figure out how to test session with flask
-        - figure out how to automate client side testing which requires
-            launching the backend
         - figure out why dependency install takes so long on the CI despite caching

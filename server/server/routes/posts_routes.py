@@ -81,12 +81,15 @@ def searchPostsByIdv1(postId):
 @routes.route('/v1/posts/create', methods=['POST'])
 def createPostsv1():
     try:
-        newPost = request.form
-        createdPost = app_utils.getDB(current_app).createPost(newPost)
+        postProps = request.form
+        app_utils.getDB(current_app).createPost({**postProps})
     except MyAppException as e:
-        return route_utils .createJSONErrorResponse(e, [ route_utils .createPostsObject([]) ])
+        return route_utils.createJSONErrorResponse(e, [ route_utils .createPostsObject([]) ])
+    except Exception as e:
+        print(e)
+        raise e
 
-    return route_utils .createJSONResponse([ route_utils .createPostsObject([createdPost]) ], 201)
+    return route_utils.createJSONResponse([ route_utils .createPostsObject([]) ], 201)
 
 
 @routes.route('/v1/posts/<postId>/update', methods=['PATCH'])

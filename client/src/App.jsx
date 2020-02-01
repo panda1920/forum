@@ -2,7 +2,8 @@ import React from 'react';
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
 
 import Threads from './components/threads/threads.component';
-import Users from './components/users/users.component';
+import UsersPage from './pages/users/userspage';
+import PostsPage from './pages/posts/postspage';
 import Signup from './components/signup/signup.component';
 
 function App() {
@@ -10,7 +11,8 @@ function App() {
     <BrowserRouter>
       <div className="App">
         <Switch>
-          <Route path='/users' component={Users} />
+          <Route path='/users' component={UsersPage} />
+          <Route path='/posts' component={PostsPage} />
           <Route path='/signup' component={Signup} />
           <Route path='/' component={Threads} />
         </Switch>

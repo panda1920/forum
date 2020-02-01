@@ -95,9 +95,6 @@ class FileCrudManager(CrudManager):
         self._createPostImpl(post)
 
     def searchPost(self, searchFilters, paging = Paging()):
-        if len(searchFilters) == 0:
-            return []
-
         with self._postsFile.open('r', encoding='utf-8') as f:
             posts = json.load(f)
 

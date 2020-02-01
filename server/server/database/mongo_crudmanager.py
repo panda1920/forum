@@ -32,11 +32,7 @@ class MongoCrudManager(CrudManager):
         self._db['users'].insert_one( self._hashUserPassword(user) )
 
     def searchUser(self, searchFilters, paging = Paging()):
-        # if len(searchFilters) == 0:
-        #     return []
-        query = {}
-        if len(searchFilters) > 0:
-            query = self._combineSearchFilterAnd(searchFilters)
+        query = self._combineSearchsFilterAnd(searchFilters)
         start = paging.offset
         end = None if paging.limit == None else start + paging.limit
 
@@ -67,9 +63,7 @@ class MongoCrudManager(CrudManager):
         result = self._db['posts'].insert_one(post)
     
     def searchPost(self, searchFilters, paging = Paging()):
-        if len(searchFilters) == 0:
-            return []
-        query = self._combineSearchFilterAnd(searchFilters)
+        query = self._combineSearchsFilterAnd(searchFilters)
         start = paging.offset
         end = None if paging.limit == None else start + paging.limit
 
@@ -102,10 +96,13 @@ class MongoCrudManager(CrudManager):
             update['$set'][field] = updateProps[field]
         return update
 
-    def _combineSearchFilterAnd(self, searchFilters):
-        return {
-            '$and': [ searchFilter.getMongoFilter() for searchFilter in searchFilters ]
-        }
+    def _combineSearchsFilterAnd(self, searchFilters):
+        if len(searchFilters) == 0:
+            return {}
+        else:
+            return {
+                '$and': [ searchFilter.getMongoFilter() for searchFilter in searchFilters ]
+            }
 
     def _validateEntity(self, entitySchema, entity):
         if not entitySchema.validate(entity):

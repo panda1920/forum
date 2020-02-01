@@ -1,88 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 
-import Input from '../input/input.component';
+import TextInput from '../textinput/textinput.component';
+
+import UsersContext from '../../contexts/users/users.context';
+import { changeSignupState, createSubmitHandler } from './signup.logic';
 import { userApiCreate } from '../../paths';
 
 const Signup = () => {
-  // declare states for the input subcomponents
   const [username, setUsername] = useState('');
-  const [pw, setPw] = useState('');
-  const [cpw, setCpw] = useState('');
+  const [password, setPassword] = useState('');
+  const [cPassword, setCpassword] = useState('');
 
-  // generate functions to be consumed by each input components
-  const generateSetter = (setter) => {
-    return (event) => {
-      event.preventDefault();
-      setter(event.target.value);
-    };
-  };
-
-  const submitHandler = (event) => {
-    event.preventDefault();
-    if (! validateInput(username, pw, cpw))
-      return;
-    
-    let formdata = createFormData(username, pw);
-    createUser(formdata);
-  };
-  const validateInput = (username, pw, cpw) => {
-    if (pw !== cpw) {
-      alert('Password must match');
-      return false
-    }
-
-    if (!pw || !cpw) {
-      alert('Make sure password is not empty');
-      return false;
-    }
-
-    return true;
-  };
-  const createFormData = (userName, password) => {
-    let formdata = new URLSearchParams();
-    formdata.set('userName', userName);
-    formdata.set('password', password);
-    return formdata;
-  };
-  const createUser = (body) => {
-    let method = 'POST';
-    let header = { 'Content-Type': 'application/x-www-form-urlencoded' };
-    fetch(userApiCreate, { method, headers: header, body })
-    .then(response => {
-      if (response.ok) {
-        console.log('Success!');
-        clearInputs();
-      }
-      else
-        console.log('Failed to create user!');
-    })
-    .catch(error => {
-      console.log(error)
-    });
-  };
-  const clearInputs = () => {
-    setUsername('');
-    setPw('');
-    setCpw('');
-  };
-
+  const { fetchUsers } = useContext(UsersContext);
+  const submitHandler = createSubmitHandler({
+    username, password, cPassword,
+    refresh: fetchUsers,
+    apiPath: userApiCreate
+  });
+  
   return (
     <div className='signup'>
       <form id='signup-form' onSubmit={submitHandler}>
-        <Input
+        <TextInput
           label='username'
+          name='username'
           type='email'
-          onChange={ generateSetter(setUsername) }
+          onChange={ changeSignupState(setUsername) }
         />
-        <Input
+        <TextInput
           label='password'
+          name='password'
           type='password'
-          onChange={ generateSetter(setPw) }
+          onChange={ changeSignupState(setPassword) }
         />
-        <Input
+        <TextInput
           label='confirm password'
+          name='cPassword'
           type='password'
-          onChange={ generateSetter(setCpw) }
+          onChange={ changeSignupState(setCpassword) }
         />
         <button type='submit'>Signup</button>
       </form>
