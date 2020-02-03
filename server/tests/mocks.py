@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses mocks used in tests
+"""
+
 from unittest.mock import create_autospec
 
 from flask import g, request, session
@@ -7,6 +12,7 @@ from server.database.filter import Filter
 from server.database.paging import Paging
 from server.middleware.userauth import UserAuthentication
 from server.middleware.signup import Signup
+from server.services.search_service import SearchService
 
 def createMockDB():
     return create_autospec(CrudManager)
@@ -39,3 +45,6 @@ def createMockSession(sessionInfo = {}):
     mock.update(defaults)
     mock.update(sessionInfo)
     return mock
+
+def createMockSearchService():
+    return create_autospec(SearchService)

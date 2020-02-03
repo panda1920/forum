@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses utility logic used by various routes
+"""
+
 import json
 
 from flask import make_response, current_app

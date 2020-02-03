@@ -26,27 +26,27 @@ class Paging:
         }
     }
 
-    def __init__(self, querystringObj = {}):
-        parsed = self.parseQuerystring(querystringObj)
+    def __init__(self, keyValues = {}):
+        parsed = self.parseKeyValues(keyValues)
         self.offset = parsed['offset']
         self.limit = parsed['limit']
 
-    def parseQuerystring(self, querystringObj):
-        copy = querystringObj.copy()
+    def parseKeyValues(self, keyValues):
+        copy = keyValues.copy()
         v = Validator(schema=self._schema, allow_unknown=True)
         if v.validate(copy):
             return v.document
 
-        parsedQuerystring = v.document
+        parsedKeyValues = v.document
         for attribute in v.errors.keys():
-            parsedQuerystring[attribute] = self._schema[attribute]['default']
-        return parsedQuerystring
+            parsedKeyValues[attribute] = self._schema[attribute]['default']
+        return parsedKeyValues
 
 class PagingNoLimit(Paging):
     """
     No limit to how many records shown in 1 page
     """
-    def __init__(self, querystringObj = {}):
-        super().__init__(querystringObj)
+    def __init__(self, keyValues = {}):
+        super().__init__(keyValues)
 
         self.limit = None

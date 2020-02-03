@@ -71,12 +71,18 @@ class FileCrudManager(CrudManager):
             users = json.load(f)
 
         matchedUsers = []
-        for user in users[paging.offset:]:
+        for user in users:
             matchedConditions = [ search.matches(user) for search in searchFilters ]
             if all(matchedConditions):
                 matchedUsers.append(user)
 
-        return matchedUsers[:paging.limit]
+        start = paging.offset
+        end = None if paging.limit is None else start + paging.limit
+        return {
+            'users': matchedUsers[start:end],
+            'returnCount': len(matchedUsers[start:end]),
+            'matchedCount': len(matchedUsers),
+        }
 
     def deleteUser(self, userIds):
         self._deleteUserImpl(userIds)
@@ -99,12 +105,18 @@ class FileCrudManager(CrudManager):
             posts = json.load(f)
 
         matchedPosts = []
-        for post in posts[paging.offset:]:
+        for post in posts:
             matchConditions = [search.matches(post) for search in searchFilters]
             if all(matchConditions):
                 matchedPosts.append(post)
 
-        return matchedPosts[:paging.limit]
+        start = paging.offset
+        end = None if paging.limit is None else start + paging.limit
+        return {
+            'posts': matchedPosts[start:end],
+            'returnCount': len(matchedPosts[start:end]),
+            'matchedCount': len(matchedPosts),
+        }
 
     def deletePost(self, postIds):
         self._deletePostImpl(postIds)

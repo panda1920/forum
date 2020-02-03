@@ -43,7 +43,7 @@ class TestServerAPIs:
             'age': '1'
         }
         serialized = json.dumps(jsonData).encode('ascii')
-        headers = {'content-type': 'application/json'}
+        headers = {'Content-Type': 'application/json'}
         
         # client.post('/post', json=jsonData) # simple solution when posting json data
         client.post('/post', headers=headers, data=serialized) # a more general approach where specifying mime-type and payload
@@ -69,7 +69,7 @@ class TestServerAPIs:
             'author': 'someone',
             'message': 'Hello world'
         })
-        header = { 'content-type': 'application/x-www-form-urlencoded' }
+        header = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
         client.post('/post', data=formData, headers=header)
 
@@ -92,7 +92,7 @@ class TestServerAPIs:
             'userId': '112233',
             'content': 'This is a post by 112233 for test'
         })
-        header = { 'content-type': 'application/x-www-form-urlencoded' }
+        header = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
         response = client.post('/api/post', data=formData, headers=header)
         assert response.status_code == 200
@@ -109,7 +109,7 @@ class TestServerAPIs:
         formData = urllib.parse.urlencode({
             'postId': '0',
         })
-        header = { 'content-type': 'application/x-www-form-urlencoded' }
+        header = { 'Content-Type': 'application/x-www-form-urlencoded' }
         
         response = client.delete('/api/post', data=formData, headers=header)
         assert response.status_code == 200
@@ -132,7 +132,7 @@ class TestServerAPIs:
         formData = urllib.parse.urlencode({
             'postId': '0',
         })
-        header = { 'content-type': 'application/x-www-form-urlencoded' }
+        header = { 'Content-Type': 'application/x-www-form-urlencoded' }
         
         response = client.patch('/api/post', data=formData, headers=header)
         assert response.status_code == 200
@@ -267,30 +267,20 @@ class TestPostsAPI:
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_createPostReturnCreatedPost(self, mockApp):
+    def test_createPostAPICallsDBToCreatePostAndReturns201(self, mockApp):
+        mockDB = app_utils.getDB(mockApp)
         url = f'{self.POSTSAPI_BASE_URL}/create'
         newPostData = {
             'userId': '0',
             'content': 'This is a test post',
         }
-        headers = { 'content-type': 'application/x-www-form-urlencoded' }
-
-        mockDB = app_utils.getDB(mockApp)
-        mockDB.createPost.return_value = 'post created'
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
         with mockApp.test_client() as client:
             response = client.post(url, data=newPostData, headers=headers)
 
             assert response.status_code == 201
-
-            assert mockDB.createPost.call_count == 1
-            argPassed = mockDB.createPost.call_args[0][0]
-            assert argPassed['userId'] == newPostData['userId']
-            assert argPassed['content'] == newPostData['content']
-
-            # returns post
-            responseBodyJSON = response.get_json()
-            assert responseBodyJSON['posts'] == [mockDB.createPost.return_value]
+            mockDB.createPost.assert_called_with(newPostData)
 
     def test_whenCreatePostRaisesExceptionReturnsError(self, mockApp):
         mockDB = app_utils.getDB(mockApp)
@@ -299,7 +289,7 @@ class TestPostsAPI:
             'userId': '0',
             'content': 'This is a test post',
         }
-        headers = { 'content-type': 'application/x-www-form-urlencoded' }
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
         exceptionsToTest = [
             exceptions.EntityValidationError('Some error happened'),
             exceptions.ServerMiscError('Some error happened')
@@ -341,7 +331,7 @@ class TestPostsAPI:
         postIdToUpdate = '1'
         url = f'{self.POSTSAPI_BASE_URL}/{postIdToUpdate}/update'
         updateData = 'content'
-        headers={ 'content-type': 'text/plain'}
+        headers={ 'Content-Type': 'text/plain'}
 
         with mockApp.test_client() as client:
             response = client.patch(url, data=updateData, headers=headers)

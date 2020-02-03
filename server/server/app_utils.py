@@ -17,3 +17,6 @@ def getuserAuth(app):
 
 def getSignup(app):
     return app.config['SIGNUP']
+
+def getSearchService(app):
+    return app.config['SEARCH_SERVICE']

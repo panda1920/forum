@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses routes for user related api
+"""
+
 import urllib.parse
 
 from flask import Blueprint, request, current_app, make_response

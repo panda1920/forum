@@ -123,10 +123,13 @@ class TestUserCRUD:
             createSearchFilter('userId', 'eq', userIdsToSearch)
         ]
 
-        users = setupDB.getDB().searchUser(filters)
+        result = setupDB.getDB().searchUser(filters)
+        users = result['users']
 
         assert len(users) == 1
         assert users[0]['userId'] == userIdsToSearch[0]
+        assert result['matchedCount'] == 1
+        assert result['returnCount'] == 1
 
     def test_searchUserByNonExistantUserIdShouldReturnZeroUsersFromDB(self, setupDB):
         userIdsToSearch = ['non_existant']
@@ -134,9 +137,12 @@ class TestUserCRUD:
             createSearchFilter('userId', 'eq', userIdsToSearch)
         ]
 
-        users = setupDB.getDB().searchUser(filters)
+        result = setupDB.getDB().searchUser(filters)
+        users = result['users']
 
         assert len(users) == 0
+        assert result['matchedCount'] == 0
+        assert result['returnCount'] == 0
 
     def test_searchUserBy2UserIdsShouldReturn2UsersFromDB(self, setupDB):
         userIdsToSearch = [
@@ -146,27 +152,37 @@ class TestUserCRUD:
             createSearchFilter('userId', 'eq', userIdsToSearch)
         ]
 
-        users = setupDB.getDB().searchUser(filters)
+        result = setupDB.getDB().searchUser(filters)
+        users = result['users']
 
         assert len(users) == 2
         for user in users:
             assert user['userId'] in userIdsToSearch
+        assert result['matchedCount'] == 2
+        assert result['returnCount'] == 2
 
     def test_searchUserByNoFilterShouldReturnAllUsers(self, setupDB):
         filters = []
         
-        users = setupDB.getDB().searchUser(filters)
+        result = setupDB.getDB().searchUser(filters)
+        users = result['users']
 
         assert len(users) == len( setupDB.getOriginalUsers() )
+        assert result['matchedCount'] == len( setupDB.getOriginalUsers() )
+        assert result['returnCount'] == len( setupDB.getOriginalUsers() )
 
     def test_searchUserByContradictingFiltersShouldReturnNoUsers(self, setupDB):
         filters = [
             createSearchFilter('userId', 'eq', ['1']),
             createSearchFilter('userId', 'eq', ['2']),
         ]
-        users = setupDB.getDB().searchUser(filters)
+
+        result = setupDB.getDB().searchUser(filters)
+        users = result['users']
 
         assert len(users) == 0
+        assert result['matchedCount'] == 0
+        assert result['returnCount'] == 0
 
     def test_searchUserBy10UserIdWith5LimitShouldReturn5Users(self, setupDB):
         userIdsToSearch = [
@@ -177,9 +193,14 @@ class TestUserCRUD:
             createSearchFilter('userId', 'eq', userIdsToSearch),
         ]
 
-        users = setupDB.getDB().searchUser(filters, paging)
+        result = setupDB.getDB().searchUser(filters, paging)
+        users = result['users']
+
+        print(result)
 
         assert len(users) == 5
+        assert result['matchedCount'] == 10
+        assert result['returnCount'] == 5
 
     def test_searchUserBy10UserIdWith5Limit8OffsetShouldReturn2Users(self, setupDB):
         userIdsToSearch = [
@@ -190,9 +211,12 @@ class TestUserCRUD:
             createSearchFilter('userId', 'eq', userIdsToSearch),
         ]
 
-        users = setupDB.getDB().searchUser(filters, paging)
+        result = setupDB.getDB().searchUser(filters, paging)
+        users = result['users']
 
         assert len(users) == 2
+        assert result['matchedCount'] == 10
+        assert result['returnCount'] == 2
 
     def test_updateUserUpdatesUserOnDB(self, setupDB):
         mock = setupDB.getMockUserAuth()
@@ -331,10 +355,13 @@ class TestPostCRUD:
             createSearchFilter('postId', 'eq', postIdsToSearch),
         ]
 
-        posts = setupDB.getDB().searchPost(searchFilters)
+        result = setupDB.getDB().searchPost(searchFilters)
+        posts = result['posts']
 
         assert len(posts) == 1
         assert posts[0]['postId'] in postIdsToSearch
+        assert result['returnCount'] == 1
+        assert result['matchedCount'] == 1
 
     def test_searchPostByMultiplePostIdsShouldReturnPostFromDB(self, setupDB):
         postIdsToSearch = [
@@ -344,56 +371,85 @@ class TestPostCRUD:
             createSearchFilter('postId', 'eq', postIdsToSearch),
         ]
 
-        posts = setupDB.getDB().searchPost(searchFilters)
+        result = setupDB.getDB().searchPost(searchFilters)
+        posts = result['posts']
 
         assert len(posts) == 2
         for post in posts:
             assert post['postId'] in postIdsToSearch
+        assert result['returnCount'] == 2
+        assert result['matchedCount'] == 2
 
     def test_searchPostByNonExitantPostIdShouldReturnNoPosts(self, setupDB):
         searchFilters = [
             createSearchFilter('postId', 'eq', ['non_existant']),
         ]
-        posts = setupDB.getDB().searchPost(searchFilters)
+
+        result = setupDB.getDB().searchPost(searchFilters)
+        posts = result['posts']
 
         assert len(posts) == 0
+        assert result['returnCount'] == 0
+        assert result['matchedCount'] == 0
 
     def test_searchPostWithoutExplicitPagingShouldReturnDefaultAmount(self, setupDB):
-        searchFilters = [
-            createSearchFilter('userId', 'eq', ['0', '1', '2']),
+        userIdsToSearch = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:3]
         ]
-        posts = setupDB.getDB().searchPost(searchFilters)
+        searchFilters = [
+            createSearchFilter('userId', 'eq', userIdsToSearch),
+        ]
+
+        result = setupDB.getDB().searchPost(searchFilters)
+        posts = result['posts']
 
         assert len(posts) == Paging.DEFAULT_LIMIT
+        assert result['returnCount'] == Paging.DEFAULT_LIMIT
+        assert result['matchedCount'] == len(userIdsToSearch) * DataCreator.POSTCOUNT_PER_USER
 
     def test_searchPostWithExplicitPagingShouldBeLimited(self, setupDB):
-        paging = Paging({ 'offset': DataCreator.POSTCOUNT_PER_USER * 2 + 1, 'limit': DataCreator.POSTCOUNT_PER_USER })
-        searchFilters = [
-            createSearchFilter('userId', 'eq', ['0', '1', '2']),
+        userIdsToSearch = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:3]
         ]
+        searchFilters = [
+            createSearchFilter('userId', 'eq', userIdsToSearch),
+        ]
+        paging = Paging({ 'offset': DataCreator.POSTCOUNT_PER_USER * 2 + 1, 'limit': DataCreator.POSTCOUNT_PER_USER })
 
-        posts = setupDB.getDB().searchPost(searchFilters, paging)
+        result = setupDB.getDB().searchPost(searchFilters, paging)
+        posts = result['posts']
 
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER - 1
+        assert result['returnCount'] == DataCreator.POSTCOUNT_PER_USER - 1
+        assert result['matchedCount'] == len(userIdsToSearch) * DataCreator.POSTCOUNT_PER_USER
 
     def test_searchPostByMultipleFiltersIsSearchedByAND(self, setupDB):
+        userIdsToSearch = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:3]
+        ]
         displayNameOfFirstUser = setupDB.getOriginalUsers()[0]['displayName']
-        paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })
         searchFilters = [
-            createSearchFilter('userId', 'eq', ['0', '1', '2']),
+            createSearchFilter('userId', 'eq', userIdsToSearch),
             createSearchFilter('content', 'fuzzy', [displayNameOfFirstUser]),
         ]
+        paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })
 
-        posts = setupDB.getDB().searchPost(searchFilters, paging)
+        result = setupDB.getDB().searchPost(searchFilters, paging)
+        posts = result['posts']
 
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER
+        assert result['returnCount'] == DataCreator.POSTCOUNT_PER_USER
+        assert result['matchedCount'] == DataCreator.POSTCOUNT_PER_USER
 
     def test_searchPostWithEmptyFiltersShouldReturnDefaultCount(self, setupDB):
         searchFilters = []
 
-        posts = setupDB.getDB().searchPost(searchFilters)
+        result = setupDB.getDB().searchPost(searchFilters)
+        posts = result['posts']
 
         assert len(posts) == Paging.DEFAULT_LIMIT
+        assert result['returnCount'] == Paging.DEFAULT_LIMIT
+        assert result['matchedCount'] == len(setupDB.getOriginalPosts())
 
     def test_updatePostUpdatesPostOnDB(self, setupDB):
         postToUpdate = self.createUpdatePostProps()
