@@ -28,6 +28,10 @@ class NewPost:
     def validate(cls, newPost):
         return cls._validator.validate(newPost)
 
+    @classmethod
+    def getFields(cls):
+        return cls._schema.keys()
+
 class UpdatePost:
     """
     A namespace for update-post related operations

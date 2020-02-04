@@ -3,7 +3,6 @@
 This file houses test code for search_service.py
 """
 import pytest
-from unittest.mock import call
 
 from server.services.search_service import SearchService
 
@@ -245,11 +244,10 @@ class TestSearchPostsByKeyValues:
 
     def test_searchPostByKeyValuesReturnWhatReturnedFromBothQueries(self, service):
         expectedResult = self.MOCKDB_DEFAULT_RETURN.copy()
-        expectedResult['posts'][0].update({
-            'user': self.MOCKDB_USER_DEFAULT_RETURN['users'][0]
-        })
+        expectedResult['posts'][0]['user'] = self.MOCKDB_USER_DEFAULT_RETURN['users'][0]
 
         searchResult = service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
+
         assert searchResult == expectedResult
 
 

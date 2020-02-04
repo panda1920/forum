@@ -138,7 +138,7 @@ class FileCrudManager(CrudManager):
         postsToDelete = self.searchPost(
             [Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds })], 
             PagingNoLimit()
-        )
+        )['posts']
         self.deletePost( [post['postId'] for post in postsToDelete] )
         
         updatedUsers = [
