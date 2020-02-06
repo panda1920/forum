@@ -10,7 +10,7 @@ from server.database.filter import Filter
 import server.database.aggregate_filter as aggregates
 
 class TestAndFilter:
-    DEFAULT_OBJECT_PASSED_MATCHES = { 'postId': 1 }
+    DEFAULT_OBJECT_PASSEDTO_MATCHES = { 'postId': 1 }
 
     @pytest.fixture(scope='function')
     def agg(self):
@@ -25,32 +25,32 @@ class TestAndFilter:
         filters = createMockFilters(4)
         agg.setFilters(filters)
 
-        agg.matches(self.DEFAULT_OBJECT_PASSED_MATCHES)
+        agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
         for f in filters:
             assert f.matches.call_count == 1
-            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSED_MATCHES)
+            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
     def test_matchesCallsMatchesOnAllSubFiltersAppended(self, agg):
         filters = createMockFilters(4)
         for f in filters:
             agg.appendFilter(f)
 
-        agg.matches(self.DEFAULT_OBJECT_PASSED_MATCHES)
+        agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
         for f in filters:
             assert f.matches.call_count == 1
-            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSED_MATCHES)
+            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
     def test_matchesCallsMatchesOnAllSubFiltersSetThroughConstructor(self):
         filters = createMockFilters(4)
         agg = aggregates.AggregateFilter.createFilter('and', filters)
 
-        agg.matches(self.DEFAULT_OBJECT_PASSED_MATCHES)
+        agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
         for f in filters:
             assert f.matches.call_count == 1
-            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSED_MATCHES)
+            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
     def test_matchesForVariousFilterPatterns(self, agg):
         filterPatterns = [
@@ -74,7 +74,7 @@ class TestAndFilter:
 
         for filters, expected in zip(filterPatterns, expectedMatchResult):
             agg.setFilters(filters)
-            result = agg.matches(self.DEFAULT_OBJECT_PASSED_MATCHES)
+            result = agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
             assert result == expected
 
@@ -87,7 +87,7 @@ class TestAndFilter:
         ]
 
         agg.setFilters(filters)
-        assert agg.matches(self.DEFAULT_OBJECT_PASSED_MATCHES) == False
+        assert agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES) == False
 
     def test_getMongoFilterWithVariousFilterPatterns(self, agg):
         filterPatterns = [
@@ -112,7 +112,7 @@ class TestAndFilter:
             assert result == expected
 
 class TestOrFilter:
-    DEFAULT_OBJECT_PASSED_MATCHES = { 'postId': 1 }
+    DEFAULT_OBJECT_PASSEDTO_MATCHES = { 'postId': 1 }
 
     @pytest.fixture(scope='function')
     def agg(self):
@@ -127,32 +127,32 @@ class TestOrFilter:
         filters = createMockFilters(4)
         agg.setFilters(filters)
 
-        agg.matches(self.DEFAULT_OBJECT_PASSED_MATCHES)
+        agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
         for f in filters:
             assert f.matches.call_count == 1
-            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSED_MATCHES)
+            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
     def test_matchesCallsMatchesOnAllSubFiltersAppended(self, agg):
         filters = createMockFilters(4)
         for f in filters:
             agg.appendFilter(f)
 
-        agg.matches(self.DEFAULT_OBJECT_PASSED_MATCHES)
+        agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
         for f in filters:
             assert f.matches.call_count == 1
-            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSED_MATCHES)
+            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
     def test_matchesCallsMatchesOnAllSubFiltersSetThroughConstructor(self):
         filters = createMockFilters(4)
         agg = aggregates.AggregateFilter.createFilter('or', filters)
 
-        agg.matches(self.DEFAULT_OBJECT_PASSED_MATCHES)
+        agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
         for f in filters:
             assert f.matches.call_count == 1
-            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSED_MATCHES)
+            f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
     def test_matchesForVariousFilterPatterns(self, agg):
         filterPatterns = [
@@ -174,7 +174,7 @@ class TestOrFilter:
 
         for filters, expected in zip(filterPatterns, expectedMatchResult):
             agg.setFilters(filters)
-            result = agg.matches(self.DEFAULT_OBJECT_PASSED_MATCHES)
+            result = agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
             assert result == expected
 
@@ -187,7 +187,8 @@ class TestOrFilter:
         ]
 
         agg.setFilters(filters)
-        assert agg.matches(self.DEFAULT_OBJECT_PASSED_MATCHES) == True
+
+        assert agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES) == True
 
     def test_getMongoFilterWithVariousFilterPatterns(self, agg):
         filterPatterns = [

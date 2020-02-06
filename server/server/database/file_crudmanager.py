@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses class for file-based database system
+Used during the early phases of development
+"""
+
+
 import json
 import time
 
@@ -66,15 +73,17 @@ class FileCrudManager(CrudManager):
         
         self._createUserImpl(user)
 
-    def searchUser(self, searchFilters, paging = Paging()):
+    def searchUser(self, searchFilter, paging = Paging()):
         with self._usersFile.open('r', encoding='utf-8') as f:
             users = json.load(f)
 
-        matchedUsers = []
-        for user in users:
-            matchedConditions = [ search.matches(user) for search in searchFilters ]
-            if all(matchedConditions):
-                matchedUsers.append(user)
+        if searchFilter is None:
+            matchedUsers = users
+        else:
+            matchedUsers = []
+            for user in users:
+                if searchFilter.matches(user):
+                    matchedUsers.append(user)
 
         start = paging.offset
         end = None if paging.limit is None else start + paging.limit
@@ -100,15 +109,17 @@ class FileCrudManager(CrudManager):
 
         self._createPostImpl(post)
 
-    def searchPost(self, searchFilters, paging = Paging()):
+    def searchPost(self, searchFilter, paging = Paging()):
         with self._postsFile.open('r', encoding='utf-8') as f:
             posts = json.load(f)
 
-        matchedPosts = []
-        for post in posts:
-            matchConditions = [search.matches(post) for search in searchFilters]
-            if all(matchConditions):
-                matchedPosts.append(post)
+        if searchFilter is None:
+            matchedPosts = posts
+        else:
+            matchedPosts = []
+            for post in posts:
+                if searchFilter.matches(post):
+                    matchedPosts.append(post)
 
         start = paging.offset
         end = None if paging.limit is None else start + paging.limit
@@ -136,7 +147,7 @@ class FileCrudManager(CrudManager):
     def _deleteUserImpl(self, userIds, currentUsers = None):
         # delete related posts
         postsToDelete = self.searchPost(
-            [Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds })], 
+            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds }), 
             PagingNoLimit()
         )['posts']
         self.deletePost( [post['postId'] for post in postsToDelete] )

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This file houses aggregate search filters like 
-AND, OR
+AND, OR, NOT
 """
 
 class AggregateFilter:
@@ -13,6 +13,17 @@ class AggregateFilter:
 
     @staticmethod
     def createFilter(opstring, filters = []):
+        """
+        A factory method to create aggregate filters.
+        The motivation was to avoid having to call individual constructors
+        from where it is used which hopefully decouples code.
+        
+        Args:
+            opstring (string): short string representation of aggregate to create
+            filteres (list): list of filters to add under the aggregate being created
+        Returns:
+            a concrete aggregate filter
+        """
         if opstring == 'and':
             return AndFilter(filters)
         elif opstring == 'or':
@@ -23,7 +34,7 @@ class AggregateFilter:
         Assign filters to be aggregated under this aggregate
         
         Args:
-            filters (list): list of filters
+            filters (list): list of filters, which can be primitive or aggregate
         Returns:
             None
         """

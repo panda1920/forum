@@ -9,16 +9,21 @@ from flask import g, request, session
 
 from server.database.crudmanager import CrudManager
 from server.database.filter import Filter
+from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
 from server.middleware.userauth import UserAuthentication
 from server.middleware.signup import Signup
 from server.services.search_service import SearchService
+from server.services.entity_creation_service import EntityCreationService
 
 def createMockDB():
     return create_autospec(CrudManager)
 
 def createMockFilter():
     return create_autospec(Filter)
+
+def createMockAggregateFilter():
+    return create_autospec(AggregateFilter)
 
 def createMockPaging():
     return create_autospec(Paging)
@@ -48,3 +53,6 @@ def createMockSession(sessionInfo = {}):
 
 def createMockSearchService():
     return create_autospec(SearchService)
+
+def createMockEntityCreationService():
+    return create_autospec(EntityCreationService)

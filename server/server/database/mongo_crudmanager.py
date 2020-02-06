@@ -33,10 +33,10 @@ class MongoCrudManager(CrudManager):
         with self._mongoOperationHandling('Failed to create user'):
             self._db['users'].insert_one( self._hashUserPassword(user) )
 
-    def searchUser(self, searchFilters, paging = Paging()):
-        query = self._combineSearchsFilterAnd(searchFilters)
+    def searchUser(self, searchFilter, paging = Paging()):
+        query = {} if searchFilter is None else searchFilter.getMongoFilter() 
         start = paging.offset
-        end = None if paging.limit == None else start + paging.limit
+        end = None if paging.limit is None else start + paging.limit
 
         with self._mongoOperationHandling('Failed to search user'):
             users = list( self._db['users'].find(query)[start:end] )
@@ -75,10 +75,10 @@ class MongoCrudManager(CrudManager):
         with self._mongoOperationHandling('Failed to create post'):
             result = self._db['posts'].insert_one(post)
     
-    def searchPost(self, searchFilters, paging = Paging()):
-        query = self._combineSearchsFilterAnd(searchFilters)
+    def searchPost(self, searchFilter, paging = Paging()):
+        query = {} if searchFilter is None else searchFilter.getMongoFilter()
         start = paging.offset
-        end = None if paging.limit == None else start + paging.limit
+        end = None if paging.limit is None else start + paging.limit
 
         with self._mongoOperationHandling('Failed to search post'):
             posts = list( self._db['posts'].find(query)[start:end] )
@@ -118,15 +118,6 @@ class MongoCrudManager(CrudManager):
         for field in entitySchema.getUpdatableFields():
             update['$set'][field] = updateProps[field]
         return update
-
-
-    def _combineSearchsFilterAnd(self, searchFilters):
-        if len(searchFilters) == 0:
-            return {}
-        else:
-            return {
-                '$and': [ searchFilter.getMongoFilter() for searchFilter in searchFilters ]
-            }
 
     def _validateEntity(self, entitySchema, entity):
         if not entitySchema.validate(entity):
