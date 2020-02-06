@@ -72,6 +72,16 @@ class AggregateFilter:
         """
         raise NotImplementedError
 
+    def __len__(self):
+        """
+        Determines the amount of direct child filter this aggregate contains
+        
+        Args:
+        Returns:
+            (int): amount of direct child filter this aggregate contains
+        """
+        raise NotImplementedError
+
 class AndFilter(AggregateFilter):
     """
     Relates filters by AND
@@ -97,6 +107,9 @@ class AndFilter(AggregateFilter):
             return {
                 '$and': [ f.getMongoFilter() for f in self._filters ]
             }
+
+    def __len__(self):
+        return len(self._filters)
 
 class OrFilter(AggregateFilter):
     """
@@ -126,3 +139,6 @@ class OrFilter(AggregateFilter):
             return {
                 '$or': [ f.getMongoFilter() for f in self._filters ]
             }
+
+    def __len__(self):
+        return len(self._filters)

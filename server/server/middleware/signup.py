@@ -35,7 +35,7 @@ class Signup:
     def createUser(userProps, db):
         atIdx = userProps['userName'].find('@')
         defaultName = userProps['userName'][:atIdx]
-        
+
         db.createUser({
             **userProps,
             'displayName': defaultName,

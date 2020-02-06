@@ -52,6 +52,12 @@ class TestAndFilter:
             assert f.matches.call_count == 1
             f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
 
+    def test_lenReturnsNumberOfSubfiltersPassed(self):
+        filters = createMockFilters(4)
+        agg = aggregates.AggregateFilter.createFilter('and', filters)
+
+        assert len(agg) == 4
+
     def test_matchesForVariousFilterPatterns(self, agg):
         filterPatterns = [
             createMockFiltersWithReturnValuesForMatches(True, True, True, True),
@@ -153,6 +159,12 @@ class TestOrFilter:
         for f in filters:
             assert f.matches.call_count == 1
             f.matches.assert_called_with(self.DEFAULT_OBJECT_PASSEDTO_MATCHES)
+
+    def test_lenReturnsNumberOfSubfiltersPassed(self):
+        filters = createMockFilters(4)
+        agg = aggregates.AggregateFilter.createFilter('or', filters)
+
+        assert len(agg) == 4
 
     def test_matchesForVariousFilterPatterns(self, agg):
         filterPatterns = [

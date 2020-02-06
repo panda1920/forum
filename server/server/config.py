@@ -4,9 +4,12 @@ from pathlib import Path
 from server.database.file_crudmanager import FileCrudManager
 from server.database.mongo_crudmanager import MongoCrudManager
 from server.database.filter import Filter
+from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
 from server.middleware.userauth import UserAuthentication
 from server.middleware.signup import Signup
+from server.services.entity_creation_service import EntityCreationService
+from server.services.search_service import SearchService
 
 class Config:
     # when using file-based db, this is where data gets stored
@@ -21,8 +24,13 @@ class Config:
         USER_AUTHENTICATION
     )
     SEARCH_FILTER = Filter
+    AGGREGATE_FILTER = AggregateFilter
     PAGING = Paging
+
+    # services
     SIGNUP = Signup
+    CREATION_SERVICE = EntityCreationService(DATABASE_OBJECT)
+    SEARCH_SERVICE = SearchService(DATABASE_OBJECT, SEARCH_FILTER, AGGREGATE_FILTER, PAGING)
 
     # for session
     SECRET_KEY = os.environ.get('SECRET_KEY')

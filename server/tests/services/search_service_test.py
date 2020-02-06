@@ -11,10 +11,11 @@ import server.app_utils as app_utils
 
 @pytest.fixture(scope='function')
 def service():
-    mockDB= mocks.createMockDB()
+    mockDB = mocks.createMockDB()
     mockFilter = mocks.createMockFilter()
+    mockAggregate = mocks.createMockAggregateFilter()
     mockPaging = mocks.createMockPaging()
-    yield SearchService(mockDB, mockFilter, mockPaging)
+    yield SearchService(mockDB, mockFilter, mockAggregate, mockPaging)
 
 class TestSearchUsersByKeyValues:
     MOCKDB_DEFAULT_RETURN = dict(
@@ -23,6 +24,7 @@ class TestSearchUsersByKeyValues:
         matchedCount=2,
     )
     MOCKFILTER_DEFAULT_RETURN = 'default_filter'
+    MOCKAGGREGATE_DEFAULT_RETURN = 'default_aggregate'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
     DEFAULT_KEYVALUES = dict(search='username1')
 
@@ -30,15 +32,21 @@ class TestSearchUsersByKeyValues:
     def setDefaultReturnValues(self, service):
         service._repo.searchUser.return_value = self.MOCKDB_DEFAULT_RETURN
         service._filter.createFilter.return_value = self.MOCKFILTER_DEFAULT_RETURN
+        service._aggregate.createFilter.return_value = self.MOCKAGGREGATE_DEFAULT_RETURN
         service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
 
-    def test_searchUsersByKeyValuesConvertsSearchTermToFuzzyFilterForUsername(self, service):
+    def test_searchUsersByKeyValuesConvertsSearchTermToFilters(self, service):
         mockFilter = service._filter
 
         service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockFilter.createFilter.assert_called_with({
+        mockFilter.createFilter.assert_any_call({
             'field': 'userName',
+            'operator': 'fuzzy',
+            'value': [ 'username1' ]
+        })
+        mockFilter.createFilter.assert_any_call({
+            'field': 'displayName',
             'operator': 'fuzzy',
             'value': [ 'username1' ]
         })
@@ -49,11 +57,26 @@ class TestSearchUsersByKeyValues:
 
         service.searchUsersByKeyValues(keyValues)
 
-        mockFilter.createFilter.assert_called_with({
+        mockFilter.createFilter.assert_any_call({
             'field': 'userName',
             'operator': 'fuzzy',
             'value': [ 'username1', 'username2' ]
         })
+        mockFilter.createFilter.assert_any_call({
+            'field': 'displayName',
+            'operator': 'fuzzy',
+            'value': [ 'username1', 'username2' ]
+        })
+
+    def test_searchUsersPassesFiltersToAggregate(self, service):
+        mockAggregate = service._aggregate
+
+        service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
+
+        mockAggregate.createFilter.assert_called_with(
+            'or',
+            [ self.MOCKFILTER_DEFAULT_RETURN, self.MOCKFILTER_DEFAULT_RETURN ]
+        )
 
     def test_searchUserByKeyValuesPassesKeyValuessToPaging(self, service):
         mockPaging = service._paging
@@ -68,7 +91,7 @@ class TestSearchUsersByKeyValues:
         service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
 
         mockDB.searchUser.assert_called_with(
-            [ self.MOCKFILTER_DEFAULT_RETURN ],
+            self.MOCKAGGREGATE_DEFAULT_RETURN,
             self.MOCKPAGING_DEFAULT_RETURN
         )
 
@@ -98,6 +121,7 @@ class TestSearchUserById:
         matchedCount=1,
     )
     MOCKFILTER_DEFAULT_RETURN = 'default_filter'
+    MOCKAGGREGATE_DEFAULT_RETURN = 'default_aggregate'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
     DEFAULT_ID = '11111111'
     DEFAULT_KEYVALUE = dict(offset=20, limit=100)
@@ -106,6 +130,7 @@ class TestSearchUserById:
     def setDefaultReturnValues(self, service):
         service._repo.searchUser.return_value = self.MOCKDB_DEFAULT_RETURN
         service._filter.createFilter.return_value = self.MOCKFILTER_DEFAULT_RETURN
+        service._aggregate.createFilter.return_value = self.MOCKAGGREGATE_DEFAULT_RETURN
         service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
 
     def test_searchUsersByIdConvertsIdToEqFilter(self, service):
@@ -132,7 +157,7 @@ class TestSearchUserById:
         service.searchUsersById(self.DEFAULT_ID, self.DEFAULT_KEYVALUE)
 
         mockDB.searchUser.assert_called_with(
-            [ self.MOCKFILTER_DEFAULT_RETURN ],
+            self.MOCKFILTER_DEFAULT_RETURN,
             self.MOCKPAGING_DEFAULT_RETURN,
         )
 
@@ -155,6 +180,7 @@ class TestSearchPostsByKeyValues:
         matchedCount=1,
     )
     MOCKFILTER_DEFAULT_RETURN = 'default_filter'
+    MOCKAGGREGATE_DEFAULT_RETURN = 'default_aggregate'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
     DEFAULT_KEYVALUE = dict(search='some_content')
 
@@ -163,6 +189,7 @@ class TestSearchPostsByKeyValues:
         service._repo.searchPost.return_value = self.MOCKDB_DEFAULT_RETURN
         service._repo.searchUser.return_value = self.MOCKDB_USER_DEFAULT_RETURN
         service._filter.createFilter.return_value = self.MOCKFILTER_DEFAULT_RETURN
+        service._aggregate.createFilter.return_value = self.MOCKAGGREGATE_DEFAULT_RETURN
         service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
 
     def test_searchPostsByKeyValuesConvertsSearchTermToFuzzyFilter(self, service):
@@ -175,6 +202,37 @@ class TestSearchPostsByKeyValues:
             operator='fuzzy',
             value=[ self.DEFAULT_KEYVALUE['search'] ]
         ))
+
+    def test_searchPostByKeyValuesConvertsCertainKeysToEqFilter(self, service):
+        mockFilter = service._filter
+        fieldNameAgainstValuesList = [
+            dict(fieldname=['threadId'], value=['11223344']),
+            dict(fieldname=['userId'], value=['99999999']),
+            dict(fieldname=['createdAt'], value=[11113333]),
+            dict(fieldname=['threadId', 'createdAt'], value=['11223344', 11113333]),
+        ]
+
+        for fieldNameAgainstValues in fieldNameAgainstValuesList:
+            mockFilter.reset_mock()
+            keyValue = {}
+            for fieldname, value in zip(fieldNameAgainstValues['fieldname'], fieldNameAgainstValues['value']):
+                keyValue[fieldname] = value
+            
+            service.searchPostsByKeyValues(keyValue)
+
+            for fieldname, value in zip(fieldNameAgainstValues['fieldname'], fieldNameAgainstValues['value']):
+                mockFilter.createFilter.assert_any_call(dict(
+                    field=fieldname,
+                    operator='eq',
+                    value=[value]
+                ))
+
+    def test_searchPostsByKeyValuesPassesFiltersToAggregate(self, service):
+        mockAggregate = service._aggregate
+
+        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
+
+        mockAggregate.createFilter.assert_called_with('and', [ self.MOCKFILTER_DEFAULT_RETURN ])
 
     def test_searchPostsByKeyValuesPassesKeyValueToPaging(self, service):
         mockPaging = service._paging
@@ -201,7 +259,7 @@ class TestSearchPostsByKeyValues:
         service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
 
         mockDB.searchPost.assert_any_call(
-            [ self.MOCKFILTER_DEFAULT_RETURN ],
+            self.MOCKAGGREGATE_DEFAULT_RETURN,
             self.MOCKPAGING_DEFAULT_RETURN
         )
 
@@ -239,7 +297,7 @@ class TestSearchPostsByKeyValues:
         service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
 
         mockDB.searchUser.assert_called_with(
-            [ self.MOCKFILTER_DEFAULT_RETURN ]
+            self.MOCKFILTER_DEFAULT_RETURN
         )
 
     def test_searchPostByKeyValuesReturnWhatReturnedFromBothQueries(self, service):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Utility class for the entire app
+Utility functions for the entire app
 """
 
 def getDB(app):
@@ -8,6 +8,9 @@ def getDB(app):
 
 def getFilter(app):
     return app.config['SEARCH_FILTER']
+
+def getAggregateFilter(app):
+    return app.config['AGGREGATE_FILTER']
 
 def getPaging(app):
     return app.config['PAGING']
@@ -20,3 +23,6 @@ def getSignup(app):
 
 def getSearchService(app):
     return app.config['SEARCH_SERVICE']
+
+def getCreationService(app):
+    return app.config['CREATION_SERVICE']
