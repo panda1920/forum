@@ -114,60 +114,6 @@ class TestSearchUsersByKeyValues:
 
         assert searchResult == self.MOCKDB_DEFAULT_RETURN
 
-class TestSearchUserById:
-    MOCKDB_DEFAULT_RETURN = dict(
-        users=[ 'user1' ],
-        returnCount=1,
-        matchedCount=1,
-    )
-    MOCKFILTER_DEFAULT_RETURN = 'default_filter'
-    MOCKAGGREGATE_DEFAULT_RETURN = 'default_aggregate'
-    MOCKPAGING_DEFAULT_RETURN = 'default_paging'
-    DEFAULT_ID = '11111111'
-    DEFAULT_KEYVALUE = dict(offset=20, limit=100)
-
-    @pytest.fixture(scope='function', autouse=True)
-    def setDefaultReturnValues(self, service):
-        service._repo.searchUser.return_value = self.MOCKDB_DEFAULT_RETURN
-        service._filter.createFilter.return_value = self.MOCKFILTER_DEFAULT_RETURN
-        service._aggregate.createFilter.return_value = self.MOCKAGGREGATE_DEFAULT_RETURN
-        service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
-
-    def test_searchUsersByIdConvertsIdToEqFilter(self, service):
-        mockFilter = service._filter
-
-        service.searchUsersById(self.DEFAULT_ID, self.DEFAULT_KEYVALUE)
-
-        mockFilter.createFilter.assert_called_with(dict(
-            field='userId',
-            operator='eq',
-            value=[ self.DEFAULT_ID ]
-        ))
-
-    def test_searchUserByIdPassesKeyValuesToPaging(self, service):
-        mockPaging = service._paging
-
-        service.searchUsersById(self.DEFAULT_ID, self.DEFAULT_KEYVALUE)
-
-        mockPaging.assert_called_with(self.DEFAULT_KEYVALUE)
-
-    def test_searchUserByIdPassesCreatedFilterAndPagingToQuery(self, service):
-        mockDB = service._repo
-        
-        service.searchUsersById(self.DEFAULT_ID, self.DEFAULT_KEYVALUE)
-
-        mockDB.searchUser.assert_called_with(
-            self.MOCKFILTER_DEFAULT_RETURN,
-            self.MOCKPAGING_DEFAULT_RETURN,
-        )
-
-    def test_searchUserByIdReturnsWhatDBReturns(self, service):
-        mockDB = service._repo
-        
-        response = service.searchUsersById(self.DEFAULT_ID, self.DEFAULT_KEYVALUE)
-
-        assert response == self.MOCKDB_DEFAULT_RETURN
-
 class TestSearchPostsByKeyValues:
     MOCKDB_DEFAULT_RETURN = dict(
         posts=[ dict(userId='11111111') ],

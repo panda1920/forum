@@ -8,13 +8,26 @@ import tests.mocks as mocks
 import server.app_utils as app_utils
 import server.exceptions as exceptions
 
+DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES = 'some_value'
+DEFAULT_RETURN_CREATENEWPOST = None
+DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES = 'some_value'
+DEFAULT_RETURN_SIGNUP = None
+
 @pytest.fixture(scope='function')
 def mockApp(app):
     # replace with mock
-    app.config['DATABASE_OBJECT'] = mocks.createMockDB()
-    app.config['SEARCH_FILTER'] = mocks.createMockFilter()
-    app.config['PAGING'] = mocks.createMockPaging()
-    app.config['SIGNUP'] = mocks.createMockSignup()
+    mockDB = mocks.createMockDB()
+    app.config['DATABASE_OBJECT'] = mockDB
+
+    mockCreate = mocks.createMockEntityCreationService()
+    mockCreate.signup.return_value = DEFAULT_RETURN_SIGNUP
+    mockCreate.createNewPost.return_value = DEFAULT_RETURN_CREATENEWPOST
+    app.config['CREATION_SERVICE'] = mockCreate
+    
+    mockSearch = mocks.createMockSearchService()
+    mockSearch.searchPostsByKeyValues.return_value = DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES
+    mockSearch.searchUsersByKeyValues.return_value = DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
+    app.config['SEARCH_SERVICE'] = mockSearch
 
     yield app
 
@@ -153,150 +166,146 @@ class TestServerAPIs:
 class TestPostsAPI:
     POSTSAPI_BASE_URL = '/v1/posts'
 
-    def test_searchPostsAPI(self, mockApp):
-        mockDB = app_utils.getDB(mockApp)
-        mockDB.searchPost.return_value = ['post1', 'post2']
-        mockFilter = app_utils.getFilter(mockApp)
-        mockFilter.createFilter.return_value = 'mockfilter'
-        mockPaging = app_utils.getPaging(mockApp)
-        mockPaging.return_value = 'mockPaging'
+    def test_searchPostsAPIPassesQueryStringToSearchService(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        keyValues = dict(
+            search='1 2 3 4',
+        )
 
         with mockApp.test_client() as client:
-            search = {
-                'search': '1 2 3 4'
-            }
-            response = client.get(self.POSTSAPI_BASE_URL, query_string=search)
+            response = client.get(self.POSTSAPI_BASE_URL, query_string=keyValues)
 
-            # check response
+            mockSearch.searchPostsByKeyValues.assert_called_with(keyValues)
+
+    def test_searchPostsAPIReturns200AndWhatsReturnedFromService(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        keyValues = dict(
+            search='1 2 3 4',
+        )
+
+        with mockApp.test_client() as client:
+            response = client.get(self.POSTSAPI_BASE_URL, query_string=keyValues)
+
             assert response.status_code == 200
+            jsonResponse = response.get_json()
+            assert jsonResponse['searchResult'] == DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES
 
-            # check arguments passed to searchPost
-            assert mockDB.searchPost.call_count == 1
-            firstArg = mockDB.searchPost.call_args[0][0]
-            assert firstArg == [mockFilter.createFilter.return_value]
-            secondArg = mockDB.searchPost.call_args[0][1]
-            assert secondArg == mockPaging.return_value
-
-            # check correct filter was created
-            assert mockFilter.createFilter.call_args[0][0]['value'] == ['1', '2', '3', '4']
-
-            # check posts returned
-            responseBodyJSON = response.get_json()
-            assert responseBodyJSON['posts'] == mockDB.searchPost.return_value
-
-    def test_searchPostsWithoutSearchStringReturnsNothing(self, mockApp):
-        with mockApp.test_client() as client:
-            response = client.get(self.POSTSAPI_BASE_URL)
-
-            assert response.status_code == 400
-
-            responseBodyJSON = response.get_json()
-            assert responseBodyJSON['posts'] == []
-
-    def test_searchPostsWithEmptySearchReturnsNothing(self, mockApp):
-        with mockApp.test_client() as client:
-            search = {
-                'search': ''
-            }
-            response = client.get(self.POSTSAPI_BASE_URL, query_string=search)
-
-            assert response.status_code == 400
-
-            responseBodyJSON = response.get_json()
-            assert responseBodyJSON['posts'] == []
-
-    def test_whenSearchPostsRaisesErrorReturnsError(self, mockApp):
-        mockDB = app_utils.getDB(mockApp)
-        search = {
-            'search': '1 2 3 4'
-        }
+    def test_searchPostsReturnsErrorWhenExceptionWasRaised(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
         exceptionsToTest = [
-            exceptions.RecordNotFoundError('Some error'),
-            exceptions.ServerMiscError('Some error')
+            exceptions.EntityValidationError,
+            exceptions.FailedMongoOperation,
+            exceptions.ServerMiscError
         ]
+        keyValues = dict(
+            search='1 2 3 4',
+        )
 
         for e in exceptionsToTest:
-            mockDB.searchPost.side_effect = e
             with mockApp.test_client() as client:
-                response = client.get(self.POSTSAPI_BASE_URL, query_string=search)
+                mockSearch.searchPostsByKeyValues.side_effect = e()
+                response = client.get(self.POSTSAPI_BASE_URL, query_string=keyValues)
 
                 assert response.status_code == e.getStatusCode()
 
-
-    def test_searchPostsByExplicitIDReturns1Post(self, mockApp):
-        postId = 'aaabbb90'
+    def test_searchPostsAPIByIdPassesIdToSearchService(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        postId = '11223344'
         url = f'{self.POSTSAPI_BASE_URL}/{postId}'
-        mockDB = app_utils.getDB(mockApp)
-        mockDB.searchPost.return_value = ['user1']
-        mockFilter = app_utils.getFilter(mockApp)
-        mockFilter.createFilter.return_value = 'testFilter'
+
+        with mockApp.test_client() as client:
+            response = client.get(url)
+
+            mockSearch.searchPostsByKeyValues.assert_called_with(dict(
+                postId=postId
+            ))
+
+    def searchPostsByIdAPIIgnoresQueryString(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        postId = '11223344'
+        url = f'{self.POSTSAPI_BASE_URL}/{postId}'
+        keyValues = dict(offset=30, limit=100)
+
+        with mockApp.test_client() as client:
+            response = client.get(url, query_string=keyValues)
+
+            mockSearch.searchPostsByKeyValues.assert_called_with(dict(
+                postId=postId
+            ))
+
+    def test_searchPostsByIdAPIReturns200AndWhatsReturnedFromService(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        postId = '11223344'
+        url = f'{self.POSTSAPI_BASE_URL}/{postId}'
 
         with mockApp.test_client() as client:
             response = client.get(url)
 
             assert response.status_code == 200
+            jsonResponse = response.get_json()
+            assert jsonResponse['searchResult'] == DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES
 
-            # make sure searchPost was called
-            assert mockDB.searchPost.call_count == 1
-            firstArg = mockDB.searchPost.call_args[0][0]
-            assert firstArg == [mockFilter.createFilter.return_value]
-
-            # make sure correct filter was created
-            assert mockFilter.createFilter.call_count == 1
-            firstArg = mockFilter.createFilter.call_args[0][0]
-            assert firstArg['value'] == [postId]
-
-            # returns post
-            responseBodyJSON = response.get_json()
-            assert responseBodyJSON['posts'] == mockDB.searchPost.return_value
-
-    def test_searchPostsByExplicitIDReturnsErrorWhenExceptionRaised(self, mockApp):
-        mockDB = app_utils.getDB(mockApp)
-        postId = 'aaabbb90'
-        url = f'{self.POSTSAPI_BASE_URL}/{postId}'
-        
+    def test_searchPostsByIdAPIReturnsErrorWhenServiceRaisesException(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
         exceptionsToTest = [
-            exceptions.RecordNotFoundError('Some error'),
-            exceptions.ServerMiscError('Some error'),
+            exceptions.EntityValidationError,
+            exceptions.FailedMongoOperation,
+            exceptions.ServerMiscError
         ]
+        postId = '11223344'
+        url = f'{self.POSTSAPI_BASE_URL}/{postId}'
 
         for e in exceptionsToTest:
-            mockDB.searchPost.side_effect = e
             with mockApp.test_client() as client:
+                mockSearch.searchPostsByKeyValues.side_effect = e()
                 response = client.get(url)
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_createPostAPICallsDBToCreatePostAndReturns201(self, mockApp):
-        mockDB = app_utils.getDB(mockApp)
+    def test_createPostAPIPassesPostedDataToService(self, mockApp):
+        mockCreate = app_utils.getCreationService(mockApp)
+        newPostData = dict(
+            userId='0',
+            content='This is a test post'
+        )
         url = f'{self.POSTSAPI_BASE_URL}/create'
-        newPostData = {
-            'userId': '0',
-            'content': 'This is a test post',
-        }
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+
+        with mockApp.test_client() as client:
+            response = client.post(url, data=newPostData, headers=headers)
+
+            mockCreate.createNewPost.assert_called_with(newPostData)
+
+    def test_createPostAPIReturns201(self, mockApp):
+        mockCreate = app_utils.getCreationService(mockApp)
+        newPostData = dict(
+            userId='0',
+            content='This is a test post'
+        )
+        url = f'{self.POSTSAPI_BASE_URL}/create'
         headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
         with mockApp.test_client() as client:
             response = client.post(url, data=newPostData, headers=headers)
 
             assert response.status_code == 201
-            mockDB.createPost.assert_called_with(newPostData)
 
-    def test_whenCreatePostRaisesExceptionReturnsError(self, mockApp):
-        mockDB = app_utils.getDB(mockApp)
+    def test_createPostAPIReturnsErrorWhenServiceRaisesException(self, mockApp):
+        mockCreate = app_utils.getCreationService(mockApp)
+        newPostData = dict(
+            userId='0',
+            content='This is a test post'
+        )
         url = f'{self.POSTSAPI_BASE_URL}/create'
-        newPostData = {
-            'userId': '0',
-            'content': 'This is a test post',
-        }
         headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
         exceptionsToTest = [
-            exceptions.EntityValidationError('Some error happened'),
-            exceptions.ServerMiscError('Some error happened')
+            exceptions.EntityValidationError,
+            exceptions.FailedMongoOperation,
+            exceptions.ServerMiscError
         ]
 
         for e in exceptionsToTest:
-            mockDB.createPost.side_effect = e
+            mockCreate.createNewPost.side_effect = e()
             with mockApp.test_client() as client:
                 response = client.post(url, data=newPostData, headers=headers)
 

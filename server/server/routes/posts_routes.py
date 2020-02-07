@@ -39,6 +39,7 @@ def postSearch():
         return make_response('', 200)
     except Exception as e:
         return route_utils.createTextResponse(str(e), 500)
+    pass
     
 @routes.route('/api/post', methods=['DELETE'])
 def postDelete():
@@ -59,35 +60,29 @@ def postUpdate():
 @routes.route('/v1/posts', methods=['GET'])
 def searchPostsv1():
     try:
-        paging = app_utils.getPaging(current_app)(request.args)
-        searchFilters = route_utils.createSearchFilters(request.args, 'content')
-        posts = app_utils.getDB(current_app).searchPost(searchFilters, paging)
+        search = app_utils.getSearchService(current_app)
+        result = search.searchPostsByKeyValues({ **request.args })
+        return route_utils.createJSONResponse( [dict(searchResult=result)], 200)
     except MyAppException as e:
-        return route_utils.createJSONErrorResponse(e, [ route_utils.createPostsObject([]) ])
-
-    return route_utils.createJSONResponse([ route_utils.createPostsObject(posts) ], 200)
+        return route_utils.createJSONErrorResponse(e)
 
 @routes.route('/v1/posts/<postId>', methods=['GET'])
 def searchPostsByIdv1(postId):
-    searchFilters = route_utils.createIDFilters(fieldName='postId', idValue=postId)
-
     try:
-        posts = app_utils.getDB(current_app).searchPost(searchFilters)
+        search = app_utils.getSearchService(current_app)
+        result = search.searchPostsByKeyValues(dict(postId=postId))
+        return route_utils.createJSONResponse( [dict(searchResult=result)], 200)
     except MyAppException as e:
-        return route_utils.createJSONErrorResponse(e, [ route_utils.createPostsObject([]) ])
-
-    return route_utils.createJSONResponse([ route_utils.createPostsObject(posts) ], 200)
+        return route_utils.createJSONErrorResponse(e)
 
 @routes.route('/v1/posts/create', methods=['POST'])
 def createPostsv1():
     try:
-        postProps = request.form
-        app_utils.getDB(current_app).createPost({**postProps})
+        create = app_utils.getCreationService(current_app)
+        create.createNewPost({**request.form})
+        return route_utils.createJSONResponse([], 201)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
-
-    return route_utils.createJSONResponse([ route_utils.createPostsObject([]) ], 201)
-
 
 @routes.route('/v1/posts/<postId>/update', methods=['PATCH'])
 def updatePostv1(postId):

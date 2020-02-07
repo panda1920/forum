@@ -4,7 +4,9 @@ This file houses aggregate search filters like
 AND, OR, NOT
 """
 
-class AggregateFilter:
+from server.database.filter import Filter
+
+class AggregateFilter(Filter):
     """
     Base class for classes that combines multiple filters to declare
     complicated filter operations.
@@ -89,6 +91,9 @@ class AndFilter(AggregateFilter):
     def __init__(self, filters):
         self._filters = filters
 
+    def getOpString(self):
+        return 'and'
+
     def setFilters(self, filters):
         self._filters = filters
 
@@ -118,8 +123,8 @@ class OrFilter(AggregateFilter):
     def __init__(self, filters):
         self._filters = filters
 
-    def __init__(self, filters):
-        self._filters = filters
+    def getOpString(self):
+        return 'or'
 
     def setFilters(self, filters):
         self._filters = filters

@@ -8,11 +8,10 @@ from unittest.mock import create_autospec
 from flask import g, request, session
 
 from server.database.crudmanager import CrudManager
-from server.database.filter import Filter
+from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
 from server.middleware.userauth import UserAuthentication
-from server.middleware.signup import Signup
 from server.services.search_service import SearchService
 from server.services.entity_creation_service import EntityCreationService
 
@@ -20,7 +19,7 @@ def createMockDB():
     return create_autospec(CrudManager)
 
 def createMockFilter():
-    return create_autospec(Filter)
+    return create_autospec(PrimitiveFilter)
 
 def createMockAggregateFilter():
     return create_autospec(AggregateFilter)
@@ -30,9 +29,6 @@ def createMockPaging():
 
 def createMockUserAuth():
     return create_autospec(UserAuthentication)
-
-def createMockSignup():
-    return create_autospec(Signup)
 
 def createMockRequest():
     return create_autospec(request, instance=True)

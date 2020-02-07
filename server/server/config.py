@@ -3,11 +3,10 @@ from pathlib import Path
 
 from server.database.file_crudmanager import FileCrudManager
 from server.database.mongo_crudmanager import MongoCrudManager
-from server.database.filter import Filter
+from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
 from server.middleware.userauth import UserAuthentication
-from server.middleware.signup import Signup
 from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
 
@@ -23,13 +22,12 @@ class Config:
         os.environ.get('MONGO_DBNAME', 'TEST_MYFORUMWEBAPP'),
         USER_AUTHENTICATION
     )
-    SEARCH_FILTER = Filter
+    SEARCH_FILTER = PrimitiveFilter
     AGGREGATE_FILTER = AggregateFilter
     PAGING = Paging
 
     # services
-    SIGNUP = Signup
-    CREATION_SERVICE = EntityCreationService(DATABASE_OBJECT)
+    CREATION_SERVICE = EntityCreationService(DATABASE_OBJECT, SEARCH_FILTER)
     SEARCH_SERVICE = SearchService(DATABASE_OBJECT, SEARCH_FILTER, AGGREGATE_FILTER, PAGING)
 
     # for session

@@ -43,12 +43,6 @@ class SearchService:
 
         return self._repo.searchUser(aggregate, paging)
 
-    def searchUsersById(self, userId, keyValues):
-        searchFilter = self._createFilter('userId', 'eq', [userId])
-        paging = self._paging(keyValues)
-
-        return self._repo.searchUser(searchFilter, paging)
-
     def searchPostsByKeyValues(self, keyValues):
         # create aggregate search filter
         searchFilters = []

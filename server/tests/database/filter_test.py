@@ -15,7 +15,7 @@ class TestFilterCreation:
             'value': [100],
             'field': 'content',
         }
-        f = Filter.createFilter(querystringObj)
+        f = PrimitiveFilter.createFilter(querystringObj)
 
         assert isinstance(f, FuzzyStringFilter)
     
@@ -25,7 +25,7 @@ class TestFilterCreation:
             'value': [100],
             'field': 'content',
         }
-        f = Filter.createFilter(querystringObj)
+        f = PrimitiveFilter.createFilter(querystringObj)
 
         assert isinstance(f, GTFilter)
     
@@ -35,7 +35,7 @@ class TestFilterCreation:
             'value': [100],
             'field': 'content',
         }
-        f = Filter.createFilter(querystringObj)
+        f = PrimitiveFilter.createFilter(querystringObj)
 
         assert isinstance(f, GTEFilter)
     
@@ -45,7 +45,7 @@ class TestFilterCreation:
             'value': [100],
             'field': 'content',
         }
-        f = Filter.createFilter(querystringObj)
+        f = PrimitiveFilter.createFilter(querystringObj)
 
         assert isinstance(f, LTFilter)
     
@@ -55,7 +55,7 @@ class TestFilterCreation:
             'value': [100],
             'field': 'content',
         }
-        f = Filter.createFilter(querystringObj)
+        f = PrimitiveFilter.createFilter(querystringObj)
 
         assert isinstance(f, LTEFilter)
     
@@ -65,7 +65,7 @@ class TestFilterCreation:
             'value': [100],
             'field': 'content',
         }
-        f = Filter.createFilter(querystringObj)
+        f = PrimitiveFilter.createFilter(querystringObj)
 
         assert isinstance(f, EQFilter)
 
@@ -78,7 +78,7 @@ class TestFilterCreation:
 
         with pytest.raises(FilterParseError):
             for querystringObj in querystringObjs:
-                Filter.createFilter(querystringObj)
+                PrimitiveFilter.createFilter(querystringObj)
 
     def test_createFilterThrowsErrorWhenInvalidOperator(self):
         querystringObj = {
@@ -88,7 +88,7 @@ class TestFilterCreation:
         }
 
         with pytest.raises(InvalidFilterOperatorError):
-            Filter.createFilter(querystringObj)
+            PrimitiveFilter.createFilter(querystringObj)
 
 class TestFilterMatching:
     FIELD_TO_COMPARE = 'counter'
@@ -225,7 +225,7 @@ class TestFilterMatching:
         op = args[0]
         fieldValue = args[1] if len(args) > 1 else [self.FIELD_VALUE]
         
-        return Filter.createFilter(
+        return PrimitiveFilter.createFilter(
             {
             'operator': op,
             'field': self.FIELD_TO_COMPARE,
@@ -242,7 +242,7 @@ class TestFilterComparison:
         field = args[1] if len(args) > 1 else self.DEFAULT_FIELD
         fieldValue = args[2:] if len(args) > 2 else self.DEFAULT_FIELD_VALUES
         
-        return Filter.createFilter(
+        return PrimitiveFilter.createFilter(
             {
             'operator': op,
             'field': field,
