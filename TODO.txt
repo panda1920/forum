@@ -1,14 +1,16 @@
 FORUM
     [DB]
-        - Implement password encyrption
         - Add sorting
-        - Implement CRUD operations in some sort of real DB system
-            probably mongoDB
+        - Figure out how to make transactional operation
+            Seems like I need to configure replicas for the mongoDB
+            Figure out how to do this, especially with docker.
+            https://stackoverflow.com/questions/58301553/creating-a-mongo-replicaset-in-a-circleci-job
+        - Figure out how to make SSL connection from backend to DB
+            Password authentication necessary?
+        - Make sure exceptions are thrown at failed attempt on CRUD operation
             
     [Flask]
         - Implement user authentication system
-            Consider SSL connection.
-            Need encryption?
         - Implement user authentication system to operations that need it
         - Impement user authorizaiton
             Operations yields differing result depending on the current logged in user
@@ -17,21 +19,23 @@ FORUM
         - stop returning the saerch results directly; carefully select which information to disclose and which not to
         - Handle entities inside the app as separate class instead of bare dictionary
         - Consider using Flask-Session for server-side session management
-        - Consider CORS restriction from frontend-to-backend during development
+        - Implement business logic in middleware; separate it from the routes
+        - Currently user session is being dealth by cookies;
+            change this to a token-based solution so that AJAX request/mobile apps(potentially)
+            can also leverage the session information.
     
     [Frontend]
-        - Figure out how to carry around user information on the client side
-            sessionstorage, localstorage?
-        - Create a simple page to signup user
         - Create a simple page to write posts
         - Figure out routing of SPA that utilizes HTML5 history
             https://github.com/ReactTraining/react-router/blob/master/FAQ.md#how-do-i-access-the-history-object-outside-of-components
             https://codeburst.io/full-stack-single-page-application-with-vue-js-and-flask-b1e036315532
+        - Figure out react testing library
 
     [Deployment]
         - Deploy on amazon
+            Figure out how to import secrets in the app.
         - Try using docker
-        - Get a CI system going
 
     [TESTING]
         - figure out how to test session with flask
+        - figure out why dependency install takes so long on the CI despite caching

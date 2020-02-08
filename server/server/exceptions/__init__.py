@@ -71,7 +71,7 @@ class InvalidSession(MyAppException):
     """
     @classmethod
     def getStatusCode(cls):
-        return 
+        return 400
 
 class RecordNotFoundError(MyAppException):
     """
@@ -89,3 +89,19 @@ class ServerMiscError(MyAppException):
     @classmethod
     def getStatusCode(cls):
         return 500
+
+class FailedMongoOperation(MyAppException):
+    """
+    Failed to perform CRUD operation
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 500
+
+class DuplicateUserError(MyAppException):
+    """
+    User was found when signup
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 500    

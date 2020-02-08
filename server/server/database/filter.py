@@ -6,43 +6,70 @@ class Filter:
     """
     An object that defines search filter
     Passed to database object when querying for records
-    Conceptually a filter consists of the following 3 elements:
+    Conceptuatlly it does the following 2 things:
+        - determine if record matches the defined filter
+        - pump out mongo expression of filter as dict
+    """
+    def getOpString(self):
+        """
+        get a string that represents filter operation
+        used and overrided by subclass
+        """
+        raise NotImplementedError
+
+    def getMongoFilter(self):
+        """
+        forumlates a mongo filter that can be used for searching documents
+        """
+        raise NotImplementedError
+    
+    def matches(self, record):
+        """
+        Determines if target record matches the filter
+        """
+        raise NotImplementedError
+
+class PrimitiveFilter(Filter):
+    """
+    Base class for filters that are not aggregates.
+    Defines search filter against a record.
+    Conceptually a primitive filter consists of the following 3 elements:
         - target field
         - value(s) of the field to look for
         - operator used to compare the above field value against records in db
     """
     @staticmethod
-    def createFilter(querystringObj):
+    def createFilter(keyValues):
         """
         Factory method to create a derivative instance of Filter
         """
-        Filter.validateQuerystringObj(querystringObj)
+        PrimitiveFilter.validateKeyValues(keyValues)
         
-        operator = querystringObj['operator']
+        operator = keyValues['operator']
         if operator == 'fuzzy':
-            return FuzzyStringFilter(querystringObj)
+            return FuzzyStringFilter(keyValues)
         elif operator == 'gt':
-            return GTFilter(querystringObj)
+            return GTFilter(keyValues)
         elif operator == 'gte':
-            return GTEFilter(querystringObj)
+            return GTEFilter(keyValues)
         elif operator == 'lt':
-            return LTFilter(querystringObj)
+            return LTFilter(keyValues)
         elif operator == 'lte':
-            return LTEFilter(querystringObj)
+            return LTEFilter(keyValues)
         elif operator == 'eq':
-            return EQFilter(querystringObj)
+            return EQFilter(keyValues)
         elif operator == 'regex':
-            return RegexFilter(querystringObj)
+            return RegexFilter(keyValues)
         else:
             raise InvalidFilterOperatorError(f'Operator {operator} is not defined')
 
     @classmethod
-    def validateQuerystringObj(cls, querystringObj):
+    def validateKeyValues(cls, keyValues):
         """
         validate that dictionary contains enough information to form a search filter
         """
         v = Validator(schema=cls._filterSchema, allow_unknown=True)
-        isValidated = v.validate(querystringObj)
+        isValidated = v.validate(keyValues)
         if not isValidated:
             raise FilterParseError('Failed construting search filter')
 
@@ -61,28 +88,9 @@ class Filter:
         },
     }
 
-    def __init__(self, querystringObj):
-        self._field = querystringObj['field']
-        self._values = querystringObj['value']
-
-    def getOpString(self):
-        """
-        get a string that represents filter operation
-        used and overrided by subclass
-        """
-        return NotImplementedError
-
-    # def parse(self, querystringObj):
-    #     raise NotImplementedError
-
-    def isFieldInRecord(self, record):
-        return self._field in record.keys()
-    
-    def matches(self, record):
-        """
-        Determines if target record matches the filter
-        """
-        raise NotImplementedError
+    def __init__(self, keyValues):
+        self._field = keyValues['field']
+        self._values = keyValues['value']
 
     def __eq__(self, other):
         if not isinstance(other, Filter):
@@ -94,15 +102,21 @@ class Filter:
             self._values == other._values,
         ])
 
-class FuzzyStringFilter(Filter):
+    def isFieldInRecord(self, record):
+        return self._field in record.keys()
+
+class FuzzyStringFilter(PrimitiveFilter):
     """
     Allows fuzzy searches like searching for post that contains a certain substring
     """
     def getOpString(self):
-        """
-        returns string value that represents this filter class
-        """
         return 'fuzzy'
+
+    def getMongoFilter(self):
+        concattedWithPipe = '|'.join(self._values)
+        return {
+            self._field: { '$regex': f'{concattedWithPipe}', '$options': 'i'} 
+        }
 
     def matches(self, record):
         if not self.isFieldInRecord(record):
@@ -114,7 +128,7 @@ class FuzzyStringFilter(Filter):
 
         return False
 
-class GTFilter(Filter):
+class GTFilter(PrimitiveFilter):
     """
     Greater than filter
     """
@@ -132,7 +146,7 @@ class GTFilter(Filter):
         fieldValue = self._values[0]
         return record[self._field] > fieldValue
 
-class GTEFilter(Filter):
+class GTEFilter(PrimitiveFilter):
     """
     Greater than or equal to filter
     """
@@ -146,7 +160,7 @@ class GTEFilter(Filter):
         fieldValue = self._values[0]
         return record[self._field] >= fieldValue
 
-class LTFilter(Filter):
+class LTFilter(PrimitiveFilter):
     """
     Less than filter
     """
@@ -160,7 +174,7 @@ class LTFilter(Filter):
         fieldValue = self._values[0]
         return record[self._field] < fieldValue
 
-class LTEFilter(Filter):
+class LTEFilter(PrimitiveFilter):
     """
     Less than or equal to filter
     """
@@ -174,12 +188,17 @@ class LTEFilter(Filter):
         fieldValue = self._values[0]
         return record[self._field] <= fieldValue
     
-class EQFilter(Filter):
+class EQFilter(PrimitiveFilter):
     """
     Exact match filter
     """
     def getOpString(self):
         return 'eq'
+
+    def getMongoFilter(self):
+        return {
+            self._field: { '$in': self._values } 
+        }
 
     def matches(self, record):
         if not self.isFieldInRecord(record):
@@ -191,7 +210,7 @@ class EQFilter(Filter):
 
         return False
     
-class RegexFilter(Filter):
+class RegexFilter(PrimitiveFilter):
     """
     Regular expression filter
     """

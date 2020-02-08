@@ -11,3 +11,12 @@ def app():
     app = server.setupApp()
     app.testing = True
     yield app
+
+@pytest.fixture(scope='function')
+def saveOldConfig(app):
+    oldConf = app.config
+    app.config = {**oldConf}
+    
+    yield
+
+    app.config = oldConf

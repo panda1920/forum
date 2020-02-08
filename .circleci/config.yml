@@ -7,6 +7,12 @@ jobs:
       - image: circleci/python:3.7.0
         environment:
           PIPENV_VENV_IN_PROJECT: true
+          MONGO_HOSTNAME: localhost
+          MONGO_PORT: 27017
+      
+      # docker image for test db
+      - image: circleci/mongo:4.2
+
     steps:
       - checkout
       - run:
@@ -29,7 +35,7 @@ jobs:
           name: Run tests
           command: |
             cd ./server
-            pipenv run testl
+            pipenv run test
       - save_cache:
           name: Saving dependency cache
           key: deps-v2-{{ checksum "./server/Pipfile.lock"}}

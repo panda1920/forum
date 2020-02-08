@@ -24,7 +24,7 @@ class NewUser:
         },
         'createdAt': {
             'type': 'float',
-            'required': True,
+            'required': False,
         },
     }
     _validator = Validator(_schema, allow_unknown=False)
@@ -51,7 +51,7 @@ class UpdateUser:
             'required': False,
         },
     }
-    _validator = Validator(_schema, allow_unknown=True)
+    _validator = Validator(_schema, allow_unknown=False)
 
     @classmethod
     def validate(cls, updateUser):

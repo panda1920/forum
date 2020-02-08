@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses utility logic used by various routes
+"""
+
 import json
 
 from flask import make_response, current_app
@@ -21,6 +26,14 @@ def createUsersObject(users):
     return {
         'users': users
     }
+
+def createSearchResultObject(result):
+    return dict(
+        searchResult=result
+    )
+
+def createSearchResultResponse(result):
+    return createJSONResponse([ dict(searchResult=result) ], 200)
 
 def createJSONErrorResponse(error, datas = [], additionalHeaders = {}):
     datas.append({

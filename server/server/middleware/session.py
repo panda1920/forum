@@ -1,5 +1,3 @@
-import pytest
-
 import server.app_utils as app_utils
 import server.routes.route_utils  as route_utils 
 import server.exceptions as exceptions

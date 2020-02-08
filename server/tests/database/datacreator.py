@@ -16,7 +16,7 @@ class DataCreator:
         'Johnson',
     ]
     EMAIL_DOMAIN = '@myforumwebapp.com'
-    POSTCOUNT_PER_USER_ENG = 198
+    POSTCOUNT_PER_USER_ENG = 48
     POSTCOUNT_PER_USER_JPN = 2
     POSTCOUNT_PER_USER = POSTCOUNT_PER_USER_ENG + POSTCOUNT_PER_USER_JPN
 
@@ -27,16 +27,18 @@ class DataCreator:
         self._testDataPath.unlink()
         self._testDataPath.touch()
 
-        users = self.createUsers()
-        posts = self.createPosts(users)
+        users = self._createUsers()
+        posts = self._createPosts(users)
+        counters = self._createCounters()
 
         with self._testDataPath.open('w', encoding='utf-8') as f:
             json.dump({
                 'users': users,
-                'posts': posts
+                'posts': posts,
+                'counters': counters,
             }, f)
 
-    def createUsers(self):
+    def _createUsers(self):
         users = []
         now = time()
         for idx, username in enumerate(self.USERS):
@@ -50,27 +52,45 @@ class DataCreator:
         
         return users
 
-    def createPosts(self, users):
+    def _createPosts(self, users):
         posts = []
         now = time()
 
         for userCount, user in enumerate(users):
-            for n in range(self.POSTCOUNT_PER_USER_ENG):
-                posts.append({
-                    'postId': str(userCount * self.POSTCOUNT_PER_USER + n),
-                    'userId': user['userId'],
-                    'content': f'{user["displayName"]}\'s post {n}',
-                    'createdAt': now
-                })
-            for n in range(self.POSTCOUNT_PER_USER_JPN):
-                posts.append({
-                    'postId': str(userCount * self.POSTCOUNT_PER_USER + self.POSTCOUNT_PER_USER_ENG + n),
-                    'userId': user['userId'],
-                    'content': f'ユーザ名：{user["displayName"]}による{n}番目の投稿です',
-                    'createdAt': now
-                })
+            for n in range(self.POSTCOUNT_PER_USER):
+                postId = str(userCount * self.POSTCOUNT_PER_USER + n)
+
+                if n < self.POSTCOUNT_PER_USER_ENG:
+                    posts.append(self._createEnglishPost(
+                        user, n, postId, now
+                    ))
+                else:
+                    posts.append(self._createJapanesePost(
+                        user, n, postId, now
+                    ))
 
         return posts
+
+    def _createEnglishPost(self, user, postNum, postId, createdAt):
+        return {
+            'postId': postId,
+            'userId': user['userId'],
+            'content': f'{user["displayName"]}\'s post {postNum}',
+            'createdAt': createdAt
+        }
+    def _createJapanesePost(self, user, postNum, postId, createdAt):
+        return {
+            'postId': postId,
+            'userId': user['userId'],
+            'content': f'ユーザ名：{user["displayName"]}による{postNum}番目の投稿です',
+            'createdAt': createdAt
+        }
+
+    def _createCounters(self):
+        return [
+            dict( fieldname='userId', value=len( self.USERS ) ),
+            dict( fieldname='postId', value=self.getTotalPostCount() ),
+        ]
 
     @classmethod
     def getUsernames(cls):

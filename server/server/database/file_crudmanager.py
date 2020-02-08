@@ -1,8 +1,15 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses class for file-based database system
+Used during the early phases of development
+"""
+
+
 import json
 import time
 
-from server.database.database import Database
-from server.database.filter import Filter
+from server.database.crudmanager import CrudManager
+from server.database.filter import PrimitiveFilter
 from server.database.paging import Paging, PagingNoLimit
 from server.entity.user import NewUser, UpdateUser
 from server.entity.post import NewPost, UpdatePost
@@ -38,16 +45,19 @@ def updateJSONFileContent(filenameAttr):
         return wrapper
     return updateJSONFileContentDecorator
 
-class SimpleFile(Database):
+class FileCrudManager(CrudManager):
     USERS_FILENAME = 'users.json'
     POSTS_FILENAME = 'posts.json'
     THREADS_FILENAME = 'threads.json'
+    COUNTERS_FILENAME = 'counters.json'
 
-    def __init__(self, filePath):
+    def __init__(self, filePath, userauth):
         self._saveLocation = filePath
         self._usersFile = self.createIfNotExist(self._saveLocation / self.USERS_FILENAME)
         self._postsFile = self.createIfNotExist(self._saveLocation / self.POSTS_FILENAME)
         self._threadsFile = self.createIfNotExist(self._saveLocation / self.THREADS_FILENAME)
+        self._countersFile = self.createIfNotExist(self._saveLocation / self.COUNTERS_FILENAME)
+        self._userauth = userauth
 
     def createIfNotExist(self, filePath):
         if not filePath.exists():
@@ -65,20 +75,25 @@ class SimpleFile(Database):
         
         self._createUserImpl(user)
 
-    def searchUser(self, searchFilters, paging = Paging()):
-        if len(searchFilters) == 0:
-            return []
-
+    def searchUser(self, searchFilter, paging = Paging()):
         with self._usersFile.open('r', encoding='utf-8') as f:
             users = json.load(f)
 
-        matchedUsers = []
-        for user in users[paging.offset:]:
-            matchedConditions = [ search.matches(user) for search in searchFilters ]
-            if all(matchedConditions):
-                matchedUsers.append(user)
+        if searchFilter is None:
+            matchedUsers = users
+        else:
+            matchedUsers = []
+            for user in users:
+                if searchFilter.matches(user):
+                    matchedUsers.append(user)
 
-        return matchedUsers[:paging.limit]
+        start = paging.offset
+        end = None if paging.limit is None else start + paging.limit
+        return {
+            'users': matchedUsers[start:end],
+            'returnCount': len(matchedUsers[start:end]),
+            'matchedCount': len(matchedUsers),
+        }
 
     def deleteUser(self, userIds):
         self._deleteUserImpl(userIds)
@@ -96,20 +111,25 @@ class SimpleFile(Database):
 
         self._createPostImpl(post)
 
-    def searchPost(self, searchFilters, paging = Paging()):
-        if len(searchFilters) == 0:
-            return []
-
+    def searchPost(self, searchFilter, paging = Paging()):
         with self._postsFile.open('r', encoding='utf-8') as f:
             posts = json.load(f)
 
-        matchedPosts = []
-        for post in posts[paging.offset:]:
-            matchConditions = [search.matches(post) for search in searchFilters]
-            if all(matchConditions):
-                matchedPosts.append(post)
+        if searchFilter is None:
+            matchedPosts = posts
+        else:
+            matchedPosts = []
+            for post in posts:
+                if searchFilter.matches(post):
+                    matchedPosts.append(post)
 
-        return matchedPosts[:paging.limit]
+        start = paging.offset
+        end = None if paging.limit is None else start + paging.limit
+        return {
+            'posts': matchedPosts[start:end],
+            'returnCount': len(matchedPosts[start:end]),
+            'matchedCount': len(matchedPosts),
+        }
 
     def deletePost(self, postIds):
         self._deletePostImpl(postIds)
@@ -122,15 +142,18 @@ class SimpleFile(Database):
 
     @updateJSONFileContent('_usersFile')
     def _createUserImpl(self, user, currentUsers = None):
+        user['password'] = self._userauth.hashPassword( user['password'] )
+        user['userId'] = str( self._getCounter('userId') )
+        self._incrementCounter('userId')
         return [*currentUsers, user]
 
     @updateJSONFileContent('_usersFile')
     def _deleteUserImpl(self, userIds, currentUsers = None):
         # delete related posts
         postsToDelete = self.searchPost(
-            [Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds })], 
+            PrimitiveFilter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds }), 
             PagingNoLimit()
-        )
+        )['posts']
         self.deletePost( [post['postId'] for post in postsToDelete] )
         
         updatedUsers = [
@@ -152,7 +175,10 @@ class SimpleFile(Database):
             raise RecordNotFoundError(f'User with id of {user["userId"]} was not found.')
         
         for field in UpdateUser.getUpdatableFields():
-            updatedUsers[userIdxToUpdate][field] = user[field]
+            if field == 'password':
+                updatedUsers[userIdxToUpdate][field] = self._userauth.hashPassword( user[field] )
+            else:
+                updatedUsers[userIdxToUpdate][field] = user[field]
         
         return updatedUsers
 
@@ -179,3 +205,18 @@ class SimpleFile(Database):
             updatedPosts[postIdxToUpdate][field] = post[field]
         
         return updatedPosts
+
+    def _getCounter(self, fieldname):
+        with self._countersFile.open('r', encoding='utf-8') as f:
+            counters = json.load(f)
+            for counter in counters:
+                if counter['fieldname'] == fieldname:
+                    return counter['value']
+
+    @updateJSONFileContent('_countersFile')
+    def _incrementCounter(self, fieldname, currentCounters = None):
+        counters = [*currentCounters]
+        for counter in counters:
+            if counter['fieldname'] == fieldname:
+                counter['value'] += 1
+        return counters

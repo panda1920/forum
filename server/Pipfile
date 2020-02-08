@@ -11,13 +11,14 @@ flask = "*"
 cerberus = "*"
 passlib = "*"
 bcrypt = "*"
+pymongo = "*"
 
 [requires]
 python_version = "3.7"
 
 [scripts]
 start = "python -m flask run"
-testdata = "python server/tests/database/datacreator.py"
+testdata = "python ./tests/database/datacreator.py"
 random = "python -m server.randomcode"
 test = "python -m pytest -ra"
 testl = "python -m pytest -ra -m \"not slow\""

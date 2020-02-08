@@ -19,7 +19,7 @@ class NewPost:
         },
         'createdAt': {
             'type': 'float',
-            'required': True,
+            'required': False,
         }
     }
     _validator = Validator(_schema, allow_unknown=False)
@@ -27,6 +27,10 @@ class NewPost:
     @classmethod
     def validate(cls, newPost):
         return cls._validator.validate(newPost)
+
+    @classmethod
+    def getFields(cls):
+        return cls._schema.keys()
 
 class UpdatePost:
     """
@@ -42,7 +46,7 @@ class UpdatePost:
             'required': True,
         },
     }
-    _validator = Validator(_schema, allow_unknown=True)
+    _validator = Validator(_schema, allow_unknown=False)
 
     @classmethod
     def validate(cls, updatePost):

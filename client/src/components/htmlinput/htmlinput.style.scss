@@ -1,0 +1,33 @@
+$border-settings: 1px solid gray;
+
+.htmlinput {
+    position: relative;
+    box-sizing: border-box;
+    background-color: lightblue;
+    border: $border-settings;
+
+    .htmlinput-menubar {
+        height: 2em;
+        background-color:gray;
+        border: $border-settings;
+        border-top: 0px;
+    }
+    .htmlinput-input {
+        min-height: 150px;
+        padding: 5px 10px;
+    }
+    .htmlinput-postbutton {
+        outline: inherit;
+        background: white;
+        border: none;
+        padding: none;
+        color: gray;
+        text-align: center;
+        height: 2em;
+        width: 100px;
+        
+        &:hover {
+            cursor: pointer;
+        }
+    }
+}

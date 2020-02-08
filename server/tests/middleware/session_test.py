@@ -4,7 +4,6 @@ from contextlib import contextmanager
 from server import server
 import tests.mocks as mocks
 import server.exceptions as exceptions
-from server.database import database
 from server.database.filter import Filter
 from server.middleware.session import SessionManager as session
     
