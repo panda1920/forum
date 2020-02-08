@@ -19,7 +19,7 @@ routes = Blueprint('userRoutes', __name__)
 def searchUserv1():
     try:
         search = app_utils.getSearchService(current_app)
-        result = search.searchUsersByKeyValues({ **request.args })
+        result = search.searchUsersByKeyValues( request.args.to_dict(flat=True) )
         return route_utils.createSearchResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
@@ -37,7 +37,7 @@ def searchUserByIDv1(userId):
 def createUserv1():
     try:
         create = app_utils.getCreationService(current_app)
-        create.signup({ **request.form })
+        create.signup (request.form.to_dict(flat=True) )
         return route_utils.createJSONResponse([], 201)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)

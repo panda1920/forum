@@ -61,7 +61,7 @@ def postUpdate():
 def searchPostsv1():
     try:
         search = app_utils.getSearchService(current_app)
-        result = search.searchPostsByKeyValues({ **request.args })
+        result = search.searchPostsByKeyValues( request.args.to_dict(flat=True) )
         return route_utils.createSearchResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
@@ -79,7 +79,7 @@ def searchPostsByIdv1(postId):
 def createPostsv1():
     try:
         create = app_utils.getCreationService(current_app)
-        create.createNewPost({**request.form})
+        create.createNewPost( request.form.to_dict(flat=True) )
         return route_utils.createJSONResponse([], 201)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
