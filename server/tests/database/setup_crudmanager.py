@@ -115,11 +115,23 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
+    def getCounter(self, fieldname):
+        """
+        returns the current countervalue associated with fieldname
+        
+        Args:
+            fieldname (str): specify which fieldname
+        Returns:
+            (int)
+        """
+        raise NotImplementedError
+
 class Setup_FileCrudManager(SetupCrudManager):
     def __init__(self):
         self._saveLocation = Path(__file__).resolve().parents[0] / 'temp'
         self._usersFile = self._saveLocation / FileCrudManager.USERS_FILENAME
         self._postsFile = self._saveLocation / FileCrudManager.POSTS_FILENAME
+        self._countersFile = self._saveLocation / FileCrudManager.COUNTERS_FILENAME
         self._testdata = self._readTestData()
         self._userauth = mocks.createMockUserAuth()
         self._db = FileCrudManager(self._saveLocation, self._userauth)
@@ -128,6 +140,7 @@ class Setup_FileCrudManager(SetupCrudManager):
         self._saveLocation.mkdir(exist_ok=True)
         self._writeObjToFile(self._testdata['users'], self._usersFile)
         self._writeObjToFile(self._testdata['posts'], self._postsFile)
+        self._writeObjToFile(self._testdata['counters'], self._countersFile)
 
     def cleanup(self):
         shutil.rmtree(self._saveLocation, ignore_errors=True)
@@ -177,6 +190,13 @@ class Setup_FileCrudManager(SetupCrudManager):
     def getDB(self):
         return self._db
 
+    def getCounter(self, fieldname):
+        counters = self._readJson(self._countersFile)
+        for counter in counters:
+            if counter['fieldname'] == fieldname:
+                return counter['value']
+        return None
+
     def getMockUserAuth(self):
         return self._userauth
 
@@ -208,11 +228,13 @@ class Setup_MongoCrudManager(SetupCrudManager):
         db = self._getDB()
         db['users'].insert_many(self._testdata['users'])
         db['posts'].insert_many(self._testdata['posts'])
+        db['counters'].insert_many(self._testdata['counters'])
 
     def cleanup(self):
         db = self._getDB()
-        db.drop_collection('users')
-        db.drop_collection('posts')
+        db['users'].delete_many({})
+        db['posts'].delete_many({})
+        db['counters'].delete_many({})
 
     def teardown(self):
         self._mongo.drop_database(self.TEST_DBNAME)
@@ -252,6 +274,12 @@ class Setup_MongoCrudManager(SetupCrudManager):
 
     def getDB(self):
         return self._db
+
+    def getCounter(self, fieldname):
+        query = dict(
+            fieldname={'$eq': fieldname}
+        )
+        return self._getDB()['counters'].find_one(query)['value']
 
     def getMockUserAuth(self):
         return self._userauth

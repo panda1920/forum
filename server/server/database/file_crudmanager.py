@@ -9,7 +9,7 @@ import json
 import time
 
 from server.database.crudmanager import CrudManager
-from server.database.filter import Filter
+from server.database.filter import PrimitiveFilter
 from server.database.paging import Paging, PagingNoLimit
 from server.entity.user import NewUser, UpdateUser
 from server.entity.post import NewPost, UpdatePost
@@ -49,12 +49,14 @@ class FileCrudManager(CrudManager):
     USERS_FILENAME = 'users.json'
     POSTS_FILENAME = 'posts.json'
     THREADS_FILENAME = 'threads.json'
+    COUNTERS_FILENAME = 'counters.json'
 
     def __init__(self, filePath, userauth):
         self._saveLocation = filePath
         self._usersFile = self.createIfNotExist(self._saveLocation / self.USERS_FILENAME)
         self._postsFile = self.createIfNotExist(self._saveLocation / self.POSTS_FILENAME)
         self._threadsFile = self.createIfNotExist(self._saveLocation / self.THREADS_FILENAME)
+        self._countersFile = self.createIfNotExist(self._saveLocation / self.COUNTERS_FILENAME)
         self._userauth = userauth
 
     def createIfNotExist(self, filePath):
@@ -141,13 +143,15 @@ class FileCrudManager(CrudManager):
     @updateJSONFileContent('_usersFile')
     def _createUserImpl(self, user, currentUsers = None):
         user['password'] = self._userauth.hashPassword( user['password'] )
+        user['userId'] = str( self._getCounter('userId') )
+        self._incrementCounter('userId')
         return [*currentUsers, user]
 
     @updateJSONFileContent('_usersFile')
     def _deleteUserImpl(self, userIds, currentUsers = None):
         # delete related posts
         postsToDelete = self.searchPost(
-            Filter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds }), 
+            PrimitiveFilter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds }), 
             PagingNoLimit()
         )['posts']
         self.deletePost( [post['postId'] for post in postsToDelete] )
@@ -201,3 +205,18 @@ class FileCrudManager(CrudManager):
             updatedPosts[postIdxToUpdate][field] = post[field]
         
         return updatedPosts
+
+    def _getCounter(self, fieldname):
+        with self._countersFile.open('r', encoding='utf-8') as f:
+            counters = json.load(f)
+            for counter in counters:
+                if counter['fieldname'] == fieldname:
+                    return counter['value']
+
+    @updateJSONFileContent('_countersFile')
+    def _incrementCounter(self, fieldname, currentCounters = None):
+        counters = [*currentCounters]
+        for counter in counters:
+            if counter['fieldname'] == fieldname:
+                counter['value'] += 1
+        return counters

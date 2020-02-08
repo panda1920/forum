@@ -29,9 +29,15 @@ class MongoCrudManager(CrudManager):
 
     def createUser(self, user):
         self._validateEntity(NewUser, user)
+        user['password'] = self._userauth.hashPassword( user['password'] )
+        counterQuery = self._createCounterQuery('userId')
 
         with self._mongoOperationHandling('Failed to create user'):
-            self._db['users'].insert_one( self._hashUserPassword(user) )
+            userIdCounter = self._db['counters'].find_one(counterQuery)
+            user['userId'] = str( userIdCounter['value'] )
+            update = { '$inc': { 'value': 1 } }
+            self._db['users'].insert_one(user)
+            self._db['counters'].update_one(counterQuery, update)
 
     def searchUser(self, searchFilter, paging = Paging()):
         query = {} if searchFilter is None else searchFilter.getMongoFilter() 
@@ -41,6 +47,7 @@ class MongoCrudManager(CrudManager):
         with self._mongoOperationHandling('Failed to search user'):
             users = list( self._db['users'].find(query)[start:end] )
             matchedCount = self._db['users'].count_documents(query)
+            
         return {
             'users': users,
             'returnCount': len(users),
@@ -57,9 +64,9 @@ class MongoCrudManager(CrudManager):
 
     def updateUser(self, user):
         self._validateEntity(UpdateUser, user)
+        user['password'] = self._userauth.hashPassword( user['password'] )
+        update = self._createMongoUpdate(UpdateUser, user)
         query = { 'userId': { '$eq': user['userId'] } }
-        passwordHashedUser = self._hashUserPassword(user)
-        update = self._createMongoUpdate(UpdateUser, passwordHashedUser)
         
         with self._mongoOperationHandling('Failed to update user'):
             result = self._db['users'].update_one(query, update)
@@ -108,11 +115,6 @@ class MongoCrudManager(CrudManager):
         if result.modified_count == 0:
             raise exceptions.FailedMongoOperation('failed to update document')
 
-    def _hashUserPassword(self, user):
-        copy = user.copy()
-        copy['password'] = self._userauth.hashPassword( copy['password'] )
-        return copy
-
     def _createMongoUpdate(self, entitySchema, updateProps):
         update = { '$set': {} }
         for field in entitySchema.getUpdatableFields():
@@ -122,6 +124,11 @@ class MongoCrudManager(CrudManager):
     def _validateEntity(self, entitySchema, entity):
         if not entitySchema.validate(entity):
             raise exceptions.EntityValidationError(f'failed to validate {entitySchema.__name__}')
+
+    def _createCounterQuery(self, fieldname):
+        return dict(
+            fieldname={ '$eq': fieldname }
+        )
 
     @contextmanager
     def _mongoOperationHandling(self, errormsg):

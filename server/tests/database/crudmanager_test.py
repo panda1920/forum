@@ -2,7 +2,7 @@ import pytest
 
 from tests.database.setup_crudmanager import Setup_FileCrudManager, Setup_MongoCrudManager
 from tests.database.datacreator import DataCreator
-from server.database.filter import Filter
+from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
 from server.entity.user import UpdateUser
@@ -49,12 +49,26 @@ class TestUserCRUD:
         assert setupDB.getUserCount() == len( setupDB.getOriginalUsers() ) + 1
         createdUsers = setupDB.findUsers('userName', [ userProps['userName'] ])
         assert len(createdUsers) == 1
+        createdUser = createdUsers[0]
         for prop, value in userProps.items():
             if prop == 'password':
-                assert createdUsers[0][prop] == 'hashed'
+                assert createdUser[prop] == 'hashed'
             else:
-                assert createdUsers[0][prop] == value
+                assert createdUser[prop] == value
         assert mockuserauth.hashPassword.call_count == 1
+
+    def test_createUserShouldHaveUserIdAndIncrementedCounter(self, setupDB):
+        mockuserauth = setupDB.getMockUserAuth()
+        mockuserauth.hashPassword.return_value = 'hashed'
+        userProps = self.createNewUserProps()
+        nextUserId = setupDB.getCounter('userId')
+
+        setupDB.getDB().createUser(userProps)
+
+        createdUser = setupDB.findUsers('userName', [ userProps['userName'] ])[0]
+
+        assert setupDB.getCounter('userId') == nextUserId + 1
+        assert createdUser['userId'] == str(nextUserId)
 
     def test_createUserWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
         userProps = [
@@ -516,7 +530,7 @@ def createNewProps(defaultProps, **kwargs):
     return props
 
 def createSearchFilter(field, operator, values):
-    return Filter.createFilter({
+    return PrimitiveFilter.createFilter({
          'field': field,
          'operator': operator,
          'value': values

@@ -9,7 +9,9 @@ import pytest
 def createDB(request):
     """
     creates setup helper object for testing
+    for this to work properly,
     make sure to specify which setup helper class to use by parametrizing fixture
+    which replaces reuquest.param with the classname
     """
     DBToTest = request.param
     db = DBToTest()
