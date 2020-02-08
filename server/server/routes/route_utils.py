@@ -27,6 +27,14 @@ def createUsersObject(users):
         'users': users
     }
 
+def createSearchResultObject(result):
+    return dict(
+        searchResult=result
+    )
+
+def createSearchResultResponse(result):
+    return createJSONResponse([ dict(searchResult=result) ], 200)
+
 def createJSONErrorResponse(error, datas = [], additionalHeaders = {}):
     datas.append({
         'error': {

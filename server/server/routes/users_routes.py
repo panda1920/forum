@@ -17,35 +17,30 @@ routes = Blueprint('userRoutes', __name__)
 
 @routes.route('/v1/users', methods=['GET'])
 def searchUserv1():
-    # do i need this api?
     try:
-        searchCriteria = route_utils.createSearchFilters(request.args, fieldName='userName')
-        users = app_utils.getDB(current_app).searchUser(searchCriteria)
+        search = app_utils.getSearchService(current_app)
+        result = search.searchUsersByKeyValues({ **request.args })
+        return route_utils.createSearchResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
-    
-    return route_utils.createJSONResponse([ route_utils.createUsersObject(users) ], 200)
 
 @routes.route('/v1/users/<userId>', methods=['GET'])
 def searchUserByIDv1(userId):
     try:
-        searchCriteria = route_utils.createIDFilters(fieldName='userId', idValue=userId)
-        users = app_utils.getDB(current_app).searchUser(searchCriteria)
+        search = app_utils.getSearchService(current_app)
+        result = search.searchUsersByKeyValues( dict(userId=userId) )
+        return route_utils.createSearchResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
-
-    return route_utils.createJSONResponse([ route_utils.createUsersObject(users) ], 200)
 
 @routes.route('/v1/users/create', methods=['POST'])
 def createUserv1():
-    userProperties = request.form
     try:
-        app_utils.getSignup(current_app).signup(userProperties)
+        create = app_utils.getCreationService(current_app)
+        create.signup({ **request.form })
+        return route_utils.createJSONResponse([], 201)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
-
-    return route_utils.createJSONResponse([], 200)
-
 
 @routes.route('/v1/users/<userId>/update', methods=['PATCH'])
 def updateUserv1(userId):

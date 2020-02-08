@@ -10,10 +10,10 @@ The goal of this project is in the learning that happens during the process of a
 - Testing: pytest
 - CI: CircleCI
 - Database: mongoDB
+- Frontend framework: React
 
 ## To be implemented
-- Frontend framework: React
-- Frontend testing: node.js + Jest
+- Frontend testing: node.js + Jest + JSDom + puppeteer
 - HTTP server/proxy: Gunicorn, Nginx
 - CD: CircleCI
 - Hosting: AWS/docker

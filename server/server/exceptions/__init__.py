@@ -71,7 +71,7 @@ class InvalidSession(MyAppException):
     """
     @classmethod
     def getStatusCode(cls):
-        return 
+        return 400
 
 class RecordNotFoundError(MyAppException):
     """

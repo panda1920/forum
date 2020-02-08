@@ -62,7 +62,7 @@ def searchPostsv1():
     try:
         search = app_utils.getSearchService(current_app)
         result = search.searchPostsByKeyValues({ **request.args })
-        return route_utils.createJSONResponse( [dict(searchResult=result)], 200)
+        return route_utils.createSearchResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
 
@@ -71,7 +71,7 @@ def searchPostsByIdv1(postId):
     try:
         search = app_utils.getSearchService(current_app)
         result = search.searchPostsByKeyValues(dict(postId=postId))
-        return route_utils.createJSONResponse( [dict(searchResult=result)], 200)
+        return route_utils.createSearchResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
 

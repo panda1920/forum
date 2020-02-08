@@ -4,7 +4,7 @@ Utility functions for the entire app
 """
 
 def getDB(app):
-    return app.config['DATABASE_OBJECT']
+    return app.config['DATABASE_REPOSITORY']
 
 def getFilter(app):
     return app.config['SEARCH_FILTER']

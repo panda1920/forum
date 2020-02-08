@@ -17,7 +17,7 @@ DEFAULT_RETURN_SIGNUP = None
 def mockApp(app):
     # replace with mock
     mockDB = mocks.createMockDB()
-    app.config['DATABASE_OBJECT'] = mockDB
+    app.config['DATABASE_REPOSITORY'] = mockDB
 
     mockCreate = mocks.createMockEntityCreationService()
     mockCreate.signup.return_value = DEFAULT_RETURN_SIGNUP
@@ -163,7 +163,7 @@ class TestServerAPIs:
         jsonBody = response.get_json()
         assert jsonBody['users'] == users
 
-class TestPostsAPI:
+class TestPostAPIs:
     POSTSAPI_BASE_URL = '/v1/posts'
 
     def test_searchPostsAPIPassesQueryStringToSearchService(self, mockApp):
@@ -399,132 +399,99 @@ class TestPostsAPI:
 class TestUserAPIs:
     USERAPI_BASE_URL = '/v1/users'
 
-    def test_searchUsersReturnUsers(self, mockApp):
-        # setup mock behavior
-        mockDB = app_utils.getDB(mockApp)
-        mockFilter = app_utils.getFilter(mockApp)
-        mockDB.searchUser.return_value = 'user found'
-        mockFilter.createFilter.return_value = 'mock filter'
-
-        query = {
-            'search': 'myusername hisusername herusername'
-        }
+    def test_searchUsersPassesQueryStringToService(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        keyValues = dict(
+            search='username'
+        )
 
         with mockApp.test_client() as client:
-            response = client.get(self.USERAPI_BASE_URL, query_string=query)
+            response = client.get(self.USERAPI_BASE_URL, query_string=keyValues)
+
+            mockSearch.searchUsersByKeyValues.assert_called_with(keyValues)
+
+    def test_searchUsersReturns200AearchResultFromService(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        keyValues = dict(
+            search='username'
+        )
+
+        with mockApp.test_client() as client:
+            response = client.get(self.USERAPI_BASE_URL, query_string=keyValues)
+            jsonResponse =  response.get_json()
 
             assert response.status_code == 200
-
-            assert mockDB.searchUser.call_count == 1
-            arg1Passed = mockDB.searchUser.call_args[0][0]
-            assert len(arg1Passed)  == 1
-            assert arg1Passed[0] == mockFilter.createFilter.return_value
-
-            responseJson = response.get_json()
-            assert responseJson['users'] == mockDB.searchUser.return_value
-
-    def test_searchUsersReturnsErrorWhenFilterCreationRaisesException(self, mockApp):
-        # setup mock
-        app_utils.getFilter(mockApp).createFilter.side_effect = exceptions.FilterParseError('some error')
+            assert jsonResponse['searchResult'] == DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
         
-        query = {
-            'search': 'myusername hisusername herusername'
-        }
-
-        with mockApp.test_client() as client:
-            response = client.get(self.USERAPI_BASE_URL, query_string=query)
-
-            assert response.status_code ==  app_utils.getFilter(mockApp).createFilter.side_effect.getStatusCode()
-
-    def test_searchUsersReturnErrorWhenSearchRaisesException(self, mockApp):
-        # setup mock
-        mockFilter = app_utils.getFilter(mockApp)
-        mockFilter.createFilter.return_value = 'mock filter'
-
-        query = {
-            'search': 'myusername hisusername herusername'
-        }
-
+    def test_searchUsersReturnsErrorWhenServiceRaisesException(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        keyValues = dict(
+            search='username'
+        )
         exceptionsToTest = [
-            exceptions.RecordNotFoundError('some error'),
-            exceptions.ServerMiscError('some error'),
+            exceptions.FailedMongoOperation,
+            exceptions.ServerMiscError,
+            exceptions.InvalidFilterOperatorError,
         ]
 
         for e in exceptionsToTest:
-            app_utils.getDB(mockApp).searchUser.side_effect = e
+            mockSearch.searchUsersByKeyValues.side_effect = e()
             with mockApp.test_client() as client:
-                response = client.get(self.USERAPI_BASE_URL, query_string=query)
+                response = client.get(self.USERAPI_BASE_URL, query_string=keyValues)
 
-                response.status_code == e.getStatusCode()
+                assert response.status_code == e.getStatusCode()
 
-    def test_searchUserReturnsErrorWhenNoQuerystringProvided(self, mockApp):
-        # setup mock behavior
-        mockDB = app_utils.getDB(mockApp)
-        mockFilter = app_utils.getFilter(mockApp)
-        mockDB.searchUser.return_value = 'user found'
-        mockFilter.createFilter.return_value = 'mock filter'
-
-        with mockApp.test_client() as client:
-            response = client.get(self.USERAPI_BASE_URL)
-
-            assert response.status_code == 400
-
-    def test_searchUserByExplicitID(self, mockApp):
-        # setup mock
-        mockDB = app_utils.getDB(mockApp)
-        mockDB.searchUser.return_value = 'user found'
-        mockFilter = app_utils.getFilter(mockApp)
-        mockFilter.createFilter.return_value = 'mock filter'
-
-        userId = '112233'
+    def test_searchUserByExplicitIDPassesUserIdToService(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        userId = '11111111'
         url = f'{self.USERAPI_BASE_URL}/{userId}'
 
         with mockApp.test_client() as client:
             response = client.get(url)
 
-            assert response.status_code == 200
+            mockSearch.searchUsersByKeyValues.assert_called_with(dict(userId=userId))
 
-            assert mockDB.searchUser.call_count == 1
-            arg1Passed = mockDB.searchUser.call_args[0][0]
-            assert arg1Passed == [ mockFilter.createFilter.return_value ]
+    def test_searchUserByExplicitIDIgnoresQueryString(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        userId = '11111111'
+        url = f'{self.USERAPI_BASE_URL}/{userId}'
+        keyValues=dict(offset=30, limit=100)
 
-            jsonResponse = response.get_json()
-            assert jsonResponse['users'] == mockDB.searchUser.return_value
+        with mockApp.test_client() as client:
+            response = client.get(url, query_string=keyValues)
 
-    def test_searchUserByExplicitIDReturnsErrorWhenSearchUserRaisesException(self, mockApp):
-        userId = '112233'
+            mockSearch.searchUsersByKeyValues.assert_called_with(dict(userId=userId))
+
+    def test_searchUserByExplicitIDReturns200AndSearchResultFromService(self, mockApp):
+        userId = '11111111'
         url = f'{self.USERAPI_BASE_URL}/{userId}'
 
+        with mockApp.test_client() as client:
+            response = client.get(url)
+            jsonResponse = response.get_json()
+
+            assert response.status_code == 200
+            assert jsonResponse['searchResult'] == DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
+
+    def test_searchUserByExplicitIDReturnsErrorWhenServiceRaisesException(self, mockApp):
+        mockSearch = app_utils.getSearchService(mockApp)
+        userId = '11111111'
+        url = f'{self.USERAPI_BASE_URL}/{userId}'
         exceptionsToTest = [
-            exceptions.EntityValidationError('some error'),
-            exceptions.RecordNotFoundError('some error'),
-            exceptions.ServerMiscError('some error'),
+            exceptions.FailedMongoOperation,
+            exceptions.ServerMiscError,
+            exceptions.InvalidFilterOperatorError,
         ]
 
         for e in exceptionsToTest:
-            app_utils.getDB(mockApp).searchUser.side_effect = e
-
+            mockSearch.searchUsersByKeyValues.side_effect = e()
             with mockApp.test_client() as client:
                 response = client.get(url)
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_searchUserExplciitIDReturnsErrorWhenSearchFilterRaisesException(self, mockApp):
-        # setup mock
-        exceptionToTest = exceptions.FilterParseError('some error')
-        mockFilter = app_utils.getFilter(mockApp)
-        mockFilter.createFilter.side_effect = exceptionToTest
-
-        userId = '112233'
-        url = f'{self.USERAPI_BASE_URL}/{userId}'
-
-        with mockApp.test_client() as client:
-            response = client.get(url)
-
-            assert response.status_code == exceptionToTest.getStatusCode()
-
-    def test_createUserReturns200(self, mockApp):
-        mockSignup = app_utils.getSignup(mockApp)
+    def test_createUserPassesFormDataToService(self, mockApp):
+        mockCreate = app_utils.getCreationService(mockApp)
         userProperties = {
             'userName': 'joe@myforumwebapp.com',
             'displayName': 'joe',
@@ -538,15 +505,26 @@ class TestUserAPIs:
         with mockApp.test_client() as client:
             response = client.post(url, data=userProperties, headers=headers)
 
-            assert response.status_code == 200
-            assert mockSignup.signup.call_count == 1
-            argPassed = mockSignup.signup.call_args[0][0]
-            for field, value in argPassed.items():
-                assert value == userProperties[field]
-            
+            mockCreate.signup.assert_called_with(userProperties)
 
-    def test_createUserReturnsErrorWhenSignupThrowsException(self, mockApp):
-        mockSignup = app_utils.getSignup(mockApp)
+    def test_createUserReturns201WhenSuccess(self, mockApp):
+        userProperties = {
+            'userName': 'joe@myforumwebapp.com',
+            'displayName': 'joe',
+            'password': '12345678'
+        }
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+        url = f'{self.USERAPI_BASE_URL}/create'
+
+        with mockApp.test_client() as client:
+            response = client.post(url, data=userProperties, headers=headers)
+
+            assert response.status_code == 201
+
+    def test_createUserReturnsErrorWhenServiceRaisesException(self, mockApp):
+        mockCreate = app_utils.getCreationService(mockApp)
         userProperties = {
             'userName': 'joe@myforumwebapp.com',
             'displayName': 'joe',
@@ -557,12 +535,13 @@ class TestUserAPIs:
         }
         url = f'{self.USERAPI_BASE_URL}/create'
         exceptionsToTest = [
-            exceptions.EntityValidationError('some error'),
-            exceptions.ServerMiscError('some error'),
+            exceptions.FailedMongoOperation,
+            exceptions.ServerMiscError,
+            exceptions.InvalidFilterOperatorError,
         ]
 
         for e in exceptionsToTest:
-            mockSignup.signup.side_effect = e
+            mockCreate.signup.side_effect = e()
             with mockApp.test_client() as client:
                 response = client.post(url, data=userProperties, headers=headers)
 

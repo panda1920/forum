@@ -17,8 +17,8 @@ class Config:
     # define classes/objects that are referenced in the app
     # can be replaced during tests
     USER_AUTHENTICATION = UserAuthentication
-    # DATABASE_OBJECT = FileCrudManager(Path(DATA_LOCATION), USER_AUTHENTICATION)
-    DATABASE_OBJECT = MongoCrudManager(
+    # DATABASE_REPOSITORY = FileCrudManager(Path(DATA_LOCATION), USER_AUTHENTICATION)
+    DATABASE_REPOSITORY = MongoCrudManager(
         os.environ.get('MONGO_DBNAME', 'TEST_MYFORUMWEBAPP'),
         USER_AUTHENTICATION
     )
@@ -27,8 +27,8 @@ class Config:
     PAGING = Paging
 
     # services
-    CREATION_SERVICE = EntityCreationService(DATABASE_OBJECT, SEARCH_FILTER)
-    SEARCH_SERVICE = SearchService(DATABASE_OBJECT, SEARCH_FILTER, AGGREGATE_FILTER, PAGING)
+    CREATION_SERVICE = EntityCreationService(DATABASE_REPOSITORY, SEARCH_FILTER)
+    SEARCH_SERVICE = SearchService(DATABASE_REPOSITORY, SEARCH_FILTER, AGGREGATE_FILTER, PAGING)
 
     # for session
     SECRET_KEY = os.environ.get('SECRET_KEY')
