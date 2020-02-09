@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses tests for paging.py
+"""
+
 import pdb
 import pytest
 
@@ -14,8 +19,8 @@ class TestPagingConstruction:
         }
         p = Paging(querystringObj)
 
-        assert p.offset == TEST_OFFSET_VALUE
-        assert p.limit == TEST_LIMIT_VALUE
+        assert p._offset == TEST_OFFSET_VALUE
+        assert p._limit == TEST_LIMIT_VALUE
 
     def test_constructPagingWithUnrelatedAttributes(self):
         querystringObj = {
@@ -25,8 +30,8 @@ class TestPagingConstruction:
         }
         p = Paging(querystringObj)
 
-        assert p.offset == TEST_OFFSET_VALUE
-        assert p.limit == TEST_LIMIT_VALUE
+        assert p._offset == TEST_OFFSET_VALUE
+        assert p._limit == TEST_LIMIT_VALUE
 
     def test_constructPagingWhenAttributeValueIsConvertableString(self):
         querystringObj = {
@@ -35,24 +40,24 @@ class TestPagingConstruction:
         }
         p = Paging(querystringObj)
 
-        assert p.offset == TEST_OFFSET_VALUE
-        assert p.limit == TEST_LIMIT_VALUE
+        assert p._offset == TEST_OFFSET_VALUE
+        assert p._limit == TEST_LIMIT_VALUE
 
     def test_construtPagingWithDefaultValueWhenAttributeIsMissing(self):
         querystringObjMissingOffset = {
             'limit': TEST_LIMIT_VALUE
         }
         p = Paging(querystringObjMissingOffset)
-        assert p.offset == Paging.DEFAULT_OFFSET
-        assert p.limit == TEST_LIMIT_VALUE
+        assert p._offset == Paging.DEFAULT_OFFSET
+        assert p._limit == TEST_LIMIT_VALUE
         
         querystringObjMissingLimit = {
             'offset': TEST_OFFSET_VALUE
         }
         p = Paging(querystringObjMissingLimit)
         
-        assert p.offset == TEST_OFFSET_VALUE
-        assert p.limit == Paging.DEFAULT_LIMIT
+        assert p._offset == TEST_OFFSET_VALUE
+        assert p._limit == Paging.DEFAULT_LIMIT
 
     def test_constructPagingWith0Limit0Offset(self):
         querystringObj = {
@@ -61,8 +66,8 @@ class TestPagingConstruction:
         }
         p = Paging(querystringObj)
 
-        assert p.offset == 0
-        assert p.limit == 0
+        assert p._offset == 0
+        assert p._limit == 0
 
     def test_constructPagingWithDefaultValueWhenNegativeAttributeIsPassed(self):
         querystringObjs = [
@@ -72,8 +77,8 @@ class TestPagingConstruction:
         for querystringObj in querystringObjs:
             p = Paging(querystringObj)
 
-            assert p.offset == Paging.DEFAULT_OFFSET
-            assert p.limit == Paging.DEFAULT_LIMIT
+            assert p._offset == Paging.DEFAULT_OFFSET
+            assert p._limit == Paging.DEFAULT_LIMIT
 
     def test_constructPagingWithDefaultValueWhenUncovertableValueIsPassed(self):
         querystringObjs = [
@@ -84,8 +89,8 @@ class TestPagingConstruction:
         for querystringObj in querystringObjs:
             p = Paging(querystringObj)
 
-            assert p.offset == Paging.DEFAULT_OFFSET
-            assert p.limit == Paging.DEFAULT_LIMIT
+            assert p._offset == Paging.DEFAULT_OFFSET
+            assert p._limit == Paging.DEFAULT_LIMIT
 
     def test_constructPagingWithFloorValueWhenRealNumberIsPassed(self):
         querystringObj = {
@@ -94,15 +99,15 @@ class TestPagingConstruction:
         }
         p = Paging(querystringObj)
 
-        assert p.offset == 1
-        assert p.limit == 9
+        assert p._offset == 1
+        assert p._limit == 9
 
 class TestPagingNoLimitConstruction:
     def test_constructPagingWithDefaultOffsetAndNoLimitWhenNoConstructorArgs(self):
         p = PagingNoLimit()
         
-        assert p.offset == Paging.DEFAULT_OFFSET
-        assert p.limit == None
+        assert p._offset == Paging.DEFAULT_OFFSET
+        assert p._limit == None
 
     def test_constructionWithNoLimitWhenPassedQuerystring(self):
         querystringObj = {
@@ -111,5 +116,70 @@ class TestPagingNoLimitConstruction:
         }
         p = PagingNoLimit(querystringObj)
 
-        assert p.offset == TEST_OFFSET_VALUE
-        assert p.limit == None
+        assert p._offset == TEST_OFFSET_VALUE
+        assert p._limit == None
+
+class TestPagingMethods:
+    DEFAULT_LIMIT = 3
+    DEFAULT_OFFSET = 2
+
+    @pytest.fixture(scope='function')
+    def paging(self):
+        return Paging(dict(
+            offset = self.DEFAULT_OFFSET,
+            limit = self.DEFAULT_LIMIT,
+        ))
+
+    @pytest.fixture(scope='function')
+    def nolimit(self):
+        return PagingNoLimit(dict(
+            offset=self.DEFAULT_OFFSET
+        ))
+    
+    def test_pagingSlice(self):
+        somelist = [1, 2, 3, 4, 5]
+        pagingParams = [
+            dict(offset=0, limit=3),
+            dict(offset=0, limit=5),
+            dict(offset=0, limit=6),
+            dict(offset=2, limit=3),
+            dict(offset=4, limit=3),
+            dict(offset=0, limit=0),
+        ]
+        expectedSlices = [
+            [1, 2, 3],
+            [1, 2, 3, 4, 5],
+            [1, 2, 3, 4, 5],
+            [3, 4, 5],
+            [5],
+            []
+        ]
+
+        for param, expected in zip(pagingParams, expectedSlices):
+            paging = Paging(param)
+
+            assert expected == paging.slice(somelist)
+
+    def test_pagingNoLimitSlice(self):
+        somelist = [1, 2, 3, 4, 5]
+        pagingParams = [
+            dict(offset=0, limit=3),
+            dict(offset=0, limit=5),
+            dict(offset=0, limit=6),
+            dict(offset=2, limit=3),
+            dict(offset=4, limit=3),
+            dict(offset=0, limit=0),
+        ]
+        expectedSlices = [
+            [1, 2, 3, 4, 5],
+            [1, 2, 3, 4, 5],
+            [1, 2, 3, 4, 5],
+            [3, 4, 5],
+            [5],
+            [1, 2, 3, 4, 5],
+        ]
+
+        for param, expected in zip(pagingParams, expectedSlices):
+            paging = PagingNoLimit(param)
+
+            assert expected == paging.slice(somelist)

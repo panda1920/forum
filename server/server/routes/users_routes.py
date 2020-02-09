@@ -37,7 +37,7 @@ def searchUserByIDv1(userId):
 def createUserv1():
     try:
         create = app_utils.getCreationService(current_app)
-        create.signup (request.form.to_dict(flat=True) )
+        create.signup ( request.form.to_dict(flat=True) )
         return route_utils.createJSONResponse([], 201)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)

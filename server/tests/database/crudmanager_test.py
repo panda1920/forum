@@ -306,6 +306,17 @@ class TestPostCRUD:
         for field, value in postProps.items():
             assert createdPost[0][field] == value
 
+    def test_createPostShouldHavePostIdAndIncrementedCounter(self, setupDB):
+        postProps = self.createNewPostProps()
+        nextPostId = setupDB.getCounter('postId')
+
+        setupDB.getDB().createPost(postProps)
+
+        createdPost = setupDB.findPosts('content', [ postProps['content'] ])[0]
+
+        assert setupDB.getCounter('postId') == nextPostId + 1
+        assert createdPost['postId'] == str(nextPostId)
+
     def test_createPostWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
         postsToCreate = [
             self.createNewPostProps(content=None),

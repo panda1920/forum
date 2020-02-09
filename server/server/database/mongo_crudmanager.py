@@ -30,22 +30,17 @@ class MongoCrudManager(CrudManager):
     def createUser(self, user):
         self._validateEntity(NewUser, user)
         user['password'] = self._userauth.hashPassword( user['password'] )
-        counterQuery = self._createCounterQuery('userId')
 
         with self._mongoOperationHandling('Failed to create user'):
-            userIdCounter = self._db['counters'].find_one(counterQuery)
-            user['userId'] = str( userIdCounter['value'] )
-            update = { '$inc': { 'value': 1 } }
+            nextUserId = self._getCounterAndIncrement('userId')
+            user['userId'] = str(nextUserId)
             self._db['users'].insert_one(user)
-            self._db['counters'].update_one(counterQuery, update)
 
     def searchUser(self, searchFilter, paging = Paging()):
         query = {} if searchFilter is None else searchFilter.getMongoFilter() 
-        start = paging.offset
-        end = None if paging.limit is None else start + paging.limit
 
         with self._mongoOperationHandling('Failed to search user'):
-            users = list( self._db['users'].find(query)[start:end] )
+            users = list(paging.slice( self._db['users'].find(query) ))
             matchedCount = self._db['users'].count_documents(query)
             
         return {
@@ -80,15 +75,15 @@ class MongoCrudManager(CrudManager):
         self._validateEntity(NewPost, post)
         
         with self._mongoOperationHandling('Failed to create post'):
-            result = self._db['posts'].insert_one(post)
+            nextPostId = self._getCounterAndIncrement('postId')
+            post['postId'] = str(nextPostId)
+            self._db['posts'].insert_one(post)
     
     def searchPost(self, searchFilter, paging = Paging()):
         query = {} if searchFilter is None else searchFilter.getMongoFilter()
-        start = paging.offset
-        end = None if paging.limit is None else start + paging.limit
 
         with self._mongoOperationHandling('Failed to search post'):
-            posts = list( self._db['posts'].find(query)[start:end] )
+            posts = list(paging.slice( self._db['posts'].find(query) ))
             matchedCount = self._db['posts'].count_documents(query)
 
         return {
@@ -129,6 +124,14 @@ class MongoCrudManager(CrudManager):
         return dict(
             fieldname={ '$eq': fieldname }
         )
+
+    def _getCounterAndIncrement(self, fieldname):
+        counterQuery = self._createCounterQuery(fieldname)
+        counterValue = self._db['counters'].find_one(counterQuery)['value']
+        update = { '$inc': { 'value': 1 } }
+        self._db['counters'].update_one(counterQuery, update)
+
+        return counterValue
 
     @contextmanager
     def _mongoOperationHandling(self, errormsg):

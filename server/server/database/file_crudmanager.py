@@ -74,6 +74,7 @@ class FileCrudManager(CrudManager):
             raise EntityValidationError('failed to validate new user object')
         
         self._createUserImpl(user)
+        self._incrementCounter('userId')
 
     def searchUser(self, searchFilter, paging = Paging()):
         with self._usersFile.open('r', encoding='utf-8') as f:
@@ -87,11 +88,10 @@ class FileCrudManager(CrudManager):
                 if searchFilter.matches(user):
                     matchedUsers.append(user)
 
-        start = paging.offset
-        end = None if paging.limit is None else start + paging.limit
+        returnUsers = paging.slice(matchedUsers)
         return {
-            'users': matchedUsers[start:end],
-            'returnCount': len(matchedUsers[start:end]),
+            'users': returnUsers,
+            'returnCount': len(returnUsers),
             'matchedCount': len(matchedUsers),
         }
 
@@ -110,6 +110,7 @@ class FileCrudManager(CrudManager):
             raise EntityValidationError('failed to validate new post object')
 
         self._createPostImpl(post)
+        self._incrementCounter('postId')
 
     def searchPost(self, searchFilter, paging = Paging()):
         with self._postsFile.open('r', encoding='utf-8') as f:
@@ -123,11 +124,10 @@ class FileCrudManager(CrudManager):
                 if searchFilter.matches(post):
                     matchedPosts.append(post)
 
-        start = paging.offset
-        end = None if paging.limit is None else start + paging.limit
+        returnPosts = paging.slice(matchedPosts)
         return {
-            'posts': matchedPosts[start:end],
-            'returnCount': len(matchedPosts[start:end]),
+            'posts': returnPosts,
+            'returnCount': len(returnPosts),
             'matchedCount': len(matchedPosts),
         }
 
@@ -144,7 +144,6 @@ class FileCrudManager(CrudManager):
     def _createUserImpl(self, user, currentUsers = None):
         user['password'] = self._userauth.hashPassword( user['password'] )
         user['userId'] = str( self._getCounter('userId') )
-        self._incrementCounter('userId')
         return [*currentUsers, user]
 
     @updateJSONFileContent('_usersFile')
@@ -184,6 +183,7 @@ class FileCrudManager(CrudManager):
 
     @updateJSONFileContent('_postsFile')
     def _createPostImpl(self, post, currentPosts = None):
+        post['postId'] = str( self._getCounter('postId') )
         return [*currentPosts, post]
 
     @updateJSONFileContent('_postsFile')

@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses a class to declare paging options for database requests
+"""
+
 from cerberus import Validator
 
 class Paging:
@@ -27,11 +32,17 @@ class Paging:
     }
 
     def __init__(self, keyValues = {}):
-        parsed = self.parseKeyValues(keyValues)
-        self.offset = parsed['offset']
-        self.limit = parsed['limit']
+        parsed = self._parseKeyValues(keyValues)
+        self._offset = parsed['offset']
+        self._limit = parsed['limit']
 
-    def parseKeyValues(self, keyValues):
+    def slice(self, list):
+        start = self._offset
+        end = start + self._limit
+
+        return list[start:end]
+
+    def _parseKeyValues(self, keyValues):
         copy = keyValues.copy()
         v = Validator(schema=self._schema, allow_unknown=True)
         if v.validate(copy):
@@ -49,4 +60,7 @@ class PagingNoLimit(Paging):
     def __init__(self, keyValues = {}):
         super().__init__(keyValues)
 
-        self.limit = None
+        self._limit = None
+
+    def slice(self, list):
+        return list[self._offset:]
