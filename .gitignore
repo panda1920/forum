@@ -22,6 +22,10 @@ client/coverage
 # production
 client/build/
 
+# archived assets
+client/public/**/*.zip
+client/public/**/*.rar
+
 # misc
 .DS_Store
 .env.local

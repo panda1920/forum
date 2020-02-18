@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses tests for file_crudmanager.py and mongo_crudmanager.py
+"""
+
 import pytest
 
 from tests.database.setup_crudmanager import Setup_FileCrudManager, Setup_MongoCrudManager

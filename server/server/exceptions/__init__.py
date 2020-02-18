@@ -104,4 +104,12 @@ class DuplicateUserError(MyAppException):
     """
     @classmethod
     def getStatusCode(cls):
-        return 500    
+        return 500
+
+class FailedAWSOperation(MyAppException):
+    """
+    Operation on external AWS service failed
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 500
