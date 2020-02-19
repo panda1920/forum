@@ -1,0 +1,14 @@
+[flake8]
+exclude =
+    conftest.py
+    ./pytest_cache,
+    *.json,
+    __pycache__,
+
+ignore = 
+    # suppress spaces between square brackets
+    E201,E202,
+    # suppress blank line contains whitespace error
+    W293,
+
+max-line-length = 100
