@@ -227,17 +227,16 @@ class TestS3FileRepository:
                 repo.searchFiles(searchFilter)
 
     def test_deleteFileShouldRemoveFileFromRepo(self, putMultipleSampleFiles, cleanupS3Bucket):
-        filename_to_delete = DEFAULT_TEST_FILENAMES[0]
         repo = S3FileRepository(TEST_BUCKETNAME)
 
-        repo.deleteFiles( [filename_to_delete] )
+        repo.deleteFiles( DEFAULT_TEST_FILENAMES[0:1] )
         
         file_infos = retrieveS3Objects( createS3Client() )
         assert len(file_infos) == 2
         for file_info in file_infos:
-            assert filename_to_delete != file_info['Key']
+            assert file_info['Key'] not in DEFAULT_TEST_FILENAMES[0:1]
 
-    def test_deleteFilesShouldRemoveMultipleFileFromRepo(
+    def test_deleteFilesShouldRemoveMultipleFilesFromRepo(
         self, putMultipleSampleFiles, cleanupS3Bucket
     ):
         repo = S3FileRepository(TEST_BUCKETNAME)

@@ -14,7 +14,7 @@ server/server/data/
 server/**/temp/
 
 # some experimental code
-server/playground/
+server/server/playground/
 
 # some research data not part of codebase
 research/
