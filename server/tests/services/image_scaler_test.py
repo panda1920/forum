@@ -22,13 +22,14 @@ NON_IMAGE = TESTDATA_PATH / 'some_text01.txt'
 
 
 @pytest.fixture(scope='function')
-def cleanup_temp():
-    shutil.rmtree(TEMPORARY_STORAGE, ignore_errors=True)
+def setup_temp():
     TEMPORARY_STORAGE.mkdir(exist_ok=True)
+    yield
+    shutil.rmtree(TEMPORARY_STORAGE, ignore_errors=True)
 
 
 class TestImageScaler:
-    def test_resizeBinaryShouldResizeJpegImageToSpecifiedDimension(self, cleanup_temp):
+    def test_resizeBinaryShouldResizeJpegImageToSpecifiedDimension(self, setup_temp):
         with IMAGE_01.open('rb') as fp:
             binary = fp.read()
         dimensions = [
@@ -45,7 +46,7 @@ class TestImageScaler:
 
             assert image.size == dimension
 
-    def test_resizeBinaryShouldResizePngImageToSpecifiedDimension(self, cleanup_temp):
+    def test_resizeBinaryShouldResizePngImageToSpecifiedDimension(self, setup_temp):
         with IMAGE_02.open('rb') as fp:
             binary = fp.read()
         dimensions = [
@@ -62,7 +63,7 @@ class TestImageScaler:
 
             assert image.size == dimension
 
-    def test_reiszeBinaryShouldRaiseExceptionWhenBinaryofNonImagePassed(self, cleanup_temp):
+    def test_reiszeBinaryShouldRaiseExceptionWhenBinaryofNonImagePassed(self, setup_temp):
         with NON_IMAGE.open('rb') as fp:
             binary = fp.read()
         dimension = (20, 20)
@@ -71,7 +72,7 @@ class TestImageScaler:
         with pytest.raises(exceptions.InvalidImageFileError):
             imagescaler.resize_image_binary(binary, dimension)
 
-    def test_resizeBinaryShouldRaiseExceptionWhenExecutionFailed(self, cleanup_temp):
+    def test_resizeBinaryShouldRaiseExceptionWhenExecutionFailed(self, setup_temp):
         with IMAGE_01.open('rb') as fp:
             binary = fp.read()
         dimension = (20, 20)

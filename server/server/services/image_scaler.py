@@ -34,15 +34,12 @@ class ImageScalerBase:
 class ImageScaler(ImageScalerBase):
     def resize_image_binary(self, binary, dimension):
         try:
-            binary_stream = io.BytesIO(binary)
-            image = Image.open(binary_stream)
-            imageformat = image.format  # jpeg, png etc;
+            image = self._binary_to_image(binary)
+            image_format = image.format  # jpeg, png etc;
 
             resized = image.resize(dimension)
             
-            binary_stream.seek(0)
-            resized.save(binary_stream, imageformat)
-            return binary_stream.getvalue()
+            return self._image_to_binary(resized, image_format)
         
         except UnidentifiedImageError as e:
             logging.error(e)
@@ -51,3 +48,28 @@ class ImageScaler(ImageScalerBase):
         except Exception as e:
             logging.error(e)
             raise exceptions.ServerMiscError('Failed image resize')
+
+    def _binary_to_image(self, binary):
+        """
+        converts binary bytes to PIL image
+        
+        Args:
+            binary(bytes): binary of image
+        Returns:
+            PIL image
+        """
+        return Image.open( io.BytesIO(binary) )
+
+    def _image_to_binary(self, image, image_format):
+        """
+        converts PIL image to binary bytes
+        
+        Args:
+            image: PIL image
+            image_format: desired format of output binary; jpeg, png etc.
+        Returns:
+            Bytes
+        """
+        binary_stream = io.BytesIO()
+        image.save(binary_stream, image_format)
+        return binary_stream.getvalue()

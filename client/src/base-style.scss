@@ -1,0 +1,13 @@
+// defines base styles to be referenced by other styles
+$colors: (
+    '00': rgb(50, 50, 50),
+    '01': rgb(220, 220, 220),
+    '02': rgb(220, 150, 50)
+);
+
+$font-size: (
+    'header': 40px,
+    'large': 20px,
+    'medium': 14px,
+    'small': 10px,
+);

@@ -14,7 +14,7 @@ export const createDeleteApiPath = (apiPath, id) => {
 }
 
 // apiPath: userAPi, postsApi etc
-// id: id of entity to Delete
+// id: id of entity to Update
 export const createUpdateApiPath = (apiPath, id) => {
     return `${apiPath}/${id}/update`;
 }
