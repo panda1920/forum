@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses configuration information for the main flask app
+"""
+
+
 import os
 from pathlib import Path
 
@@ -9,6 +15,8 @@ from server.database.paging import Paging
 from server.middleware.userauth import UserAuthentication
 from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
+from server.services.image_scaler import ImageScaler
+
 
 class Config:
     # when using file-based db, this is where data gets stored
@@ -29,6 +37,7 @@ class Config:
     # services
     CREATION_SERVICE = EntityCreationService(DATABASE_REPOSITORY, SEARCH_FILTER)
     SEARCH_SERVICE = SearchService(DATABASE_REPOSITORY, SEARCH_FILTER, AGGREGATE_FILTER, PAGING)
+    IMAGE_SCALER = ImageScaler()
 
     # for session
     SECRET_KEY = os.environ.get('SECRET_KEY')

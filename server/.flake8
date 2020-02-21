@@ -4,6 +4,7 @@ exclude =
     ./pytest_cache,
     *.json,
     __pycache__,
+    server/playground/*,
 
 ignore = 
     # suppress spaces between square brackets
