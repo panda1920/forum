@@ -1,4 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses classes that define contextual user state
+"""
+
 from cerberus import Validator
+
 
 class NewPost:
     """
@@ -32,6 +38,7 @@ class NewPost:
     def getFields(cls):
         return cls._schema.keys()
 
+
 class UpdatePost:
     """
     A namespace for update-post related operations
@@ -40,10 +47,6 @@ class UpdatePost:
         'content': {
             'type': 'string',
             'required': False,
-        },
-        'postId': {
-            'type': 'string',
-            'required': True,
         },
     }
     _validator = Validator(_schema, allow_unknown=False)
@@ -56,7 +59,7 @@ class UpdatePost:
     def getUpdatableFields(cls):
         fields = [
             field for field in cls._schema.keys()
-            if cls._schema[field]['required'] == False
+            if cls._schema[field]['required'] is False
         ]
         
         return fields

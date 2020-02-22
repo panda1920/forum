@@ -1,4 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses class that defines contextual user state
+"""
+
+
 from cerberus import Validator
+
 
 class NewUser:
     """
@@ -33,15 +40,12 @@ class NewUser:
     def validate(cls, newUser):
         return cls._validator.validate(newUser)
 
+
 class UpdateUser:
     """
     A namespae for update-user related operations
     """
     _schema = {
-        'userId': {
-            'type': 'string',
-            'required': True,
-        },
         'password': {
             'type': 'string',
             'required': False,
@@ -61,7 +65,7 @@ class UpdateUser:
     def getUpdatableFields(cls):
         fields = [
             field for field in cls._schema.keys()
-            if cls._schema[field]['required'] == False
+            if cls._schema[field]['required'] is False
         ]
         
         return fields

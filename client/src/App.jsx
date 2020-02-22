@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
 
-import BasePage from './pages/base/base.component';
+import BasePage from './pages/base/base-page.component';
 
 function App() {
   return (

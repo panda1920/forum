@@ -9,6 +9,7 @@ from unittest.mock import create_autospec
 from server.database.filter import Filter
 import server.database.aggregate_filter as aggregates
 
+
 class TestAndFilter:
     DEFAULT_OBJECT_PASSEDTO_MATCHES = { 'postId': 1 }
 
@@ -93,7 +94,7 @@ class TestAndFilter:
         ]
 
         agg.setFilters(filters)
-        assert agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES) == False
+        assert agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES) is False
 
     def test_getMongoFilterWithVariousFilterPatterns(self, agg):
         filterPatterns = [
@@ -116,6 +117,7 @@ class TestAndFilter:
             result = agg.getMongoFilter()
 
             assert result == expected
+
 
 class TestOrFilter:
     DEFAULT_OBJECT_PASSEDTO_MATCHES = { 'postId': 1 }
@@ -200,7 +202,7 @@ class TestOrFilter:
 
         agg.setFilters(filters)
 
-        assert agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES) == True
+        assert agg.matches(self.DEFAULT_OBJECT_PASSEDTO_MATCHES) is True
 
     def test_getMongoFilterWithVariousFilterPatterns(self, agg):
         filterPatterns = [
@@ -224,11 +226,13 @@ class TestOrFilter:
 
             assert result == expected
 
+
 # helper functions
 def createMockFilters(n):
     return [
         create_autospec(Filter) for n in range(n)
     ]
+
 
 def createMockFiltersWithReturnValuesForMatches(*values):
     mockFilters = createMockFilters( len(values) )
@@ -236,6 +240,7 @@ def createMockFiltersWithReturnValuesForMatches(*values):
         f.matches.return_value = v
 
     return mockFilters
+
 
 def createMockFiltersWithReturnValuesForGetMongoFilter(*values):
     mockFilters = createMockFilters( len(values) )

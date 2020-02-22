@@ -1,12 +1,19 @@
-import pdb
+# -*- coding: utf-8 -*-
+"""
+This file houses tests for primitive filters
+"""
+
 import pytest
 
-from server.database.filter import *
+from server.database.filter import PrimitiveFilter
+from server.database.filter import FuzzyStringFilter
+from server.database.filter import EQFilter
+from server.database.filter import GTFilter
+from server.database.filter import GTEFilter
+from server.database.filter import LTFilter
+from server.database.filter import LTEFilter
 from server.exceptions import FilterParseError, InvalidFilterOperatorError
 
-@pytest.fixture(scope='function')
-def fixture():
-    pass
 
 class TestFilterCreation:
     def test_createFuzzyString(self):
@@ -71,9 +78,9 @@ class TestFilterCreation:
 
     def test_createFilterShouldThrowExceptionWhenMissingAttributes(self):
         querystringObjs = [
-            {'operator': 'eq', 'value': [100]}, # missing field
-            {'operator': 'eq', 'field': 'content'}, # missing value
-            {'value': [100], 'field': 'content'}, # missing operator
+            {'operator': 'eq', 'value': [100]},  # missing field
+            {'operator': 'eq', 'field': 'content'},  # missing value
+            {'value': [100], 'field': 'content'},  # missing operator
         ]
 
         with pytest.raises(FilterParseError):
@@ -89,6 +96,7 @@ class TestFilterCreation:
 
         with pytest.raises(InvalidFilterOperatorError):
             PrimitiveFilter.createFilter(querystringObj)
+
 
 class TestFilterMatching:
     FIELD_TO_COMPARE = 'counter'
@@ -227,11 +235,12 @@ class TestFilterMatching:
         
         return PrimitiveFilter.createFilter(
             {
-            'operator': op,
-            'field': self.FIELD_TO_COMPARE,
-            'value': fieldValue,
+                'operator': op,
+                'field': self.FIELD_TO_COMPARE,
+                'value': fieldValue,
             }
         )
+
 
 class TestFilterComparison:
     DEFAULT_FIELD = 'default_field'
@@ -244,9 +253,9 @@ class TestFilterComparison:
         
         return PrimitiveFilter.createFilter(
             {
-            'operator': op,
-            'field': field,
-            'value': fieldValue,
+                'operator': op,
+                'field': field,
+                'value': fieldValue,
             }
         )
 

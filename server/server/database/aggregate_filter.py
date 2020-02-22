@@ -6,6 +6,7 @@ AND, OR, NOT
 
 from server.database.filter import Filter
 
+
 class AggregateFilter(Filter):
     """
     Base class for classes that combines multiple filters to declare
@@ -14,7 +15,7 @@ class AggregateFilter(Filter):
     """
 
     @staticmethod
-    def createFilter(opstring, filters = []):
+    def createFilter(opstring, filters=[]):
         """
         A factory method to create aggregate filters.
         The motivation was to avoid having to call individual constructors
@@ -84,6 +85,7 @@ class AggregateFilter(Filter):
         """
         raise NotImplementedError
 
+
 class AndFilter(AggregateFilter):
     """
     Relates filters by AND
@@ -115,6 +117,7 @@ class AndFilter(AggregateFilter):
 
     def __len__(self):
         return len(self._filters)
+
 
 class OrFilter(AggregateFilter):
     """

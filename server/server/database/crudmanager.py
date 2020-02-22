@@ -6,6 +6,7 @@ It is an interface to abstract away the detail of making CRUD operations.
 
 from server.database.paging import Paging
 
+
 class CrudManager:
     def __init__(self):
         raise NotImplementedError
@@ -13,23 +14,23 @@ class CrudManager:
     def createUser(self, user):
         raise NotImplementedError
 
-    def searchUser(self, searchFilter, paging = Paging()):
+    def searchUser(self, searchFilter, paging=Paging()):
         raise NotImplementedError
 
     def deleteUser(self, userIds):
         raise NotImplementedError
 
-    def updateUser(self, user):
+    def updateUser(self, seearchFilter, user):
         raise NotImplementedError
     
     def createPost(self, post):
         raise NotImplementedError
     
-    def searchPost(self, searchFilter, paging = Paging()):
+    def searchPost(self, searchFilter, paging=Paging()):
         raise NotImplementedError
 
     def deletePost(self, postIds):
         raise NotImplementedError
 
-    def updatePost(self, post):
+    def updatePost(self, searchFilter, post):
         raise NotImplementedError

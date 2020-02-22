@@ -9,7 +9,9 @@ exclude =
 ignore = 
     # suppress spaces between square brackets
     E201,E202,
-    # suppress blank line contains whitespace error
+    # suppress blank line contains whitespace warning
     W293,
+    # suppress warnings on number of #s used for comment
+    E266,
 
 max-line-length = 100

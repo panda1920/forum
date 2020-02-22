@@ -3,8 +3,7 @@
 header {
     display: flex;
     flex-direction: row;
-    height: 4em;
-    line-height: 4em;
+    line-height: map-get($dimensions, 'header-height');
 
     background-color: map-get($colors, '00');
     color: map-get($colors, '01');

@@ -10,9 +10,9 @@ from tests.database.datacreator import DataCreator
 from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
-from server.entity.user import UpdateUser
 from server.entity.post import UpdatePost
-from server.exceptions import EntityValidationError, RecordNotFoundError
+from server.exceptions import EntityValidationError
+
 
 @pytest.mark.slow
 @pytest.mark.parametrize('createDB', [Setup_FileCrudManager, Setup_MongoCrudManager], indirect=True)
@@ -23,6 +23,7 @@ class TestFixture:
     def test_fixtureCreatedPosts(self, setupDB):
         setupDB.validateCreatedPosts()
 
+
 @pytest.mark.slow
 @pytest.mark.parametrize('createDB', [Setup_FileCrudManager, Setup_MongoCrudManager], indirect=True)
 class TestUserCRUD:
@@ -32,13 +33,13 @@ class TestUserCRUD:
         'password': '222',
     }
     DEFAULT_UPDATE_USER = {
-        'userId': '1',
         'displayName': 'Timmy',
         'password': '222'
     }
     
     def createNewUserProps(self, **kwargs):
         return createNewProps(self.DEFAULT_NEW_USER, **kwargs)
+
     def createUpdateUserProps(self, **kwargs):
         return createNewProps(self.DEFAULT_UPDATE_USER, **kwargs)
 
@@ -91,7 +92,7 @@ class TestUserCRUD:
     def test_createUserByWrongPropertyTypeShouldRaiseException(self, setupDB):
         userProps = [
             self.createNewUserProps(userName=1),
-            self.createNewUserProps(userName='something'), # non-email string
+            self.createNewUserProps(userName='something'),  # non-email string
             self.createNewUserProps(displayName=1),
             self.createNewUserProps(password=1),
         ]
@@ -230,34 +231,58 @@ class TestUserCRUD:
         assert result['matchedCount'] == 10
         assert result['returnCount'] == 2
 
-    def test_updateUserUpdatesUserOnDB(self, setupDB):
+    def test_updateUserShouldUpdateMatchedUserOnDB(self, setupDB):
         mock = setupDB.getMockUserAuth()
         mock.hashPassword.return_value = 'hashed'
+        userIdsToUpdate = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:2]
+        ]
+        searchFilter = createSearchFilter('userId', 'eq', userIdsToUpdate)
         userProps = self.createUpdateUserProps()
 
-        setupDB.getDB().updateUser(userProps)
+        setupDB.getDB().updateUser(searchFilter, userProps)
 
-        updatedUser = setupDB.findUsers('userId', [ userProps['userId'] ])[0]
-        for field, value in userProps.items():
-            if field == 'password':
-                assert updatedUser[field] == 'hashed'
-            else:
-                assert updatedUser[field] == value
+        updatedUsers = setupDB.findUsers('userId', userIdsToUpdate)
+        for user in updatedUsers:
+            for field, value in userProps.items():
+                if field == 'password':
+                    assert user[field] == 'hashed'
+                else:
+                    assert user[field] == value
 
-    def test_updateUserByNonExistantIdRaisesException(self, setupDB):
-        with pytest.raises(RecordNotFoundError):
-            setupDB.getDB().updateUser( self.createUpdateUserProps(userId='non_existant') )
-
-    def test_updateUserWithoutRequiredPropertiesRaisesException(self, setupDB):
-        userUpdateProperties = [
-            self.createUpdateUserProps(userId=None)
+    def test_updateUserShouldReturnUpdateResult(self, setupDB):
+        mock = setupDB.getMockUserAuth()
+        mock.hashPassword.return_value = 'hashed'
+        userIdsToUpdate = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:2]
         ]
+        searchFilter = createSearchFilter('userId', 'eq', userIdsToUpdate)
+        userProps = self.createUpdateUserProps()
 
-        for userUpdate in userUpdateProperties:
-            with pytest.raises(EntityValidationError):
-                setupDB.getDB().updateUser(userUpdate)
+        result = setupDB.getDB().updateUser(searchFilter, userProps)
+
+        assert result['matchedCount'] == 2
+        assert result['updatedCount'] == 2
+
+    def test_updateUserShouldUpdateMatchedUsersWhenUsingAggregateFilters(self, setupDB):
+        mock = setupDB.getMockUserAuth()
+        mock.hashPassword.return_value = 'hashed'
+        userIdsToUpdate = [ user['userId'] for user in setupDB.getOriginalUsers()[:10] ]
+        usernameToUpdate = [ user['displayName'] for user in setupDB.getOriginalUsers()[:1] ]
+        searchFilter = AggregateFilter.createFilter('and', [
+            createSearchFilter('userId', 'eq', userIdsToUpdate),
+            createSearchFilter('displayName', 'eq', usernameToUpdate),
+        ])
+        userProps = self.createUpdateUserProps()
+
+        result = setupDB.getDB().updateUser(searchFilter, userProps)
+
+        assert result['matchedCount'] == 1
+        assert result['updatedCount'] == 1
 
     def test_updateUserByWrongUpdatePropertiesRaisesException(self, setupDB):
+        userIdsToUpdate = [ user['userId'] for user in setupDB.getOriginalUsers()[:10] ]
+        searchFilter = createSearchFilter('userId', 'eq', userIdsToUpdate)
         userUpdateProperties = [
             self.createUpdateUserProps(userId=1),
             self.createUpdateUserProps(displayName=1),
@@ -266,12 +291,11 @@ class TestUserCRUD:
 
         for userUpdate in userUpdateProperties:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().updateUser(userUpdate)
+                setupDB.getDB().updateUser(searchFilter, userUpdate)
 
     def test_updateUserWithUnexpectedPropertiesRaisesException(self, setupDB):
-        mock = setupDB.getMockUserAuth()
-        mock.hashPassword.return_value = 'hashed'
-
+        userIdsToUpdate = [ user['userId'] for user in setupDB.getOriginalUsers()[:10] ]
+        searchFilter = createSearchFilter('userId', 'eq', userIdsToUpdate)
         userUpdateProperties = [
             self.createUpdateUserProps(createdAt=30.11),
             self.createUpdateUserProps(userName='Smithy'),
@@ -280,7 +304,8 @@ class TestUserCRUD:
 
         for userUpdate in userUpdateProperties:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().updateUser(userUpdate)
+                setupDB.getDB().updateUser(searchFilter, userUpdate)
+
 
 @pytest.mark.slow
 @pytest.mark.parametrize('createDB', [Setup_FileCrudManager, Setup_MongoCrudManager], indirect=True)
@@ -290,7 +315,6 @@ class TestPostCRUD:
         'content': 'This is a new post!'
     }
     DEFAULT_UPDATE_POST = {
-        'postId': '1',
         'content': 'Post updated!'
     }
     
@@ -427,7 +451,10 @@ class TestPostCRUD:
             user['userId'] for user in setupDB.getOriginalUsers()[:3]
         ]
         searchFilter = createSearchFilter('userId', 'eq', userIdsToSearch)
-        paging = Paging({ 'offset': DataCreator.POSTCOUNT_PER_USER * 2 + 1, 'limit': DataCreator.POSTCOUNT_PER_USER })
+        paging = Paging(dict(
+            offset=DataCreator.POSTCOUNT_PER_USER * 2 + 1,
+            limit=DataCreator.POSTCOUNT_PER_USER
+        ))
 
         result = setupDB.getDB().searchPost(searchFilter, paging)
 
@@ -482,16 +509,45 @@ class TestPostCRUD:
         assert result['returnCount'] == Paging.DEFAULT_LIMIT
         assert result['matchedCount'] == len(setupDB.getOriginalPosts())
 
-    def test_updatePostUpdatesPostOnDB(self, setupDB):
-        postToUpdate = self.createUpdatePostProps()
+    def test_updatePostShouldUpdatePostOnDB(self, setupDB):
+        postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]
+        searchFilter = createSearchFilter('postId', 'eq', postIdsToUpdate)
+        update = self.createUpdatePostProps()
 
-        setupDB.getDB().updatePost(postToUpdate)
+        setupDB.getDB().updatePost(searchFilter, update)
 
-        postInDB = setupDB.findPosts('postId', [ postToUpdate['postId'] ])[0]
-        for field in UpdatePost.getUpdatableFields():
-            assert postInDB[field] == postToUpdate[field]
+        postsInDB = setupDB.findPosts('postId', postIdsToUpdate)
+        for post in postsInDB:
+            for field in UpdatePost.getUpdatableFields():
+                assert post[field] == update[field]
+
+    def test_updatePostShouldReturnUpdateResult(self, setupDB):
+        postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]
+        searchFilter = createSearchFilter('postId', 'eq', postIdsToUpdate)
+        update = self.createUpdatePostProps()
+
+        result = setupDB.getDB().updatePost(searchFilter, update)
+
+        assert result['matchedCount'] == len(postIdsToUpdate)
+        assert result['updatedCount'] == len(postIdsToUpdate)
+
+    def test_updatePostShouldUpdatePostOnDBWhenAggregateFilter(self, setupDB):
+        postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:10] ]
+        contentToSearch = [ post['content'] for post in setupDB.getOriginalPosts()[:100] ]
+        searchFilter = AggregateFilter.createFilter('or', [
+            createSearchFilter('postId', 'eq', postIdsToUpdate),
+            createSearchFilter('content', 'eq', contentToSearch),
+        ])
+        update = self.createUpdatePostProps()
+
+        result = setupDB.getDB().updatePost(searchFilter, update)
+
+        assert result['matchedCount'] == len(contentToSearch)
+        assert result['updatedCount'] == len(contentToSearch)
 
     def test_updatePostUpdatesWithNonUpdatablePropertyRaisesException(self, setupDB):
+        postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]
+        searchFilter = createSearchFilter('postId', 'eq', postIdsToUpdate)
         updatePostProperties = [
             self.createUpdatePostProps(userId='112233'),
             self.createUpdatePostProps(createdAt=22.99),
@@ -500,30 +556,18 @@ class TestPostCRUD:
 
         for postProps in updatePostProperties:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().updatePost(postProps)
-
-    def test_updatePostWithoutRequiredPropertiesRaisesException(self, setupDB):
-        updatePostProperties = [
-            self.createUpdatePostProps(postId=None),
-        ]
-
-        for postProps in updatePostProperties:
-            with pytest.raises(EntityValidationError):
-                setupDB.getDB().updatePost(postProps)
+                setupDB.getDB().updatePost(searchFilter, postProps)
 
     def test_updatePostByWrongPropertyTypeRaisesException(self, setupDB):
+        postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]
+        searchFilter = createSearchFilter('postId', 'eq', postIdsToUpdate)
         updatePostProperties = [
             self.createUpdatePostProps(content=1),
-            self.createUpdatePostProps(postId=2),
         ]
 
         for postProps in updatePostProperties:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().updatePost(postProps)
-
-    def test_updatePostByNonExistantIdRaisesException(self, setupDB):
-        with pytest.raises(RecordNotFoundError):
-            setupDB.getDB().updatePost( self.createUpdatePostProps(postId='non_existant') )
+                setupDB.getDB().updatePost(searchFilter, postProps)
 
 
 ### utility functions here
@@ -538,16 +582,17 @@ def createNewProps(defaultProps, **kwargs):
     
     for prop in kwargs.keys():
         propertyValue = kwargs[prop]
-        if propertyValue == None:
+        if propertyValue is None:
             props.pop(prop, None)
         else:
             props[prop] = propertyValue
 
     return props
 
+
 def createSearchFilter(field, operator, values):
     return PrimitiveFilter.createFilter({
-         'field': field,
-         'operator': operator,
-         'value': values
+        'field': field,
+        'operator': operator,
+        'value': values
     })

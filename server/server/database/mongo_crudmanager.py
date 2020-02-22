@@ -14,6 +14,7 @@ from server.entity.user import NewUser, UpdateUser
 from server.entity.post import NewPost, UpdatePost
 import server.exceptions as exceptions
 
+
 class MongoCrudManager(CrudManager):
     """
     Implements CrudManager interface to make CRUD operations
@@ -36,8 +37,8 @@ class MongoCrudManager(CrudManager):
             user['userId'] = str(nextUserId)
             self._db['users'].insert_one(user)
 
-    def searchUser(self, searchFilter, paging = Paging()):
-        query = {} if searchFilter is None else searchFilter.getMongoFilter() 
+    def searchUser(self, searchFilter, paging=Paging()):
+        query = {} if searchFilter is None else searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to search user'):
             users = list(paging.slice( self._db['users'].find(query) ))
@@ -57,19 +58,19 @@ class MongoCrudManager(CrudManager):
             self._db['users'].delete_many(userQuery)
             self._db['posts'].delete_many(postQuery)
 
-    def updateUser(self, user):
+    def updateUser(self, searchFilter, user):
         self._validateEntity(UpdateUser, user)
         user['password'] = self._userauth.hashPassword( user['password'] )
+        query = searchFilter.getMongoFilter()
         update = self._createMongoUpdate(UpdateUser, user)
-        query = { 'userId': { '$eq': user['userId'] } }
         
         with self._mongoOperationHandling('Failed to update user'):
-            result = self._db['users'].update_one(query, update)
-        
-        if result.matched_count == 0:
-            raise exceptions.RecordNotFoundError('failed to find document')
-        if result.modified_count == 0:
-            raise exceptions.FailedMongoOperation('failed to update document')
+            result = self._db['users'].update_many(query, update)
+
+        return dict(
+            matchedCount=result.matched_count,
+            updatedCount=result.modified_count,
+        )
     
     def createPost(self, post):
         self._validateEntity(NewPost, post)
@@ -79,7 +80,7 @@ class MongoCrudManager(CrudManager):
             post['postId'] = str(nextPostId)
             self._db['posts'].insert_one(post)
     
-    def searchPost(self, searchFilter, paging = Paging()):
+    def searchPost(self, searchFilter, paging=Paging()):
         query = {} if searchFilter is None else searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to search post'):
@@ -96,19 +97,20 @@ class MongoCrudManager(CrudManager):
         query = { 'postId': { '$in': postIds } }
 
         with self._mongoOperationHandling('Failed to create post'):
-            result = self._db['posts'].delete_many(query)
+            self._db['posts'].delete_many(query)
 
-    def updatePost(self, post):
+    def updatePost(self, searchFilter, post):
         self._validateEntity(UpdatePost, post)
-        query = { 'postId': { '$eq' : post['postId'] } }
+        query = searchFilter.getMongoFilter()
         update = self._createMongoUpdate(UpdatePost, post)
 
         with self._mongoOperationHandling('Failed to create post'):
-            result = self._db['posts'].update_one(query, update)
-        if result.matched_count == 0:
-            raise exceptions.RecordNotFoundError('failed to find document')
-        if result.modified_count == 0:
-            raise exceptions.FailedMongoOperation('failed to update document')
+            result = self._db['posts'].update_many(query, update)
+
+        return dict(
+            matchedCount=result.matched_count,
+            updatedCount=result.modified_count,
+        )
 
     def _createMongoUpdate(self, entitySchema, updateProps):
         update = { '$set': {} }
