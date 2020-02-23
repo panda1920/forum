@@ -15,6 +15,7 @@ from server.database.paging import Paging
 from server.middleware.userauth import UserAuthentication
 from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
+from server.services.update_service import UpdateService
 from server.services.image_scaler import ImageScaler
 
 
@@ -37,6 +38,7 @@ class Config:
     # services
     CREATION_SERVICE = EntityCreationService(DATABASE_REPOSITORY, SEARCH_FILTER)
     SEARCH_SERVICE = SearchService(DATABASE_REPOSITORY, SEARCH_FILTER, AGGREGATE_FILTER, PAGING)
+    UPDATE_SERVICE = UpdateService(DATABASE_REPOSITORY, SEARCH_FILTER)
     IMAGE_SCALER = ImageScaler()
 
     # for session
@@ -74,12 +76,16 @@ class Config:
         return app.config['SIGNUP']
 
     @staticmethod
+    def getCreationService(app):
+        return app.config['CREATION_SERVICE']
+    
+    @staticmethod
     def getSearchService(app):
         return app.config['SEARCH_SERVICE']
 
     @staticmethod
-    def getCreationService(app):
-        return app.config['CREATION_SERVICE']
+    def getUpdateService(app):
+        return app.config['UPDATE_SERVICE']
 
     @staticmethod
     def getImageScaler(app):

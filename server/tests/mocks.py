@@ -12,8 +12,9 @@ from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
 from server.middleware.userauth import UserAuthentication
-from server.services.search_service import SearchService
 from server.services.entity_creation_service import EntityCreationService
+from server.services.search_service import SearchService
+from server.services.update_service import UpdateService
 from server.services.image_scaler import ImageScalerBase
 
 
@@ -63,6 +64,10 @@ def createMockSearchService():
 
 def createMockEntityCreationService():
     return create_autospec(EntityCreationService)
+
+
+def createMockUpdateService():
+    return create_autospec(UpdateService)
 
 
 def createMockImageScaler():

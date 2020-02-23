@@ -1,7 +1,4 @@
-import json
-import urllib.parse
 import pytest
-from flask import request
 
 import tests.mocks as mocks
 from server.config import Config
@@ -11,6 +8,8 @@ DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES = 'some_value'
 DEFAULT_RETURN_CREATENEWPOST = None
 DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES = 'some_value'
 DEFAULT_RETURN_SIGNUP = None
+DEFAULT_RETURN_UPDATEUSER = 'some_value_updateuser'
+DEFAULT_RETURN_UPDATEPOST = 'some_value_updatepost'
 
 
 @pytest.fixture(scope='function')
@@ -29,6 +28,11 @@ def mockApp(app):
     mockSearch.searchUsersByKeyValues.return_value = DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
     app.config['SEARCH_SERVICE'] = mockSearch
 
+    mockUpdate = mocks.createMockUpdateService()
+    mockUpdate.updateUserByKeyValues.return_value = DEFAULT_RETURN_UPDATEUSER
+    mockUpdate.updatePostByKeyValues.return_value = DEFAULT_RETURN_UPDATEPOST
+    app.config['UPDATE_SERVICE'] = mockUpdate
+
     yield app
 
 
@@ -36,134 +40,6 @@ def mockApp(app):
 def client(mockApp):
     with mockApp.test_client() as client:
         yield client
-
-
-class TestServerAPIs:
-    def test_helloWorld(self, client):
-        rv = client.get('/')
-        assert 'hello world!' == rv.data.decode('utf-8')
-
-    def test_jsonAPI(self, client):
-        rv = client.get('/jsonstring')
-        data = json.loads( rv.data.decode('utf-8') )
-
-        assert data['name'] == 'Danny'
-        assert data['age'] == '13'
-        assert len(data['families']) == 3
-        assert data['families'][1] == 'father'
-
-    def test_postJson(self, client):
-        jsonData = {
-            'name': 'postJson',
-            'age': '1'
-        }
-        serialized = json.dumps(jsonData).encode('ascii')
-        headers = {'Content-Type': 'application/json'}
-        
-        # client.post('/post', json=jsonData) # simple solution when posting json data
-        client.post('/post', headers=headers, data=serialized) # a more general approach where specifying mime-type and payload
-    
-        data = request.get_json()
-        assert data['name'] == jsonData['name']
-        assert data['age'] == jsonData['age']
-
-    def test_post_ifDBThrowsErrorReturn500(self, mockApp, client):
-        jsonData = {
-            'author': 'someone',
-            'message': 'Hello world'
-        }
-        db = Config.getDB(mockApp)
-        db.createPost.side_effect = Exception('Went wrong')
-
-        rv = client.post('/api/post', json=jsonData)
-
-        assert rv.status_code == 500
-
-    def test_post_form(self, client):
-        formData = urllib.parse.urlencode({
-            'author': 'someone',
-            'message': 'Hello world'
-        })
-        header = { 'Content-Type': 'application/x-www-form-urlencoded' }
-
-        client.post('/post', data=formData, headers=header)
-
-        assert request.form['author'] == 'someone'
-        assert request.form['message'] == 'Hello world'
-
-    def test_post_form_withoutHeadersReturn500(self, client):
-        formData = urllib.parse.urlencode({
-            'userId': '112233',
-            'content': 'This is a post by 112233 for test'
-        })
-
-        response = client.post('/api/post', data=formData)
-
-        assert request.form == {}
-        assert response.status_code == 500
-
-    def test_postCallsCreatePostOnDB(self, mockApp, client):
-        formData = urllib.parse.urlencode({
-            'userId': '112233',
-            'content': 'This is a post by 112233 for test'
-        })
-        header = { 'Content-Type': 'application/x-www-form-urlencoded' }
-
-        response = client.post('/api/post', data=formData, headers=header)
-        assert response.status_code == 200
-        
-        mockDB = Config.getDB(mockApp)
-        assert mockDB.createPost.call_count == 1
-
-        passedPost = mockDB.createPost.call_args[0][0]
-        assert passedPost['userId'] == '112233'
-        assert passedPost['content'] == 'This is a post by 112233 for test'
-        assert 'postId' in passedPost.keys()
-
-    def test_postAPICallsDeletePostOnDBWhenDELETE(self, mockApp, client):
-        formData = urllib.parse.urlencode({
-            'postId': '0',
-        })
-        header = { 'Content-Type': 'application/x-www-form-urlencoded' }
-        
-        response = client.delete('/api/post', data=formData, headers=header)
-        assert response.status_code == 200
-
-        mockDB = Config.getDB(mockApp)
-        assert mockDB.deletePost.call_count == 1
-
-    def test_postAPICallsSearchPostOnDBWhenGET(self, mockApp, client):
-        searchCriteria = {
-            'postId': '0',
-        }
-
-        response = client.get('/api/post', query_string=searchCriteria)
-        assert response.status_code == 200
-
-        mockDB = Config.getDB(mockApp)
-        assert mockDB.searchPost.call_count == 1
-
-    def test_postAPICallsUpdatePostOnDBWhenPATCH(self, mockApp, client):
-        formData = urllib.parse.urlencode({
-            'postId': '0',
-        })
-        header = { 'Content-Type': 'application/x-www-form-urlencoded' }
-        
-        response = client.patch('/api/post', data=formData, headers=header)
-        assert response.status_code == 200
-            
-            # mockDB = Config.getDB(mockApp)
-            # assert mockDB.updatePost.call_count == 1
-
-    def test_userlistReturnsAllUsers(self, mockApp, client):
-        users = [{'userName': '1'}, {'userName': '2'}]
-        mockDB = Config.getDB(mockApp)
-        mockDB.searchUser.return_value = users
-
-        response = client.get('/userlist')
-        assert response.status_code == 200
-        jsonBody = response.get_json()
-        assert jsonBody['users'] == users
 
 
 class TestPostAPIs:
@@ -274,12 +150,12 @@ class TestPostAPIs:
         headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
         with mockApp.test_client() as client:
-            response = client.post(url, data=newPostData, headers=headers)
+            client.post(url, data=newPostData, headers=headers)
 
             mockCreate.createNewPost.assert_called_with(newPostData)
 
     def test_createPostAPIReturns201(self, mockApp):
-        mockCreate = Config.getCreationService(mockApp)
+        Config.getCreationService(mockApp)
         newPostData = dict(
             userId='0',
             content='This is a test post'
@@ -313,43 +189,34 @@ class TestPostAPIs:
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_updatePostReturnsStatus200(self, mockApp):
-        mockDB = Config.getDB(mockApp)
-        mockDB.updatePost.return_value = 'this is a post'
-
+    def test_updatePostShouldPassDataToServiceAndReturn200(self, client, mockApp):
+        mockUpdate = Config.getUpdateService(mockApp)
         postIdToUpdate = '1'
         url = f'{self.POSTSAPI_BASE_URL}/{postIdToUpdate}/update'
         updateData = {
             'content': 'Updated content!'
         }
 
-        with mockApp.test_client() as client:
-            response = client.patch(url, json=updateData)
+        response = client.patch(url, json=updateData)
 
-            assert response.status_code == 200
+        assert response.status_code == 200
+        mockUpdate.updatePostByKeyValues.assert_called_with(dict(
+            **updateData,
+            postId=postIdToUpdate
+        ))
 
-            assert mockDB.updatePost.call_count == 1
-            passedPostProperties = mockDB.updatePost.call_args[0][0]
-            assert 'postId' in passedPostProperties
-            assert 'content' in passedPostProperties
-            assert passedPostProperties['postId'] == postIdToUpdate
-            assert passedPostProperties['content'] == updateData['content']
-
-    def test_updatePostByPostedMimeTypeNotJsonReturnsError(self, mockApp):
-        mockDB = Config.getDB(mockApp)
-        mockDB.updatePost.return_value = 'this is a post'
-
+    def test_updatePostByPostedMimeTypeNotJsonReturnsError(self, client, mockApp):
         postIdToUpdate = '1'
         url = f'{self.POSTSAPI_BASE_URL}/{postIdToUpdate}/update'
         updateData = 'content'
-        headers={ 'Content-Type': 'text/plain'}
+        headers = { 'Content-Type': 'text/plain'}
 
-        with mockApp.test_client() as client:
-            response = client.patch(url, data=updateData, headers=headers)
+        response = client.patch(url, data=updateData, headers=headers)
 
-            assert response.status_code == 400
+        assert response.status_code == 400
 
     def test_whenUpdatePostRaisesExceptionReturnError(self, mockApp):
+        mockUpdate = Config.getUpdateService(mockApp)
         postIdToUpdate = '1'
         url = f'{self.POSTSAPI_BASE_URL}/{postIdToUpdate}/update'
         updateData = {
@@ -362,11 +229,11 @@ class TestPostAPIs:
         ]
 
         for e in exceptionsToTest:
-            Config.getDB(mockApp).updatePost.side_effect = e
+            mockUpdate.updatePostByKeyValues.side_effect = e
             with mockApp.test_client() as client:
                 response = client.patch(url, json=updateData)
 
-                assert response.status_code == e.getStatusCode()
+            assert response.status_code == e.getStatusCode()
 
     def test_deletePostReturns200(self, mockApp):
         postIdToDelete = '1'
@@ -398,6 +265,7 @@ class TestPostAPIs:
 
                 assert response.status_code == e.getStatusCode()
 
+
 class TestUserAPIs:
     USERAPI_BASE_URL = '/v1/users'
 
@@ -408,19 +276,19 @@ class TestUserAPIs:
         )
 
         with mockApp.test_client() as client:
-            response = client.get(self.USERAPI_BASE_URL, query_string=keyValues)
+            client.get(self.USERAPI_BASE_URL, query_string=keyValues)
 
             mockSearch.searchUsersByKeyValues.assert_called_with(keyValues)
 
     def test_searchUsersReturns200AearchResultFromService(self, mockApp):
-        mockSearch = Config.getSearchService(mockApp)
+        Config.getSearchService(mockApp)
         keyValues = dict(
             search='username'
         )
 
         with mockApp.test_client() as client:
             response = client.get(self.USERAPI_BASE_URL, query_string=keyValues)
-            jsonResponse =  response.get_json()
+            jsonResponse = response.get_json()
 
             assert response.status_code == 200
             assert jsonResponse['searchResult'] == DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
@@ -449,7 +317,7 @@ class TestUserAPIs:
         url = f'{self.USERAPI_BASE_URL}/{userId}'
 
         with mockApp.test_client() as client:
-            response = client.get(url)
+            client.get(url)
 
             mockSearch.searchUsersByKeyValues.assert_called_with(dict(userId=userId))
 
@@ -457,10 +325,10 @@ class TestUserAPIs:
         mockSearch = Config.getSearchService(mockApp)
         userId = '11111111'
         url = f'{self.USERAPI_BASE_URL}/{userId}'
-        keyValues=dict(offset=30, limit=100)
+        keyValues = dict(offset=30, limit=100)
 
         with mockApp.test_client() as client:
-            response = client.get(url, query_string=keyValues)
+            client.get(url, query_string=keyValues)
 
             mockSearch.searchUsersByKeyValues.assert_called_with(dict(userId=userId))
 
@@ -505,7 +373,7 @@ class TestUserAPIs:
         url = f'{self.USERAPI_BASE_URL}/create'
 
         with mockApp.test_client() as client:
-            response = client.post(url, data=userProperties, headers=headers)
+            client.post(url, data=userProperties, headers=headers)
 
             mockCreate.signup.assert_called_with(userProperties)
 
@@ -549,45 +417,36 @@ class TestUserAPIs:
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_updateUserReturns200(self, mockApp):
-        mockDB = Config.getDB(mockApp)
+    def test_updateUserShouldPassDataToServiceAndReturn200(self, client, mockApp):
+        mockUpdate = Config.getUpdateService(mockApp)
         userProperties = {
             'displayName': 'Jimmy',
         }
         userIdToUpdate = '1'
         url = f'{self.USERAPI_BASE_URL}/{userIdToUpdate}/update'
+        headers = { 'Content-Type': 'application/json' }
 
-        with mockApp.test_client() as client:
-            response = client.patch(url, json=userProperties)
+        print(userProperties)
+        response = client.patch(url, json=userProperties, headers=headers)
 
-            assert response.status_code == 200
+        assert response.status_code == 200
+        mockUpdate.updateUserByKeyValues(dict(
+            userId=userIdToUpdate,
+            **userProperties
+        ))
 
-            assert mockDB.updateUser.call_count == 1
-            arg1Passed = mockDB.updateUser.call_args[0][0]
-            for prop in userProperties.keys():
-                assert arg1Passed[prop] == userProperties[prop]
-            assert arg1Passed['userId'] == userIdToUpdate
-
-    def test_updateUserReturnsErrorWhenNonJsonPassed(self, mockApp):
-        requestDataToTest = [
-            json.dumps({ 'displayName': 'Jimmy' }),
-            'some_random_string'
-        ]
-        headersToTest = [
-            { 'Content-Type': 'text/plain' },
-            { 'Content-Type': 'application/json' },
-        ]
+    def test_updateUserReturnsErrorWhenNonJsonPassed(self, client, mockApp):
+        requestDataToTest = 'some_random_string'
+        headerToTest = { 'Content-Type': 'text/plain' }
         userIdToUpdate = '1'
         url = f'{self.USERAPI_BASE_URL}/{userIdToUpdate}/update'
 
-        for data, header in zip(requestDataToTest, headersToTest):
-            with mockApp.test_client() as client:
-                response = client.patch(url, data=data, headers=header)
+        response = client.patch(url, data=requestDataToTest, headers=headerToTest)
 
-                assert response.status_code == 400
+        assert response.status_code == 400
 
     def test_updateUserReturnsErrorWhenUpdateUserRaisesException(self, mockApp):
-        mockDB = Config.getDB(mockApp)
+        mockUpdate = Config.getUpdateService(mockApp)
         userProperties = {
             'displayName': 'Jimmy',
         }
@@ -600,11 +459,11 @@ class TestUserAPIs:
         ]
 
         for e in exceptionsToTest:
-            mockDB.updateUser.side_effect = e
+            mockUpdate.updateUserByKeyValues.side_effect = e
             with mockApp.test_client() as client:
                 response = client.patch(url, json=userProperties)
 
-                assert response.status_code == e.getStatusCode()
+            assert response.status_code == e.getStatusCode()
 
     def test_deleteUserReturns200(self, mockApp):
         mockDB = Config.getDB(mockApp)
