@@ -1,6 +1,8 @@
-import server.app_utils as app_utils
-import server.routes.route_utils  as route_utils 
-import server.exceptions as exceptions
+# -*- coding: utf-8 -*-
+"""
+This file houses session related operations
+"""
+
 
 class SessionManager:
     """
@@ -10,7 +12,7 @@ class SessionManager:
     @staticmethod
     def setCurrentUserFromSession(g, session):
         userId = session.get('userId', None)
-        if userId == None:
+        if userId is None:
             session['userId'] = SessionManager.ANONYMOUS_USERID
             userId = SessionManager.ANONYMOUS_USERID
         

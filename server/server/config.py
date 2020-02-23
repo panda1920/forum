@@ -46,3 +46,41 @@ class Config:
 
     # cookies are only sent over SSL connection
     SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', False)
+
+    # methods to extract config from app
+
+    @staticmethod
+    def getDB(app):
+        return app.config['DATABASE_REPOSITORY']
+
+    @staticmethod
+    def getFilter(app):
+        return app.config['SEARCH_FILTER']
+
+    @staticmethod
+    def getAggregateFilter(app):
+        return app.config['AGGREGATE_FILTER']
+
+    @staticmethod
+    def getPaging(app):
+        return app.config['PAGING']
+
+    @staticmethod
+    def getuserAuth(app):
+        return app.config['USER_AUTHENTICATION']
+
+    @staticmethod
+    def getSignup(app):
+        return app.config['SIGNUP']
+
+    @staticmethod
+    def getSearchService(app):
+        return app.config['SEARCH_SERVICE']
+
+    @staticmethod
+    def getCreationService(app):
+        return app.config['CREATION_SERVICE']
+
+    @staticmethod
+    def getImageScaler(app):
+        return app.config['IMAGE_SCALER']

@@ -7,7 +7,7 @@ import json
 
 from flask import make_response, current_app
 
-import server.app_utils as app_utils
+from server.config import Config
 from server.database.filter import Filter
 from server.exceptions import MissingQueryStringError, RequestDataTypeMismatchError
 
@@ -75,14 +75,14 @@ def createIDFilters(fieldName, idValue):
     return filters
 
 def createFuzzySearchFilter(searchTerms, fieldName):
-    return app_utils.getFilter(current_app).createFilter({
+    return Config.getFilter(current_app).createFilter({
         'field': fieldName,
         'operator': 'fuzzy',
         'value': searchTerms,
     })
 
 def createEQSearchFilter(values, fieldName):
-    return app_utils.getFilter(current_app).createFilter({
+    return Config.getFilter(current_app).createFilter({
         'field': fieldName,
         'operator': 'eq',
         'value': values,

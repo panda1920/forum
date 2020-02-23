@@ -1,6 +1,7 @@
 from flask import Flask
 from server.config import Config
 
+
 def setupApp():
     app = Flask(__name__)
     

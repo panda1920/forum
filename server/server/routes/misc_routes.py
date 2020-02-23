@@ -1,7 +1,7 @@
-from flask import Blueprint, request, current_app, render_template, g, session, jsonify
+from flask import Blueprint, current_app, render_template, session
 
 # from server.middleware.session import SessionManager
-import server.app_utils as app_utils
+from server.config import Config
 import server.routes.route_utils as route_utils
 
 routes = Blueprint('miscRoutes', __name__)
@@ -34,7 +34,7 @@ def template1(username):
 
 @routes.route('/userlist', methods=['GET'])
 def userlist():
-    users = app_utils.getDB(current_app).searchUser([])
+    users = Config.getDB(current_app).searchUser([])
     for user in users:
         user.pop('_id', None)
 
@@ -42,7 +42,7 @@ def userlist():
 
 @routes.route('/postlist', methods=['GET'])
 def postlist():
-    posts = app_utils.getDB(current_app).searchPost([])
+    posts = Config.getDB(current_app).searchPost([])
     for post in posts:
         post.pop('_id', None)
 

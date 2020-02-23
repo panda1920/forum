@@ -29,7 +29,6 @@ def updateJSONFileContent(filenameAttr):
     @updateJSONFileContent(<filenameAttr>)
     def updateContent(self, arg, filecontent=None):
         ... # do something with filecontent and update it
-        return updatedContent
 
     """
     def updateJSONFileContentDecorator(func):
@@ -38,10 +37,14 @@ def updateJSONFileContent(filenameAttr):
             with filename.open('r', encoding='utf-8') as f:
                 filecontent = json.load(f)
 
-            updatedContent = func(*args, filecontent)  # None wont appear in *args
+            # update filecontent with func
+            # None wont appear in *args
+            response = func(*args, filecontent)
             
             with filename.open('w') as f:
-                json.dump(updatedContent, f)
+                json.dump(filecontent, f)
+
+            return response
         return wrapper
     return updateJSONFileContentDecorator
 
@@ -103,14 +106,8 @@ class FileCrudManager(CrudManager):
         if not UpdateUser.validate(user):
             raise EntityValidationError('Failed to validate user update object')
         
-        usersToUpdate = self.searchUser(searchFilter, PagingNoLimit())
-        self._updateUserImpl(searchFilter, user)
+        return self._updateUserImpl(searchFilter, user)
         
-        return dict(
-            matchedCount=usersToUpdate['returnCount'],
-            updatedCount=usersToUpdate['returnCount'],
-        )
-
     def createPost(self, post):
         post['createdAt'] = time.time()
         if not NewPost.validate(post):
@@ -145,39 +142,23 @@ class FileCrudManager(CrudManager):
         if not UpdatePost.validate(post):
             raise EntityValidationError('failed to validate post update object')
 
-        postsToUpdate = self.searchPost(searchFilter, PagingNoLimit())
-        self._updatePostImpl(searchFilter, post)
-
-        return dict(
-            matchedCount=postsToUpdate['returnCount'],
-            updatedCount=postsToUpdate['returnCount'],
-        )
+        return self._updatePostImpl(searchFilter, post)
 
     @updateJSONFileContent('_usersFile')
     def _createUserImpl(self, user, currentUsers=None):
         user['password'] = self._userauth.hashPassword( user['password'] )
         user['userId'] = str( self._getCounter('userId') )
-        return [*currentUsers, user]
+        currentUsers.append(user)
 
     @updateJSONFileContent('_usersFile')
     def _deleteUserImpl(self, userIds, currentUsers=None):
-        # delete related posts
-        postsToDelete = self.searchPost(
-            PrimitiveFilter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds }),
-            PagingNoLimit()
-        )['posts']
-        self.deletePost( [post['postId'] for post in postsToDelete] )
-        
-        updatedUsers = [
+        currentUsers[:] = [
             user for user in currentUsers
             if user['userId'] not in userIds
         ]
-        return updatedUsers
-
+                
     @updateJSONFileContent('_usersFile')
     def _updateUserImpl(self, searchFilter, user, currentUsers=None):
-        updatedUsers = [*currentUsers]
-        
         # find out which element in list needs update
         userIdxToUpdate = [
             idx for idx, u in enumerate(currentUsers)
@@ -189,24 +170,26 @@ class FileCrudManager(CrudManager):
             for field in UpdateUser.getUpdatableFields():
                 if field == 'password':
                     hashed = self._userauth.hashPassword( user[field] )
-                    updatedUsers[idx][field] = hashed
+                    currentUsers[idx][field] = hashed
                 else:
-                    updatedUsers[idx][field] = user[field]
-        
-        return updatedUsers
+                    currentUsers[idx][field] = user[field]
 
+        return dict(
+            matchedCount=len(userIdxToUpdate),
+            updatedCount=len(userIdxToUpdate),
+        )
+        
     @updateJSONFileContent('_postsFile')
     def _createPostImpl(self, post, currentPosts=None):
         post['postId'] = str( self._getCounter('postId') )
-        return [*currentPosts, post]
+        currentPosts.append(post)
 
     @updateJSONFileContent('_postsFile')
     def _deletePostImpl(self, postIds, currentPosts=None):
-        return [ post for post in currentPosts if post['postId'] not in postIds ]
+        currentPosts[:] = [ post for post in currentPosts if post['postId'] not in postIds ]
 
     @updateJSONFileContent('_postsFile')
     def _updatePostImpl(self, searchFilter, post, currentPosts=None):
-        updatedPosts = [*currentPosts]
         # determine which element in list needs update
         postIdxToUpdate = [
             idx for idx, p in enumerate(currentPosts)
@@ -215,10 +198,13 @@ class FileCrudManager(CrudManager):
         # apply update
         for idx in postIdxToUpdate:
             for field in UpdatePost.getUpdatableFields():
-                updatedPosts[idx][field] = post[field]
-        
-        return updatedPosts
+                currentPosts[idx][field] = post[field]
 
+        return dict(
+            matchedCount=len(postIdxToUpdate),
+            updatedCount=len(postIdxToUpdate),
+        )
+        
     def _getCounter(self, fieldname):
         with self._countersFile.open('r', encoding='utf-8') as f:
             counters = json.load(f)
@@ -228,8 +214,6 @@ class FileCrudManager(CrudManager):
 
     @updateJSONFileContent('_countersFile')
     def _incrementCounter(self, fieldname, currentCounters=None):
-        counters = [*currentCounters]
-        for counter in counters:
+        for counter in currentCounters:
             if counter['fieldname'] == fieldname:
                 counter['value'] += 1
-        return counters

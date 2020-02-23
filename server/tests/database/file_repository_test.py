@@ -97,6 +97,7 @@ def deleteS3Objects(s3, objects):
 
 
 @pytest.mark.integration
+@pytest.mark.slow
 class TestS3FileRepository:
     def test_writeBinaryCreatesFileInRepo(self, cleanupS3Bucket):
         with TEST_DATA_PATH.open('rb') as fp:

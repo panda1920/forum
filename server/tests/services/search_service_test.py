@@ -7,7 +7,6 @@ import pytest
 from server.services.search_service import SearchService
 
 import tests.mocks as mocks
-import server.app_utils as app_utils
 
 @pytest.fixture(scope='function')
 def service():
@@ -16,6 +15,7 @@ def service():
     mockAggregate = mocks.createMockAggregateFilter()
     mockPaging = mocks.createMockPaging()
     yield SearchService(mockDB, mockFilter, mockAggregate, mockPaging)
+
 
 class TestSearchUsersByKeyValues:
     MOCKDB_DEFAULT_RETURN = dict(
@@ -86,7 +86,7 @@ class TestSearchUsersByKeyValues:
         mockPaging.assert_called_with(self.DEFAULT_KEYVALUES)
 
     def test_searchUsersByKeyValuesQueriesCrudWithCreatedPagingAndFilter(self, service):
-        mockDB= service._repo
+        mockDB = service._repo
 
         service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
 
@@ -96,7 +96,6 @@ class TestSearchUsersByKeyValues:
         )
 
     def test_searchUsersByKeyValuesReturnsNoUsersWhenNoSearchTermInKeyValues(self, service):
-        mockDB = service._repo
         keyValues = dict(offset=30, limit=500)
 
         searchResult = service.searchUsersByKeyValues(keyValues)
@@ -108,11 +107,10 @@ class TestSearchUsersByKeyValues:
         )
 
     def test_searchUsersByKeyValuesReturnWhatsReturnedFromQuery(self, service):
-        mockDB = service._repo
-
         searchResult = service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
 
         assert searchResult == self.MOCKDB_DEFAULT_RETURN
+
 
 class TestSearchPostsByKeyValues:
     MOCKDB_DEFAULT_RETURN = dict(

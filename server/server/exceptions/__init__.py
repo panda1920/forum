@@ -90,6 +90,15 @@ class InvalidImageFileError(MyAppException):
         return 400
 
 
+class IdNotSpecifiedError(MyAppException):
+    """
+    Raised when Id was not specified for CRUD operations against entity
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 400
+        
+
 class RecordNotFoundError(MyAppException):
     """
     Raised when record was not found during db search

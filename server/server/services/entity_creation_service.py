@@ -6,6 +6,7 @@ This file houses business logic for entity creation made by apis
 import server.exceptions as exceptions
 from server.entity.post import NewPost
 
+
 class EntityCreationService:
     def __init__(self, repo, filterClass):
         self._repo = repo
@@ -34,7 +35,6 @@ class EntityCreationService:
         if result['returnCount'] > 0:
             print(f'Failed to create user: username { keyValues["userName"] } already exist')
             raise exceptions.DuplicateUserError('Username already exist')
-
 
     def _createUser(self, keyValues):
         atIdx = keyValues['userName'].find('@')
