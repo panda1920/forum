@@ -2,10 +2,9 @@ import React from 'react';
 
 import './header-button.styles.scss';
 
-const HeaderButton = ({ children, className }) => {
-  console.log(className);
+const HeaderButton = ({ children, className, onClick }) => {
   return (
-    <div className={`${className} header-button`}>
+    <div className={`${className} header-button`} onClick={onClick}>
       { children }
     </div>
   );

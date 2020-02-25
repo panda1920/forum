@@ -37,7 +37,9 @@ class MongoCrudManager(CrudManager):
             user['userId'] = str(nextUserId)
             self._db['users'].insert_one(user)
 
-    def searchUser(self, searchFilter, paging=Paging()):
+    def searchUser(self, searchFilter, paging=None):
+        if paging is None:
+            paging = Paging()
         query = {} if searchFilter is None else searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to search user'):
@@ -80,7 +82,9 @@ class MongoCrudManager(CrudManager):
             post['postId'] = str(nextPostId)
             self._db['posts'].insert_one(post)
     
-    def searchPost(self, searchFilter, paging=Paging()):
+    def searchPost(self, searchFilter, paging=None):
+        if paging is None:
+            paging = Paging()
         query = {} if searchFilter is None else searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to search post'):

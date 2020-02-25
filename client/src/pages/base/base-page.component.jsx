@@ -1,18 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import Header from  '../../components/header/header.component';
 import Footer from  '../../components/footer/footer.component';
+import { ModalContextProvider } from '../../contexts/modal/modal';
+import ModalLogin from '../../components/modal-login/modal-login.component';
 
 import './base-page.styles.scss';
 
 const BasePage = () => {
+  const [ isBlurred, setBlur ] = useState(false);
+  const getBlurClass = () => isBlurred ? 'blurred' : 'hello';
+  const toggleBlur = () => setBlur(!isBlurred);
+
   return (
-    <div className='base-page'>
-      <Header />
-      <div className='main-content'>
-        
-      </div>
-      <Footer />
+    <div className={`base-page ${getBlurClass()}`}>
+      <ModalContextProvider toggleBlur={toggleBlur}>
+        <ModalLogin />
+        <Header />
+        <div className='main-content'>
+          
+        </div>
+        <Footer />
+      </ModalContextProvider>
     </div>
   );
 }

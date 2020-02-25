@@ -4,8 +4,6 @@ This file houses the class CrudManager.
 It is an interface to abstract away the detail of making CRUD operations.
 """
 
-from server.database.paging import Paging
-
 
 class CrudManager:
     def __init__(self):
@@ -14,7 +12,7 @@ class CrudManager:
     def createUser(self, user):
         raise NotImplementedError
 
-    def searchUser(self, searchFilter, paging=Paging()):
+    def searchUser(self, searchFilter, paging=None):
         raise NotImplementedError
 
     def deleteUser(self, userIds):
@@ -26,7 +24,7 @@ class CrudManager:
     def createPost(self, post):
         raise NotImplementedError
     
-    def searchPost(self, searchFilter, paging=Paging()):
+    def searchPost(self, searchFilter, paging=None):
         raise NotImplementedError
 
     def deletePost(self, postIds):

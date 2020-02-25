@@ -5,6 +5,7 @@ This file houses a class to declare paging options for database requests
 
 from cerberus import Validator
 
+
 class Paging:
     """
     Class that holds information about pagination
@@ -31,7 +32,9 @@ class Paging:
         }
     }
 
-    def __init__(self, keyValues = {}):
+    def __init__(self, keyValues=None):
+        if keyValues is None:
+            keyValues = {}
         parsed = self._parseKeyValues(keyValues)
         self._offset = parsed['offset']
         self._limit = parsed['limit']
@@ -53,11 +56,12 @@ class Paging:
             parsedKeyValues[attribute] = self._schema[attribute]['default']
         return parsedKeyValues
 
+
 class PagingNoLimit(Paging):
     """
     No limit to how many records shown in 1 page
     """
-    def __init__(self, keyValues = {}):
+    def __init__(self, keyValues=None):
         super().__init__(keyValues)
 
         self._limit = None

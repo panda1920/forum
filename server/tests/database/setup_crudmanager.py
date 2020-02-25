@@ -18,6 +18,7 @@ import tests.mocks as mocks
 PROJECT_DIR = Path(__file__).resolve().parents[3]
 TESTDATA = PROJECT_DIR / 'server' / 'tests' / 'database' / 'testdata.json'
 
+
 class SetupCrudManager:
     def setup(self):
         """
@@ -126,6 +127,7 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
+
 class Setup_FileCrudManager(SetupCrudManager):
     def __init__(self):
         self._saveLocation = Path(__file__).resolve().parents[0] / 'temp'
@@ -213,8 +215,10 @@ class Setup_FileCrudManager(SetupCrudManager):
         with filepath.open('r', encoding='utf-8') as f:
             return json.load(f)
 
+
 class Setup_MongoCrudManager(SetupCrudManager):
     TEST_DBNAME = 'test_mongo'
+
     def __init__(self):
         self._userauth = mocks.createMockUserAuth()
         self._db = MongoCrudManager(self.TEST_DBNAME, self._userauth)

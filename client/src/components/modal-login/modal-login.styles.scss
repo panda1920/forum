@@ -1,0 +1,22 @@
+@import '../../base-style';
+
+$width: map-get($dimensions, 'main-content-width');
+$height: 600px;
+
+.modal {
+    position: fixed;
+    top: calc(50vh - #{$height} / 2);
+    left: calc(50vw - #{$width} / 2);
+
+    background-color: red;
+    width: $width;
+    height: $height;
+}
+
+.modal-overlay {
+    background-color: crimson;
+}
+
+// .ReactModalPortal-Login {
+
+// }

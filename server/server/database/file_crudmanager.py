@@ -8,8 +8,7 @@ import json
 import time
 
 from server.database.crudmanager import CrudManager
-from server.database.filter import PrimitiveFilter
-from server.database.paging import Paging, PagingNoLimit
+from server.database.paging import Paging
 from server.entity.user import NewUser, UpdateUser
 from server.entity.post import NewPost, UpdatePost
 from server.exceptions import EntityValidationError
@@ -80,7 +79,9 @@ class FileCrudManager(CrudManager):
         self._createUserImpl(user)
         self._incrementCounter('userId')
 
-    def searchUser(self, searchFilter, paging=Paging()):
+    def searchUser(self, searchFilter, paging=None):
+        if paging is None:
+            paging = Paging()
         with self._usersFile.open('r', encoding='utf-8') as f:
             users = json.load(f)
 
@@ -116,7 +117,9 @@ class FileCrudManager(CrudManager):
         self._createPostImpl(post)
         self._incrementCounter('postId')
 
-    def searchPost(self, searchFilter, paging=Paging()):
+    def searchPost(self, searchFilter, paging=None):
+        if paging is None:
+            paging = Paging()
         with self._postsFile.open('r', encoding='utf-8') as f:
             posts = json.load(f)
 

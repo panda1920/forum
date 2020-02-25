@@ -14,9 +14,9 @@ The goal I set for myself building this app is as follows:
 - CI: CircleCI
 - Persistent storage: mongoDB, Amazon S3
 - Frontend framework: React
+- Frontend testing: node.js + Jest + testing-library
 
 ### Planning to implement
-- Frontend testing: node.js + Jest + JSDom
 - HTTP server/proxy: Gunicorn, Nginx
 - CD: CircleCI
 - Hosting: AWS/docker
