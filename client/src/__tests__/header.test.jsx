@@ -9,8 +9,8 @@ describe('Tests for Header component', () => {
     test('sub-components should be rendered on screen', () => {
         const { container } = render(<Header />);
 
-        const logo = screen.getByText('MY LOGO')
-        const signup = screen.getByText('SIGNUP')
-        const login = screen.getByText('LOGIN')
+        const logo = screen.getByText('MYFORUMAPP');
+        const signup = screen.getByText('SIGNUP');
+        const login = screen.getByText('LOGIN');
     });
 });

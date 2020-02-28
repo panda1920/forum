@@ -3,13 +3,13 @@
 This file houses tests for paging.py
 """
 
-import pdb
 import pytest
 
 from server.database.paging import Paging, PagingNoLimit
 
 TEST_OFFSET_VALUE = 118
 TEST_LIMIT_VALUE = 32
+
 
 class TestPagingConstruction:
     def test_constructPaging(self):
@@ -102,12 +102,13 @@ class TestPagingConstruction:
         assert p._offset == 1
         assert p._limit == 9
 
+
 class TestPagingNoLimitConstruction:
     def test_constructPagingWithDefaultOffsetAndNoLimitWhenNoConstructorArgs(self):
         p = PagingNoLimit()
         
         assert p._offset == Paging.DEFAULT_OFFSET
-        assert p._limit == None
+        assert p._limit is None
 
     def test_constructionWithNoLimitWhenPassedQuerystring(self):
         querystringObj = {
@@ -117,7 +118,8 @@ class TestPagingNoLimitConstruction:
         p = PagingNoLimit(querystringObj)
 
         assert p._offset == TEST_OFFSET_VALUE
-        assert p._limit == None
+        assert p._limit is None
+
 
 class TestPagingMethods:
     DEFAULT_LIMIT = 3
@@ -126,8 +128,8 @@ class TestPagingMethods:
     @pytest.fixture(scope='function')
     def paging(self):
         return Paging(dict(
-            offset = self.DEFAULT_OFFSET,
-            limit = self.DEFAULT_LIMIT,
+            offset=self.DEFAULT_OFFSET,
+            limit=self.DEFAULT_LIMIT,
         ))
 
     @pytest.fixture(scope='function')

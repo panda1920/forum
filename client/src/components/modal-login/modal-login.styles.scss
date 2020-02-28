@@ -2,20 +2,74 @@
 
 $width: map-get($dimensions, 'main-content-width');
 $height: 600px;
+$vertical-spaces-between-widgets: map-get($spaces, 'small');
 
 .modal {
     position: fixed;
     top: calc(50vh - #{$height} / 2);
     left: calc(50vw - #{$width} / 2);
 
-    background-color: red;
+    background-color: map-get($colors, '01');
     width: $width;
     height: $height;
+
+    padding: 20px 20px 40px 40px;
+
+    .modal-button-close {
+        position: absolute;
+        right: 20px;
+        top : 20px;
+
+        color: map-get($colors, '00');
+    }
+
+    .modal-header {
+        font-size: map-get($font-size, 'header');
+    }
+
+    #modal-input-email {
+        margin-bottom: $vertical-spaces-between-widgets;
+        width: map-get($dimensions, 'form-input-width');
+    }
+    
+    #modal-input-password {
+        margin-bottom: $vertical-spaces-between-widgets;
+        width: map-get($dimensions, 'form-input-width');
+    }
+
+    .form-button {
+        text-align: center;
+        margin-bottom: $vertical-spaces-between-widgets;
+        margin-right:  map-get($spaces, 'small');
+
+        .button-with-icons {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .button-logo {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+        }
+    }
+
+    .block-text {
+        margin-bottom: $vertical-spaces-between-widgets;
+    }
 }
 
-.modal-overlay {
-    background-color: crimson;
+.modal-content {
+    padding-bottom: $vertical-spaces-between-widgets; 
+    border-bottom: 0.5px solid map-get($colors, '00');
+    margin-bottom: $vertical-spaces-between-widgets;
 }
+
+// .modal-overlay {
+//     background-color: crimson;
+// }
 
 // .ReactModalPortal-Login {
 

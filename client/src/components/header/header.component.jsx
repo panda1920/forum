@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 
-import HeaderButton from '../header-button/header-button.component';
+import Button from '../button/button.component';
 
 import './header.styles.scss';
 import { ModalContext } from '../../contexts/modal/modal';
@@ -11,11 +11,25 @@ const Header = ({ id }) => {
   return (
     <header id={id}>
       <div className='logo-section'>
-        <HeaderButton className='logo' >MY LOGO</HeaderButton>
+        <Button
+          className='header-button button-logo'
+        >
+          MYFORUMAPP
+        </Button>
       </div>
       <div className='controls-section'>
-        <HeaderButton className='signup' onClick={toggleSignup}>SIGNUP</HeaderButton>
-        <HeaderButton className='login' onClick={toggleLogin}>LOGIN</HeaderButton>
+        <Button
+          className='header-button button-signup'
+          onClick={toggleSignup}
+        >
+          SIGNUP
+        </Button>
+        <Button
+          className='header-button button-login'
+          onClick={toggleLogin}
+        >
+          LOGIN
+        </Button>
       </div>
     </header>
   );

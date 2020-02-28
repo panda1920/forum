@@ -15,7 +15,7 @@ header {
         flex-direction: row;
         justify-content: flex-start;
         
-        .logo {
+        .button-logo {
             margin-left: 100px;
         }
     }
@@ -26,13 +26,20 @@ header {
         display: flex;
         flex-direction: row;
         justify-content: flex-end;
-
-        .signup {
-            
-        }
     
-        .login {
+        .button-login {
             margin-right: 50px;
         }
+    }
+}
+
+.header-button {
+    display: inline-block;
+    height: inherit;
+    padding: 0 0.5em;
+
+    &:hover {
+        cursor: pointer;
+        color: map-get($colors, '02');
     }
 }
