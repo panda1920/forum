@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 
 import { ModalContext } from '../../contexts/modal/modal';
 import ModalDialog from '../modal-dialog/modal-dialog.component';
@@ -9,12 +9,41 @@ import Button from '../button/button.component';
 import { ReactComponent as GoogleLogo } from '../../icons/google_signin_buttons/web/vector/btn_google_light_normal_ios.svg';
 import { ReactComponent as TwitterLogo } from '../../icons/Twitter_Logos/Twitter_Logo_Blue/Twitter_Logo_Blue.svg';
 
+import { userApiLogin } from '../../paths';
+
 import './modal-login.styles.scss';
 
 export const ModalLoginTitle = 'modal-login';
 
 const ModalLogin = () => {
   const { isLoginOpen, toggleLogin, toggleSignup } =  useContext(ModalContext);
+  const [ email, setEmail ] = useState('');
+  const [ password, setPassword ] = useState('');
+
+  const sendLoginInfo = async () => {
+    const response = await fetch(userApiLogin, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: JSON.stringify({ userName: email, password }),
+    });
+    
+    const { token } = await response.json();
+    localStorage.setItem('token', token);
+    toggleLogin();
+  }
+
+  const loginErrorHandler = () => {
+
+  };
+
+  const onEmailChange = (event) => {
+    setEmail(event.target.value);
+  };
+
+  const onPasswordChange = (event) => {
+    setPassword(event.target.value);
+  };
+
   const openSignup = () => {
     toggleLogin();
     toggleSignup();
@@ -34,17 +63,22 @@ const ModalLogin = () => {
           alt='modal input email'
           type='text'
           placeholder='Email'
-          onChange={() => console.log('There was an input to email')}
+          value={email}
+          onChange={onEmailChange}
         />
         <FormInput
           id='modal-input-password'
           alt='modal input password'
           type='password'
           placeholder='Password'
-          onChange={() => console.log('There was an input to password')}
+          value={password}
+          onChange={onPasswordChange}
         />
         <div className='login-button-section'>
-          <FormButton title='login-button'>
+          <FormButton
+            title='login-button'
+            onClick={sendLoginInfo}
+          >
             Login
           </FormButton>
         </div>

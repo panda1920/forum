@@ -16,4 +16,6 @@ code {
 
 * {
     box-sizing: border-box;
+    margin: none;
+    padding: none;
 }

@@ -41,6 +41,9 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
         text-align: center;
         margin-bottom: $vertical-spaces-between-widgets;
         margin-right:  map-get($spaces, 'small');
+        background-color: lighten(map-get($colors, '01'), 10);
+        color: map-get($colors, '00');
+        font-weight: 600;
 
         .button-with-icons {
             display: flex;
@@ -53,6 +56,11 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
             display: inline-block;
             width: 32px;
             height: 32px;
+        }
+
+        &:hover {
+            background-color: map-get($colors, '00');
+            color: lighten(map-get($colors, '01'), 10);
         }
     }
 
