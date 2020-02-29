@@ -9,11 +9,12 @@ afterEach(cleanup);
 
 const TEST_INPUT_ALT = 'This is a test input';
 
-function setupFormInput(onChange) {
+function setupFormInput(onChange, errorMsg) {
   return render(
     <FormInput
       alt={TEST_INPUT_ALT}
       onChange={onChange}
+      errorMsg={errorMsg}
       type='text'
     />
   );
@@ -41,6 +42,24 @@ describe('Testing behavior of form input', () => {
     fireEvent.input(input, event);
 
     expect(mock.mock.calls.length).toBe(3);
+  });
+
+  test('when there is an error message, should render error message', () => {
+    const mock = jest.fn().mockName('mocked onchange handler');
+    const errorMsg = 'This is some error message';
+    setupFormInput(mock, errorMsg);
+
+    screen.getByText(errorMsg);
+  });
+
+  test('when there is an error message, should apply error-border class to input', () => {
+    const mock = jest.fn().mockName('mocked onchange handler');
+    const errorMsg = 'This is some error message';
+    setupFormInput(mock, errorMsg);
+    const input = screen.getByAltText(TEST_INPUT_ALT);
+
+    const classes = input.getAttribute('class').split(' ');
+    expect(classes).toContain('error-border');
   });
 });
 

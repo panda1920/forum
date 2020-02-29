@@ -3,13 +3,14 @@ $colors: (
     '00': rgb(50, 50, 50),
     '01': rgb(220, 220, 220),
     '02': rgb(220, 150, 50),
+    '99': red,
 );
 
 $font-size: (
     'header': 40px,
     'large': 20px,
     'medium': 14px,
-    'small': 10px,
+    'small': 12px,
 );
 
 $spaces: (
@@ -22,7 +23,7 @@ $dimensions: (
     'header-height': 40px,
     'footer-height': 40px,
     'main-content-width': 1200px,
-    'block-text-height': 40px,
+    'block-text-height': 2em,
     'form-input-height': 40px,
     'form-input-width': 400px,
     'form-button-height': 40px,

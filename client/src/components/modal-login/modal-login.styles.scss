@@ -26,15 +26,9 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
     .modal-header {
         font-size: map-get($font-size, 'header');
     }
-
-    #modal-input-email {
-        margin-bottom: $vertical-spaces-between-widgets;
-        width: map-get($dimensions, 'form-input-width');
-    }
     
-    #modal-input-password {
+    .form-input-container {
         margin-bottom: $vertical-spaces-between-widgets;
-        width: map-get($dimensions, 'form-input-width');
     }
 
     .form-button {

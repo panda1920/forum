@@ -65,6 +65,7 @@ const ModalLogin = () => {
           placeholder='Email'
           value={email}
           onChange={onEmailChange}
+          errorMsg={'Invalid username'}
         />
         <FormInput
           id='modal-input-password'
