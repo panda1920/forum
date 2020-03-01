@@ -1,4 +1,6 @@
 [flake8]
+max-line-length = 100
+
 exclude =
     conftest.py
     ./pytest_cache,
@@ -14,4 +16,6 @@ ignore =
     # suppress warnings on number of #s used for comment
     E266,
 
-max-line-length = 100
+per-file-ignores =
+    # ignores max-line constraint in testfiles
+    *_test.py:E501

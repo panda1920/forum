@@ -10,11 +10,13 @@ import tests.mocks as mocks
 import server.exceptions as exceptions
 from server.services.entity_creation_service import EntityCreationService
 
+
 @pytest.fixture(scope='function')
 def service():
     mockDB = mocks.createMockDB()
     mockFilter = mocks.createMockFilter()
     yield EntityCreationService(mockDB, mockFilter)
+
 
 class TestSignupUser:
     DEFAULT_KEYVALUES = dict(
@@ -83,6 +85,7 @@ class TestSignupUser:
 
         with pytest.raises(exception):
             service.signup(keyValues)
+
 
 class TestCreateNewPost:
     DEFAULT_KEYVALUES = dict(

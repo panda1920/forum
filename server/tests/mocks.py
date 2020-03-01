@@ -11,11 +11,12 @@ from server.database.crudmanager import CrudManager
 from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
-from server.middleware.userauth import UserAuthentication
+from server.services.userauth import UserAuthentication
 from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
 from server.services.update_service import UpdateService
 from server.services.image_scaler import ImageScalerBase
+from server.middleware.session import SessionManager
 
 
 def createMockDB():
@@ -56,6 +57,10 @@ def createMockSession(sessionInfo={}):
     mock.update(defaults)
     mock.update(sessionInfo)
     return mock
+
+
+def createMockSessionManager():
+    return create_autospec(SessionManager)
 
 
 def createMockSearchService():

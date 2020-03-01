@@ -15,7 +15,7 @@ import server.exceptions as exceptions
 from server.database.filter import PrimitiveFilter
 
 ACCESS_KEY = os.getenv('AWS_ACCESS_KEY_ID')
-SECRET_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_JWT_SECRET_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 TEST_BUCKETNAME = 'myforumapp-test-bucket'
 TEST_DATA_PATH = Path(__file__).parents[0] / 'testdata.json'
@@ -69,7 +69,7 @@ def createS3Client():
     return boto3.client(
         's3',
         aws_access_key_id=ACCESS_KEY,
-        aws_secret_access_key=SECRET_KEY,
+        aws_secret_access_key=AWS_JWT_SECRET_KEY,
     )
 
 

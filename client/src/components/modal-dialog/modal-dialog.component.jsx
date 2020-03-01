@@ -27,8 +27,8 @@ const ModalDialog = ({ isOpen, toggleOpen, title, children}) => {
         >
           <i className='material-icons md-36' title='button-close'>close</i>
         </Button>
+        {children}
       </div>
-      {children}
 
     </ReactModal>
   );
