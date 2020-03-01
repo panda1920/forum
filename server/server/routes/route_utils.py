@@ -24,7 +24,7 @@ def createPostsObject(posts):
     }
 
 
-def createUsersObject(users):
+def createUsersObject(*users):
     return {
         'users': users
     }

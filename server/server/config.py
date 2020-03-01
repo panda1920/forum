@@ -16,6 +16,7 @@ from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
 from server.services.update_service import UpdateService
 from server.services.image_scaler import ImageScaler
+from server.middleware.session import SessionManager
 
 
 class Config:
@@ -24,11 +25,11 @@ class Config:
 
     # define classes/objects that are referenced in the app
     # can be replaced during tests
-    USER_AUTHENTICATION = UserAuthentication
+
     # DATABASE_REPOSITORY = FileCrudManager(Path(DATA_LOCATION), USER_AUTHENTICATION)
     DATABASE_REPOSITORY = MongoCrudManager(
         os.environ.get('MONGO_DBNAME', 'TEST_MYFORUMWEBAPP'),
-        USER_AUTHENTICATION
+        UserAuthentication
     )
     SEARCH_FILTER = PrimitiveFilter
     AGGREGATE_FILTER = AggregateFilter
@@ -39,6 +40,9 @@ class Config:
     SEARCH_SERVICE = SearchService(DATABASE_REPOSITORY, SEARCH_FILTER, AGGREGATE_FILTER, PAGING)
     UPDATE_SERVICE = UpdateService(DATABASE_REPOSITORY, SEARCH_FILTER)
     IMAGE_SCALER = ImageScaler()
+    USER_AUTHENTICATION = UserAuthentication(
+        DATABASE_REPOSITORY, SEARCH_FILTER, SessionManager()
+    )
 
     # for session
     SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -67,7 +71,7 @@ class Config:
         return app.config['PAGING']
 
     @staticmethod
-    def getuserAuth(app):
+    def getUserAuth(app):
         return app.config['USER_AUTHENTICATION']
 
     @staticmethod

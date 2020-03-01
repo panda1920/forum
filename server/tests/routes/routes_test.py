@@ -10,6 +10,12 @@ DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES = 'some_value'
 DEFAULT_RETURN_SIGNUP = None
 DEFAULT_RETURN_UPDATEUSER = 'some_value_updateuser'
 DEFAULT_RETURN_UPDATEPOST = 'some_value_updatepost'
+DEFAULT_USER_RETURNED = dict(
+    userId='1',
+    displayName='Bobby',
+    userName='Bobby@myforumwebapp.com',
+    imageUrl='http://some-random-website/myforumwebapp.com',
+)
 
 
 @pytest.fixture(scope='function')
@@ -32,6 +38,10 @@ def mockApp(app):
     mockUpdate.updateUserByKeyValues.return_value = DEFAULT_RETURN_UPDATEUSER
     mockUpdate.updatePostByKeyValues.return_value = DEFAULT_RETURN_UPDATEPOST
     app.config['UPDATE_SERVICE'] = mockUpdate
+
+    mockUserAuth = mocks.createMockUserAuth()
+    mockUserAuth.login.return_value = DEFAULT_USER_RETURNED
+    app.config['USER_AUTHENTICATION'] = mockUserAuth
 
     yield app
 
@@ -426,7 +436,6 @@ class TestUserAPIs:
         url = f'{self.USERAPI_BASE_URL}/{userIdToUpdate}/update'
         headers = { 'Content-Type': 'application/json' }
 
-        print(userProperties)
         response = client.patch(url, json=userProperties, headers=headers)
 
         assert response.status_code == 200
@@ -494,3 +503,55 @@ class TestUserAPIs:
                 response = client.delete(url)
 
                 assert response.status_code == e.getStatusCode()
+
+    def test_loginShouldPassCredentialsToService(self, mockApp, client):
+        userCredentials = dict(
+            userName='Bobby',
+            password='password',
+        )
+        url = f'{self.USERAPI_BASE_URL}/login'
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+
+        response = client.post(url, headers=headers, data=userCredentials)
+
+        userauth = Config.getUserAuth(mockApp)
+        assert response.status_code == 200
+        assert userauth.login.call_count == 1
+        userauth.login.assert_called_with(userCredentials)
+
+    def test_loginShouldReturnUserInfoOnSuccess(self, mockApp, client):
+        userCredentials = dict(
+            userName='Bobby',
+            password='password',
+        )
+        url = f'{self.USERAPI_BASE_URL}/login'
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+
+        response = client.post(url, headers=headers, data=userCredentials)
+
+        data = response.get_json()
+        assert 'users' in data
+        assert data['users'][0] == DEFAULT_USER_RETURNED
+
+    def test_loginShouldReturnErrorWhenLoginRaisesException(self, mockApp):
+        userCredentials = dict(
+            userName='Bobby',
+            password='password',
+        )
+        url = f'{self.USERAPI_BASE_URL}/login'
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+        userauth = Config.getUserAuth(mockApp)
+        exceptionsToTest = [
+            exceptions.InvalidUserCredentials,
+            exceptions.ServerMiscError,
+        ]
+
+        for e in exceptionsToTest:
+            userauth.login.side_effect = e('Some error string')
+            with mockApp.test_client() as client:
+                
+                response = client.post(url, headers=headers, data=userCredentials)
+
+                assert response.status_code == e.getStatusCode()
+
+    # test that exceptions are returned as error

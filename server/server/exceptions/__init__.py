@@ -143,5 +143,3 @@ class FailedAWSOperation(MyAppException):
     @classmethod
     def getStatusCode(cls):
         return 500
-
-

@@ -56,21 +56,18 @@ class UserAuthentication:
         self._filter = filter_class
         self._session = session_manager
 
-    def login(self, userName, password):
+    def login(self, formdata):
         """
         provides login service
         checks credentials against user in repo,
         and if matches put userinformation in session
         
         Args:
-            userName(str): plain text username
-            password(str): plain text password
+            formdata(dict): dictionary that contains user credentials
         Returns:
-            None
+            user(dict): user found in repo
         """
-        if not userName or not password:
-            logging.info('Invalid user credentials')
-            raise exceptions.InvalidUserCredentials('Invalid credentials')
+        userName, password = self._extractUserNameAndPassword(formdata)
 
         user = self._searchUserFromRepo(userName)
         if not self.verifyPassword(password, user['password']):
@@ -78,6 +75,18 @@ class UserAuthentication:
             raise exceptions.InvalidUserCredentials('Incorrect password')
 
         self._session.setSessionUser(user)
+
+        return user
+
+    def _extractUserNameAndPassword(self, formdata):
+        userName = formdata.get('userName', None)
+        password = formdata.get('password', None)
+
+        if not userName or not password:
+            logging.info('Invalid user credentials')
+            raise exceptions.InvalidUserCredentials('Invalid credentials')
+
+        return (userName, password)
 
     def _searchUserFromRepo(self, userName):
         searchFilter = self._filter.createFilter(dict(

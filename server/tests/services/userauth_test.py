@@ -97,7 +97,7 @@ class TestLogin:
             returnCount=0, matchedCount=0, users=[ self.DEFAULT_USER_IN_REPO ]
         )
 
-        user_auth.login(**credentials)
+        user_auth.login(credentials)
 
         expectedFilter = PrimitiveFilter.createFilter(dict(
             field='userName', operator='eq', value=[ credentials['userName'] ]
@@ -111,10 +111,20 @@ class TestLogin:
             returnCount=0, matchedCount=0, users=[ self.DEFAULT_USER_IN_REPO ]
         )
 
-        user_auth.login(**credentials)
+        user_auth.login(credentials)
 
         mockSession = user_auth._session
         mockSession.setSessionUser.assert_called_once_with(self.DEFAULT_USER_IN_REPO)
+
+    def test_loginUserShouldReturnUserInfoWhenSuccessful(self, user_auth):
+        credentials = self.DEFAULT_USER_CREDENTIALS
+        mockRepo = user_auth._repo
+        mockRepo.searchUser.return_value = dict(
+            returnCount=0, matchedCount=0, users=[ self.DEFAULT_USER_IN_REPO ]
+        )
+
+        user = user_auth.login(credentials)
+        assert user == self.DEFAULT_USER_IN_REPO
 
     def test_loginShouldRaiseExceptionWhenUserNotFound(self, user_auth):
         credentials = self.DEFAULT_USER_CREDENTIALS
@@ -124,7 +134,7 @@ class TestLogin:
         )
 
         with pytest.raises(exceptions.InvalidUserCredentials):
-            user_auth.login(**credentials)
+            user_auth.login(credentials)
 
     def test_loginShouldRaiseExceptionWhenWrongPassword(self, user_auth):
         credentials = self.DEFAULT_USER_CREDENTIALS
@@ -135,7 +145,7 @@ class TestLogin:
         )
 
         with pytest.raises(exceptions.InvalidUserCredentials):
-            user_auth.login(**credentials)
+            user_auth.login(credentials)
 
     def test_loginShouldRaiseExceptionWhenInvalidCredentials(self, user_auth):
         credentialsList = [
@@ -151,4 +161,4 @@ class TestLogin:
 
         for credentials in credentialsList:
             with pytest.raises(exceptions.InvalidUserCredentials):
-                user_auth.login(**credentials)
+                user_auth.login(credentials)

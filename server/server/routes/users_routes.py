@@ -68,3 +68,16 @@ def deleteUserv1(userId):
         return route_utils.createJSONErrorResponse(e)
 
     return route_utils.createJSONResponse([], 200)
+
+
+@routes.route('/v1/users/login', methods=['POST'])
+def loginUserv1():
+    try:
+        userauth = Config.getUserAuth(current_app)
+        authenticatedUser = userauth.login( request.form.to_dict() )
+        return route_utils.createJSONResponse(
+            [ route_utils.createUsersObject(authenticatedUser) ],
+            200
+        )
+    except MyAppException as e:
+        return route_utils.createJSONErrorResponse(e)

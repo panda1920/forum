@@ -38,7 +38,7 @@ def userlist():
     for user in users:
         user.pop('_id', None)
 
-    return route_utils.createJSONResponse( [ route_utils.createUsersObject(users) ], 200 )
+    return route_utils.createJSONResponse( route_utils.createUsersObject(*users), 200 )
 
 @routes.route('/postlist', methods=['GET'])
 def postlist():
