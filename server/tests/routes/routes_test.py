@@ -553,5 +553,3 @@ class TestUserAPIs:
                 response = client.post(url, headers=headers, data=userCredentials)
 
                 assert response.status_code == e.getStatusCode()
-
-    # test that exceptions are returned as error

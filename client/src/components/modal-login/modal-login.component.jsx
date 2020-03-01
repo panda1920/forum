@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 
 import { ModalContext } from '../../contexts/modal/modal';
+import { CurrentUserContext } from '../../contexts/currentUser/currentUser';
 import ModalDialog from '../modal-dialog/modal-dialog.component';
 import FormInput from '../form-input/form-input.component';
 import FormButton from '../form-button/form-button.component';
@@ -16,24 +17,63 @@ import './modal-login.styles.scss';
 export const ModalLoginTitle = 'modal-login';
 
 const ModalLogin = () => {
-  const { isLoginOpen, toggleLogin, toggleSignup } =  useContext(ModalContext);
+  const { isLoginOpen, toggleLogin, toggleSignup } = useContext(ModalContext);
+  const { setCurrentUser } = useContext(CurrentUserContext);
   const [ email, setEmail ] = useState('');
   const [ password, setPassword ] = useState('');
+  const [ emailError, setEmailError ] = useState('');
+  const [ passwordError, setPasswordError ] = useState('');
 
   const sendLoginInfo = async () => {
+    if (! validateInputs()) return;
+    resetInputs();
+    
     const response = await fetch(userApiLogin, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       data: JSON.stringify({ userName: email, password }),
     });
     
-    const { token } = await response.json();
-    localStorage.setItem('token', token);
-    toggleLogin();
+    if (!response.ok) {
+      loginErrorHandler(response);
+      return;
+    }
+    else {
+      const { users } = await response.json();
+      setCurrentUser(users[0]);
+      toggleLogin();
+    }
   }
 
-  const loginErrorHandler = () => {
+  const validateInputs = () => {
+    const emailPattern = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    if ( !emailPattern.test(email) ) {
+      setEmailError('Invalid email');
+      return false;
+    }
 
+    const passwordPattern = /^[^ \t]+$/;
+    if ( !passwordPattern.test(password) ) {
+      setPasswordError('Invalid password');
+      return false;
+    }
+
+    return true;
+  }
+
+  const resetInputs = () => {
+    setEmailError('');
+    setPasswordError('');
+  }
+
+  const loginErrorHandler = async (response) => {
+    const { error: { description } } = await response.json();
+    const isPasswordError = /password/i.test(description);
+
+    if (isPasswordError)
+      setPasswordError(description);
+    else
+      setEmailError(description);
   };
 
   const onEmailChange = (event) => {
@@ -65,6 +105,7 @@ const ModalLogin = () => {
           placeholder='Email'
           value={email}
           onChange={onEmailChange}
+          errorMsg={emailError}
         />
         <FormInput
           id='modal-input-password'
@@ -73,6 +114,7 @@ const ModalLogin = () => {
           placeholder='Password'
           value={password}
           onChange={onPasswordChange}
+          errorMsg={passwordError}
         />
         <div className='login-button-section'>
           <FormButton

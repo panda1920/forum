@@ -55,14 +55,14 @@ def createJSONResponse(datas, statusCode, additionalHeaders={}):
         responseBody.update(data)
     jsonBody = json.dumps(responseBody)
 
-    headers = {'content-type': 'application/json'}
+    headers = {'Content-Type': 'application/json'}
     headers.update(additionalHeaders)
 
     return make_response(jsonBody, statusCode, headers)
 
 
 def createTextResponse(string, statusCode):
-    return make_response(string, statusCode, {'content-type': 'text/plain'})
+    return make_response(string, statusCode, {'Content-Type': 'text/plain'})
 
 
 def createSearchFilters(requestArgs, fieldName):
