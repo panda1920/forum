@@ -204,12 +204,12 @@ describe('Testing behavior of login modal', () => {
 
   test('Error notification should disappear after succesful validation', () => {
     const { email, password } = DEFAULT_USERINFO;
-    const credentialsToTry = [
+    const invalidCredentials = [
       { email: '', password },
       { email, password: '' },
     ]
 
-    for (let credential in credentialsToTry) {
+    for (let credential in invalidCredentials) {
       createModalWithMocks();
       const mockFetch = createMockFetch(true, 200, () => Promise.resolve(DEFAULT_API_RETURN_INFO) );
       window.fetch = mockFetch;

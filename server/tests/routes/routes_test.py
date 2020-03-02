@@ -157,10 +157,9 @@ class TestPostAPIs:
             content='This is a test post'
         )
         url = f'{self.POSTSAPI_BASE_URL}/create'
-        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
         with mockApp.test_client() as client:
-            client.post(url, data=newPostData, headers=headers)
+            client.post(url, json=newPostData)
 
             mockCreate.createNewPost.assert_called_with(newPostData)
 
@@ -171,10 +170,9 @@ class TestPostAPIs:
             content='This is a test post'
         )
         url = f'{self.POSTSAPI_BASE_URL}/create'
-        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
         with mockApp.test_client() as client:
-            response = client.post(url, data=newPostData, headers=headers)
+            response = client.post(url, json=newPostData)
 
             assert response.status_code == 201
 
@@ -185,7 +183,6 @@ class TestPostAPIs:
             content='This is a test post'
         )
         url = f'{self.POSTSAPI_BASE_URL}/create'
-        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
         exceptionsToTest = [
             exceptions.EntityValidationError,
             exceptions.FailedMongoOperation,
@@ -195,7 +192,7 @@ class TestPostAPIs:
         for e in exceptionsToTest:
             mockCreate.createNewPost.side_effect = e()
             with mockApp.test_client() as client:
-                response = client.post(url, data=newPostData, headers=headers)
+                response = client.post(url, json=newPostData)
 
                 assert response.status_code == e.getStatusCode()
 
@@ -377,13 +374,10 @@ class TestUserAPIs:
             'displayName': 'joe',
             'password': '12345678'
         }
-        headers = {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
         url = f'{self.USERAPI_BASE_URL}/create'
 
         with mockApp.test_client() as client:
-            client.post(url, data=userProperties, headers=headers)
+            client.post(url, json=userProperties)
 
             mockCreate.signup.assert_called_with(userProperties)
 
@@ -393,13 +387,10 @@ class TestUserAPIs:
             'displayName': 'joe',
             'password': '12345678'
         }
-        headers = {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
         url = f'{self.USERAPI_BASE_URL}/create'
 
         with mockApp.test_client() as client:
-            response = client.post(url, data=userProperties, headers=headers)
+            response = client.post(url, json=userProperties)
 
             assert response.status_code == 201
 
@@ -409,9 +400,6 @@ class TestUserAPIs:
             'userName': 'joe@myforumwebapp.com',
             'displayName': 'joe',
             'password': '12345678'
-        }
-        headers = {
-            'Content-Type': 'application/x-www-form-urlencoded'
         }
         url = f'{self.USERAPI_BASE_URL}/create'
         exceptionsToTest = [
@@ -423,7 +411,7 @@ class TestUserAPIs:
         for e in exceptionsToTest:
             mockCreate.signup.side_effect = e()
             with mockApp.test_client() as client:
-                response = client.post(url, data=userProperties, headers=headers)
+                response = client.post(url, json=userProperties)
 
                 assert response.status_code == e.getStatusCode()
 
@@ -434,9 +422,8 @@ class TestUserAPIs:
         }
         userIdToUpdate = '1'
         url = f'{self.USERAPI_BASE_URL}/{userIdToUpdate}/update'
-        headers = { 'Content-Type': 'application/json' }
 
-        response = client.patch(url, json=userProperties, headers=headers)
+        response = client.patch(url, json=userProperties)
 
         assert response.status_code == 200
         mockUpdate.updateUserByKeyValues(dict(
@@ -510,9 +497,8 @@ class TestUserAPIs:
             password='password',
         )
         url = f'{self.USERAPI_BASE_URL}/login'
-        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
-        response = client.post(url, headers=headers, data=userCredentials)
+        response = client.post(url, json=userCredentials)
 
         userauth = Config.getUserAuth(mockApp)
         assert response.status_code == 200
@@ -525,9 +511,8 @@ class TestUserAPIs:
             password='password',
         )
         url = f'{self.USERAPI_BASE_URL}/login'
-        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
 
-        response = client.post(url, headers=headers, data=userCredentials)
+        response = client.post(url, json=userCredentials)
 
         data = response.get_json()
         assert 'users' in data
@@ -539,7 +524,6 @@ class TestUserAPIs:
             password='password',
         )
         url = f'{self.USERAPI_BASE_URL}/login'
-        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
         userauth = Config.getUserAuth(mockApp)
         exceptionsToTest = [
             exceptions.InvalidUserCredentials,
@@ -550,6 +534,6 @@ class TestUserAPIs:
             userauth.login.side_effect = e('Some error string')
             with mockApp.test_client() as client:
                 
-                response = client.post(url, headers=headers, data=userCredentials)
+                response = client.post(url, json=userCredentials)
 
                 assert response.status_code == e.getStatusCode()

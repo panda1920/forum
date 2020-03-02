@@ -1,6 +1,19 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses logic to create test data for this application
+Currently creating 3 kinds of data:
+    - user
+    - post
+    - counter
+"""
+
+
 import json
 from pathlib import Path
 from time import time
+
+from server.services.userauth import UserAuthentication
+
 
 class DataCreator:
     USERS = [
@@ -46,8 +59,8 @@ class DataCreator:
                 'userId': str(idx),
                 'displayName': username,
                 'userName': username.lower() + self.EMAIL_DOMAIN,
-                'password': '12345678',
-                'createdAt': now
+                'password': UserAuthentication.hashPassword('12345678'),
+                'createdAt': now,
             })
         
         return users
@@ -78,6 +91,7 @@ class DataCreator:
             'content': f'{user["displayName"]}\'s post {postNum}',
             'createdAt': createdAt
         }
+
     def _createJapanesePost(self, user, postNum, postId, createdAt):
         return {
             'postId': postId,
@@ -103,6 +117,7 @@ class DataCreator:
     @classmethod
     def getTotalPostCount(cls):
         return len(cls.USERS) * cls.POSTCOUNT_PER_USER
+
 
 if __name__ == '__main__':
     DEFAULT_FILENAME = Path(__file__).resolve().parents[0] / 'testdata.json'

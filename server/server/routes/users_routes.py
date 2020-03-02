@@ -2,7 +2,7 @@
 """
 This file houses routes for user related api
 """
-
+import pdb
 from flask import Blueprint, request, current_app
 
 from server.config import Config
@@ -36,7 +36,7 @@ def searchUserByIDv1(userId):
 def createUserv1():
     try:
         create = Config.getCreationService(current_app)
-        create.signup( request.form.to_dict(flat=True) )
+        create.signup( route_utils.getJsonFromRequest(request) )
         return route_utils.createJSONResponse([], 201)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
@@ -74,7 +74,7 @@ def deleteUserv1(userId):
 def loginUserv1():
     try:
         userauth = Config.getUserAuth(current_app)
-        authenticatedUser = userauth.login( request.form.to_dict() )
+        authenticatedUser = userauth.login( route_utils.getJsonFromRequest(request) )
         return route_utils.createJSONResponse(
             [ route_utils.createUsersObject(authenticatedUser) ],
             200

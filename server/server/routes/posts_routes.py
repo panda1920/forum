@@ -85,7 +85,9 @@ def searchPostsByIdv1(postId):
 def createPostsv1():
     try:
         create = Config.getCreationService(current_app)
-        create.createNewPost( request.form.to_dict(flat=True) )
+        # js = route_utils.getJsonFromRequest(request)
+        # pdb.set_trace()
+        create.createNewPost( route_utils.getJsonFromRequest(request) )
         return route_utils.createJSONResponse([], 201)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
