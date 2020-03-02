@@ -219,9 +219,12 @@ class Setup_FileCrudManager(SetupCrudManager):
 class Setup_MongoCrudManager(SetupCrudManager):
     TEST_DBNAME = 'test_mongo'
 
-    def __init__(self):
+    def __init__(self, dbname = None):
+        if dbname is None:
+            dbname is self.TEST_DBNAME
+        self._dbname = dbname
         self._userauth = mocks.createMockUserAuth()
-        self._db = MongoCrudManager(self.TEST_DBNAME, self._userauth)
+        self._db = MongoCrudManager(dbname, self._userauth)
 
         hostname = os.getenv('MONGO_HOSTNAME')
         port = int( os.getenv('MONGO_PORT') )
@@ -241,7 +244,7 @@ class Setup_MongoCrudManager(SetupCrudManager):
         db['counters'].delete_many({})
 
     def teardown(self):
-        self._mongo.drop_database(self.TEST_DBNAME)
+        self._mongo.drop_database(self._dbname)
         self._mongo.close()
 
     def validateCreatedUsers(self):
@@ -295,4 +298,4 @@ class Setup_MongoCrudManager(SetupCrudManager):
     def _getDB(self):
         # not to be confused with getDB (without the underscore)
         # this acquires the database instance from pymongo
-        return self._mongo[self.TEST_DBNAME]
+        return self._mongo[self._dbname]

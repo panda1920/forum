@@ -10,7 +10,7 @@ import Button from '../button/button.component';
 import { ReactComponent as GoogleLogo } from '../../icons/google_signin_buttons/web/vector/btn_google_light_normal_ios.svg';
 import { ReactComponent as TwitterLogo } from '../../icons/Twitter_Logos/Twitter_Logo_Blue/Twitter_Logo_Blue.svg';
 
-import { userApiLogin } from '../../paths';
+import { login } from '../../scripts/api';
 
 import './modal-login.styles.scss';
 
@@ -27,22 +27,12 @@ const ModalLogin = () => {
   const sendLoginInfo = async () => {
     if (! validateInputs()) return;
     resetInputs();
-    
-    const response = await fetch(userApiLogin, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      data: JSON.stringify({ userName: email, password }),
-    });
-    
-    if (!response.ok) {
-      loginErrorHandler(response);
+
+    const response = await login(email, password);
+
+    if (response.ignore)
       return;
-    }
-    else {
-      const { users } = await response.json();
-      setCurrentUser(users[0]);
-      toggleLogin();
-    }
+    response.ok ? await loginSuccess(response) : await loginError(response);
   }
 
   const validateInputs = () => {
@@ -66,7 +56,13 @@ const ModalLogin = () => {
     setPasswordError('');
   }
 
-  const loginErrorHandler = async (response) => {
+  const loginSuccess = async (response) => {
+    const { users } = await response.json();
+    setCurrentUser(users[0]);
+    toggleLogin();
+  }
+
+  const loginError = async (response) => {
     const { error: { description } } = await response.json();
     const isPasswordError = /password/i.test(description);
 

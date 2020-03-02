@@ -5,6 +5,8 @@ import {
 
 import FormInput from '../components/form-input/form-input.component';
 
+import { setNativeValue } from '../scripts/test-utilities';
+
 afterEach(cleanup);
 
 const TEST_INPUT_ALT = 'This is a test input';
@@ -62,19 +64,3 @@ describe('Testing behavior of form input', () => {
     expect(classes).toContain('error-border');
   });
 });
-
-// helper functions
-
-// sets value on controlled component
-// https://stackoverflow.com/questions/40894637/how-to-programmatically-fill-input-elements-built-with-react
-function setNativeValue(element, value) {
-  const valueSetter = Object.getOwnPropertyDescriptor(element, 'value').set;
-  const prototype = Object.getPrototypeOf(element);
-  const prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
-
-  if (valueSetter && valueSetter !== prototypeValueSetter) {
-    prototypeValueSetter.call(element, value);
-  } else {
-    valueSetter.call(element, value);
-  }
-}

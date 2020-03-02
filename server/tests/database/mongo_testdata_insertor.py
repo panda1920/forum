@@ -5,6 +5,7 @@ Data is based on content of testdata.json
 """
 
 import logging
+import os
 
 from tests.database.setup_crudmanager import Setup_MongoCrudManager
 
@@ -12,7 +13,8 @@ from tests.database.setup_crudmanager import Setup_MongoCrudManager
 def insert_data():
     print('Freshly inserting data into mongodb')
     try:
-        setup = Setup_MongoCrudManager()
+        dbname = os.environ.get('MONGO_DBNAME', 'TEST_MYFORUMWEBAPP')
+        setup = Setup_MongoCrudManager(dbname)
         setup.cleanup()
         setup.setup()
         print('Data insertion completed')

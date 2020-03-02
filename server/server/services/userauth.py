@@ -76,7 +76,7 @@ class UserAuthentication:
 
         self._session.setSessionUser(user)
 
-        return user
+        return self._makeSerializable(user)
 
     def _extractUserNameAndPassword(self, formdata):
         userName = formdata.get('userName', None)
@@ -99,3 +99,15 @@ class UserAuthentication:
         except Exception as e:
             logging.error(e)
             raise exceptions.InvalidUserCredentials('Email not registered')
+
+    def _makeSerializable(self, user):
+        """
+        remove fields that may not be serializable
+        
+        Args:
+            user(dict): dictionary of user entity
+        Returns:
+            dict: serialized data
+        """
+        user.pop('_id', None)
+        return user
