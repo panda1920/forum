@@ -8,6 +8,7 @@ from server.services.search_service import SearchService
 
 import tests.mocks as mocks
 
+
 @pytest.fixture(scope='function')
 def service():
     mockDB = mocks.createMockDB()
@@ -19,7 +20,7 @@ def service():
 
 class TestSearchUsersByKeyValues:
     MOCKDB_DEFAULT_RETURN = dict(
-        users=[ 'user1', 'user2'],
+        users=[ dict(userId=0), dict(userId=1) ],
         returnCount=2,
         matchedCount=2,
     )

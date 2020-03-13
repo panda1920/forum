@@ -38,11 +38,16 @@ class SearchService:
         )
         if len(searchFilters) == 0:
             return dict(users=[], returnCount=0, matchedCount=0)
-
         aggregate = self._aggregate.createFilter('or', searchFilters)
         paging = self._paging(keyValues)
 
-        return self._makeSerializable( self._repo.searchUser(aggregate, paging) )
+        result = self._repo.searchUser(aggregate, paging)
+
+        return dict(
+            users=self._makeSerializable( result['users'] ),
+            returnCount=result['returnCount'],
+            matchedCount=result['matchedCount'],
+        )
 
     def searchPostsByKeyValues(self, keyValues):
         # create aggregate search filter

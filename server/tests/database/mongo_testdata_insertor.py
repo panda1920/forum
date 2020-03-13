@@ -9,6 +9,16 @@ import os
 
 from tests.database.setup_crudmanager import Setup_MongoCrudManager
 
+MONGO_ISTEST = True
+TEST_MONGOHOSTNAME = 'localhost'
+TEST_MONGOPORTNUM = '3000'
+
+
+def modify_environ():
+    if MONGO_ISTEST:
+        os.environ['MONGO_HOSTNAME'] = TEST_MONGOHOSTNAME
+        os.environ['MONGO_PORT'] = TEST_MONGOPORTNUM
+
 
 def insert_data():
     print('Freshly inserting data into mongodb')
@@ -24,4 +34,5 @@ def insert_data():
 
 
 if __name__ == '__main__':
+    modify_environ()
     insert_data()
