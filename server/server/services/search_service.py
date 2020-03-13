@@ -3,6 +3,7 @@
 This file houses buisness logic for searches made by apis
 """
 
+
 class SearchService:
     """
     Provides search service for various use cases for the upper layers.
@@ -41,7 +42,7 @@ class SearchService:
         aggregate = self._aggregate.createFilter('or', searchFilters)
         paging = self._paging(keyValues)
 
-        return self._repo.searchUser(aggregate, paging)
+        return self._makeSerializable( self._repo.searchUser(aggregate, paging) )
 
     def searchPostsByKeyValues(self, keyValues):
         # create aggregate search filter
@@ -58,9 +59,9 @@ class SearchService:
         
         postResult = self._repo.searchPost(aggregate, paging)
         
-        posts = postResult['posts']
+        posts = self._makeSerializable( postResult['posts'] )
         userSearchFilter = self._createEqFiltersFromRelatedIds('userId', posts)
-        users = self._repo.searchUser(userSearchFilter)['users']
+        users = self._makeSerializable( self._repo.searchUser(userSearchFilter)['users'] )
         postsJoined = self._joinDocuments(posts, users, 'userId', 'user')
 
         return dict(
@@ -122,3 +123,16 @@ class SearchService:
             joined.append(newdoc)
 
         return joined
+
+    def _makeSerializable(self, entities):
+        """
+        remove fields that may not be serializable
+        
+        Args:
+            entities(list of dict): list of entities
+        Returns:
+            list that is serializable
+        """
+        for entity in entities:
+            entity.pop('_id', None)
+        return entities

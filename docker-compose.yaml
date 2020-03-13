@@ -1,0 +1,25 @@
+# Setup dockerized app for testing purposes on local machine
+version: "3.1"
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: myforumwebapp-mongo
+    ports:
+      - "3000:27017"
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+
+  server:
+    build:
+      context: ./server
+    image: panda1920/myforumwebapp:latest
+    container_name: myforumwebapp-server
+    ports:
+      - "5000:5000"
+    env_file: ./server/.env
+
+volumes:
+  mongo_data:
+  mongo_config:

@@ -7,7 +7,6 @@ FORUM
             https://stackoverflow.com/questions/58301553/creating-a-mongo-replicaset-in-a-circleci-job
         - Figure out how to make SSL connection from backend to DB
             Password authentication necessary?
-        - Make sure exceptions are thrown at failed attempt on CRUD operation
             
     [Flask]
         - Implement user authentication system
@@ -19,22 +18,26 @@ FORUM
         - stop returning the saerch results directly; carefully select which information to disclose and which not to
         - Handle entities inside the app as separate class instead of bare dictionary
         - Consider using Flask-Session for server-side session management
-        - Implement business logic in middleware; separate it from the routes
-        - Currently user session is being dealth by cookies;
-            change this to a token-based solution so that AJAX request/mobile apps(potentially)
-            can also leverage the session information.
+        - Session invalidation
+            Invalidation by server and user-driven invaliation (logout)
     
     [Frontend]
-        - Create a simple page to write posts
         - Figure out routing of SPA that utilizes HTML5 history
             https://github.com/ReactTraining/react-router/blob/master/FAQ.md#how-do-i-access-the-history-object-outside-of-components
             https://codeburst.io/full-stack-single-page-application-with-vue-js-and-flask-b1e036315532
-        - Figure out react testing library
+        - Session invalidation
+            To invalidate login state when session invalidation was detected
+        - Create signup dialog
+        - Create menu dropdown
+        - Create user profile page
 
     [Deployment]
         - Deploy on amazon
             Figure out how to import secrets in the app.
         - Try using docker
+        - Go over the basics of docker, especially creation of image
+        - Figure out containerization of the app
+        - Figure out the basic configuration of nginx, especially static file serving and routing depending on the requests domain name / path
 
     [TESTING]
         - figure out how to test session with flask

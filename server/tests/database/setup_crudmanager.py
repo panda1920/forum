@@ -219,9 +219,9 @@ class Setup_FileCrudManager(SetupCrudManager):
 class Setup_MongoCrudManager(SetupCrudManager):
     TEST_DBNAME = 'test_mongo'
 
-    def __init__(self, dbname = None):
+    def __init__(self, dbname=None):
         if dbname is None:
-            dbname is self.TEST_DBNAME
+            dbname = self.TEST_DBNAME
         self._dbname = dbname
         self._userauth = mocks.createMockUserAuth()
         self._db = MongoCrudManager(dbname, self._userauth)
