@@ -4,3 +4,4 @@
 ./*.env
 ./pytest.ini
 ./tests
+./server/playground

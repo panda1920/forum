@@ -10,14 +10,14 @@ import os
 from tests.database.setup_crudmanager import Setup_MongoCrudManager
 
 MONGO_ISTEST = True
-TEST_MONGOHOSTNAME = 'localhost'
-TEST_MONGOPORTNUM = '3000'
+PROD_MONGOHOSTNAME = 'localhost'
+PROD_MONGOPORTNUM = '3000'
 
 
 def modify_environ():
-    if MONGO_ISTEST:
-        os.environ['MONGO_HOSTNAME'] = TEST_MONGOHOSTNAME
-        os.environ['MONGO_PORT'] = TEST_MONGOPORTNUM
+    if not MONGO_ISTEST:
+        os.environ['MONGO_HOSTNAME'] = PROD_MONGOHOSTNAME
+        os.environ['MONGO_PORT'] = PROD_MONGOPORTNUM
 
 
 def insert_data():

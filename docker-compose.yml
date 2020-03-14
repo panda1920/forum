@@ -6,7 +6,7 @@ services:
     image: mongo:latest
     container_name: myforumwebapp-mongo
     ports:
-      - "3000:27017"
+      - "27017:27017"
     volumes:
       - mongo_data:/data/db
       - mongo_config:/data/configdb
@@ -18,7 +18,10 @@ services:
     container_name: myforumwebapp-server
     ports:
       - "5000:5000"
-    env_file: ./server/.env
+    env_file:
+      - ./server/.env
+      # docker specific env overrides the default .env
+      - ./server/.docker.env
 
 volumes:
   mongo_data:
