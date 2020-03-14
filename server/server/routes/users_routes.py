@@ -2,17 +2,17 @@
 """
 This file houses routes for user related api
 """
-import pdb
 from flask import Blueprint, request, current_app
 
 from server.config import Config
 import server.routes.route_utils as route_utils
+from server.routes.route_utils import cors_wrapped_route
 from server.exceptions import MyAppException
 
 routes = Blueprint('userRoutes', __name__)
 
 
-@routes.route('/v1/users', methods=['GET'])
+@cors_wrapped_route(routes.route, '/v1/users', methods=['GET'])
 def searchUserv1():
     try:
         search = Config.getSearchService(current_app)
@@ -22,7 +22,7 @@ def searchUserv1():
         return route_utils.createJSONErrorResponse(e)
 
 
-@routes.route('/v1/users/<userId>', methods=['GET'])
+@cors_wrapped_route(routes.route, '/v1/users/<userId>', methods=['GET'])
 def searchUserByIDv1(userId):
     try:
         search = Config.getSearchService(current_app)
@@ -32,7 +32,7 @@ def searchUserByIDv1(userId):
         return route_utils.createJSONErrorResponse(e)
 
 
-@routes.route('/v1/users/create', methods=['POST'])
+@cors_wrapped_route(routes.route, '/v1/users/create', methods=['POST'])
 def createUserv1():
     try:
         create = Config.getCreationService(current_app)
@@ -42,7 +42,7 @@ def createUserv1():
         return route_utils.createJSONErrorResponse(e)
 
 
-@routes.route('/v1/users/<userId>/update', methods=['PATCH'])
+@cors_wrapped_route(routes.route, '/v1/users/<userId>/update', methods=['PATCH'])
 def updateUserv1(userId):
     # try:
     #     userData = route_utils.getJsonFromRequest(request)
@@ -60,7 +60,7 @@ def updateUserv1(userId):
         return route_utils.createJSONErrorResponse(e)
 
 
-@routes.route('/v1/users/<userId>/delete', methods=['DELETE'])
+@cors_wrapped_route(routes.route, '/v1/users/<userId>/delete', methods=['DELETE'])
 def deleteUserv1(userId):
     try:
         Config.getDB(current_app).deleteUser([userId])
@@ -70,7 +70,7 @@ def deleteUserv1(userId):
     return route_utils.createJSONResponse([], 200)
 
 
-@routes.route('/v1/users/login', methods=['POST'])
+@cors_wrapped_route(routes.route, '/v1/users/login', methods=['POST'])
 def loginUserv1():
     try:
         userauth = Config.getUserAuth(current_app)

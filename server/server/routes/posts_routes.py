@@ -4,18 +4,19 @@ from flask import Blueprint, request, current_app, make_response
 
 from server.config import Config
 import server.routes.route_utils as route_utils
+from server.routes.route_utils import cors_wrapped_route
 from server.exceptions import MyAppException
 
 routes = Blueprint('postRoutes', __name__)
 
 
-@routes.route('/post')
+@cors_wrapped_route(routes.route, '/post')
 def examplepost():
     data = request.data
     print(data)
     
 
-@routes.route('/api/post', methods=['POST'])
+@cors_wrapped_route(routes.route, '/api/post', methods=['POST'])
 def postCreate():
     try:
         postData = request.form
@@ -31,7 +32,7 @@ def postCreate():
     return route_utils.createTextResponse('Post was stored!', 200)
 
 
-@routes.route('/api/post', methods=['GET'])
+@cors_wrapped_route(routes.route, '/api/post', methods=['GET'])
 def postSearch():
     try:
         db = Config.getDB(current_app)
@@ -43,7 +44,7 @@ def postSearch():
     pass
     
 
-@routes.route('/api/post', methods=['DELETE'])
+@cors_wrapped_route(routes.route, '/api/post', methods=['DELETE'])
 def postDelete():
     try:
         db = Config.getDB(current_app)
@@ -55,13 +56,13 @@ def postDelete():
         return route_utils.createTextResponse(str(e), 500)
 
 
-@routes.route('/api/post', methods=['PATCH'])
+@cors_wrapped_route(routes.route, '/api/post', methods=['PATCH'])
 def postUpdate():
 
     return route_utils.createTextResponse('Post was updated!', 200)
 
 
-@routes.route('/v1/posts', methods=['GET'])
+@cors_wrapped_route(routes.route, '/v1/posts', methods=['GET'])
 def searchPostsv1():
     try:
         search = Config.getSearchService(current_app)
@@ -71,7 +72,7 @@ def searchPostsv1():
         return route_utils.createJSONErrorResponse(e)
 
 
-@routes.route('/v1/posts/<postId>', methods=['GET'])
+@cors_wrapped_route(routes.route, '/v1/posts/<postId>', methods=['GET'])
 def searchPostsByIdv1(postId):
     try:
         search = Config.getSearchService(current_app)
@@ -81,7 +82,7 @@ def searchPostsByIdv1(postId):
         return route_utils.createJSONErrorResponse(e)
 
 
-@routes.route('/v1/posts/create', methods=['POST'])
+@cors_wrapped_route(routes.route, '/v1/posts/create', methods=['POST'])
 def createPostsv1():
     try:
         create = Config.getCreationService(current_app)
@@ -93,7 +94,7 @@ def createPostsv1():
         return route_utils.createJSONErrorResponse(e)
 
 
-@routes.route('/v1/posts/<postId>/update', methods=['PATCH'])
+@cors_wrapped_route(routes.route, '/v1/posts/<postId>/update', methods=['PATCH'])
 def updatePostv1(postId):
     try:
         update = Config.getUpdateService(current_app)
@@ -106,7 +107,7 @@ def updatePostv1(postId):
     return route_utils.createJSONResponse([], 200)
 
 
-@routes.route('/v1/posts/<postId>/delete', methods=['DELETE'])
+@cors_wrapped_route(routes.route, '/v1/posts/<postId>/delete', methods=['DELETE'])
 def deletePostv1(postId):
     try:
         Config.getDB(current_app).deletePost([postId])

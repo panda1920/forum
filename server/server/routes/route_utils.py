@@ -5,10 +5,9 @@ This file houses utility logic used by various routes
 
 import json
 
-from flask import make_response, current_app
+from flask import make_response, request
 
-from server.config import Config
-from server.exceptions import MissingQueryStringError, RequestDataTypeMismatchError
+from server.exceptions import RequestDataTypeMismatchError
 
 
 def getJsonFromRequest(req):
@@ -46,6 +45,7 @@ def createJSONErrorResponse(error, datas=[], additionalHeaders={}):
             'description': error.getErrorMsg()
         }
     })
+    
     return createJSONResponse(datas, error.getStatusCode(), additionalHeaders)
 
 
@@ -58,43 +58,57 @@ def createJSONResponse(datas, statusCode, additionalHeaders={}):
     headers = {'Content-Type': 'application/json'}
     headers.update(additionalHeaders)
 
-    return make_response(jsonBody, statusCode, headers)
+    return createCorsifiedResponse(jsonBody, statusCode, headers)
 
 
 def createTextResponse(string, statusCode):
-    return make_response(string, statusCode, {'Content-Type': 'text/plain'})
+    return createCorsifiedResponse(string, statusCode, {'Content-Type': 'text/plain'})
 
 
-def createSearchFilters(requestArgs, fieldName):
-    filters = []
+def createCorsifiedResponse(string, statusCode, headers):
+    cors_headers = { 'Access-Control-Allow-Origin': '*' }
+    cors_headers.update(headers)
+    return make_response(string, statusCode, cors_headers)
 
-    search = requestArgs.get('search', None)
-    if not search:
-        raise MissingQueryStringError('need search key and value as querystring')
+
+def cors_wrapped_route(route_func, path, **options):
+    """
+    wraps app.route, blueprint.route
+    so it returns CORS preflight response for any OPTIONS request
     
-    searchTerms = search.split(' ')
-    filters.append( createFuzzySearchFilter(searchTerms, fieldName) )
-    return filters
+    Args:
+        route_func(func): designate Blueprint.route or app.route
+        path(string): url
+    Returns:
+        response object
+    """
+    def inner(func):
+        def wrapper(*args, **kwargs):
+            if request.method == 'OPTIONS':
+                return createPreflightCorsResponse()
+            else:
+                return func(*args, **kwargs)
+
+        wrapper.__name__ = func.__name__
+
+        # make sure OPTIONS method are allowed in routes
+        # so CORS preflight can be handled by the wrapper function above
+        if 'methods' in options:
+            if 'OPTIONS' not in options['methods']:
+                options['methods'].append('OPTIONS')
+
+        return route_func(path, **options)(wrapper)
+
+    return inner
 
 
-def createIDFilters(fieldName, idValue):
-    filters = [
-        createEQSearchFilter([idValue], fieldName)
-    ]
-    return filters
+def createPreflightCorsResponse():
+    response = make_response()
+    cors_headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': '*',
+    }
+    response.headers.extend(cors_headers)
 
-
-def createFuzzySearchFilter(searchTerms, fieldName):
-    return Config.getFilter(current_app).createFilter({
-        'field': fieldName,
-        'operator': 'fuzzy',
-        'value': searchTerms,
-    })
-
-
-def createEQSearchFilter(values, fieldName):
-    return Config.getFilter(current_app).createFilter({
-        'field': fieldName,
-        'operator': 'eq',
-        'value': values,
-    })
+    return response

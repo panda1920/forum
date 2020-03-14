@@ -6,13 +6,14 @@ import server.routes.route_utils as route_utils
 
 routes = Blueprint('miscRoutes', __name__)
 
-@routes.route('/')
-@routes.route('/index')
+@routes.route('/', methods=['GET'])
+@routes.route('/index', methods=['GET'])
 def hello_world():
     # currentUser = session.get('userId', 'None')
     # SessionManager.setCurrentUserFromSession(g, session)
     # return f'You have a userId of {currentUser}!'
     return 'hello world!'
+
 
 @routes.route('/clear')
 def clear():
