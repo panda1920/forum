@@ -1,0 +1,6 @@
+# This file specifies what to ignore when creating image
+./.env
+./node_modules
+./public
+./src
+./package*

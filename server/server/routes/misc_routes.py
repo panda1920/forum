@@ -6,6 +6,7 @@ import server.routes.route_utils as route_utils
 
 routes = Blueprint('miscRoutes', __name__)
 
+
 @routes.route('/', methods=['GET'])
 @routes.route('/index', methods=['GET'])
 def hello_world():
@@ -20,18 +21,22 @@ def clear():
     session.clear()
     return 'cleared!'
 
+
 @routes.route('/jsonstring')
 def jsonstring():
     json = r'{ "name": "Danny", "age": "13", "families": ["mother", "father", "sister"]}'
     return json
 
+
 @routes.route('/template')
 def template():
     return render_template('hello.html', user='default')
 
+
 @routes.route('/template/<username>')
 def template1(username):
     return render_template('hello.html', user=username)
+
 
 @routes.route('/userlist', methods=['GET'])
 def userlist():
@@ -40,6 +45,7 @@ def userlist():
         user.pop('_id', None)
 
     return route_utils.createJSONResponse( route_utils.createUsersObject(*users), 200 )
+
 
 @routes.route('/postlist', methods=['GET'])
 def postlist():

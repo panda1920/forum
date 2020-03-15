@@ -14,7 +14,7 @@ services:
   server:
     build:
       context: ./server
-    image: panda1920/myforumwebapp:latest
+    image: panda1920/forumapp-server:latest
     container_name: myforumwebapp-server
     ports:
       - "5000:5000"
@@ -24,6 +24,14 @@ services:
     environment:
       - MONGO_HOSTNAME=myforumwebapp-mongo
       - MONGO_PORT=27017
+
+  client:
+    build:
+      context: ./client
+    image: panda1920/forumapp-client:latest
+    container_name: myforumwebapp-client
+    ports:
+      - '8080:80'
 
 volumes:
   mongo_data:
