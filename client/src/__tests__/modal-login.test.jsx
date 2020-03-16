@@ -281,15 +281,46 @@ describe('Testing behavior of login modal', () => {
     
     expect(screen.queryByText('Invalid password for testing')).toBeNull();
   });
+
+  test('Closing dialog should clear input field', async () => {
+    createModalWithMocks();
+    const emailInput = screen.getByAltText('modal input email');
+    const passwordInput = screen.getByAltText('modal input password');
+
+    const { email, password } = DEFAULT_USERINFO;
+    await typeInputs(email, password);
+    await closeDialog();
+
+    expect(emailInput.value).toBe('');
+    expect(passwordInput.value).toBe('');
+  });
+
+  test('Closing dialog should clear error message', async () => {
+    createModalWithMocks();
+    window.fetch = createMockFetch(false, 400, () => 
+      Promise.resolve( createErrorJsonData('Invalid password for testing') )
+    );
+
+    const { email, password } = DEFAULT_USERINFO;
+    await typeInputsAndClickLogin(email, password);
+    await closeDialog();
+
+    expect( screen.queryByText('Invalid password for testing') ).toBeNull();
+  });
 });
 
 // helper functions
 
 // simulates user interaction with the login form
 async function typeInputsAndClickLogin(email, password) {
+  await typeInputs(email, password);
+  await clickLogin();
+}
+
+// simluates user interaction with the inputs
+async function typeInputs(email, password) {
   const emailInput = screen.getByAltText('modal input email');
   const passwordInput = screen.getByAltText('modal input password');
-  const loginButton = screen.getByTitle('login-button');
 
   // when not using react-testing library, need to wrap event emission with act()
   // https://reactjs.org/docs/testing-recipes.html#act
@@ -300,8 +331,27 @@ async function typeInputsAndClickLogin(email, password) {
     setNativeValue(passwordInput, password);
     fireEvent.input(passwordInput, inputEvent);
   });
-  // since stuff inside clickhandler contains async logic, must use async ver of act()
-  await act(async () => {
-    loginButton.click();
-  })
+}
+
+// simluates user clicking on the login button
+async function clickLogin() {
+  const loginButton = screen.getByTitle('login-button');
+
+    // since stuff inside clickhandler contains async logic, must use async ver of act()
+    await act(async () => {
+      loginButton.click();
+    });
+}
+
+// simulates user closing the dialog
+async function closeDialog() {
+  const login = screen.getByTitle(ModalLoginTitle);
+  const escapeKey = new KeyboardEvent('keydown', {
+    key: 'Escape', code: 'Escape', charCode: 27, keyCode: 27,
+    bubbles: true,
+  });
+
+  act(() => {
+    fireEvent(login, escapeKey);
+  });
 }

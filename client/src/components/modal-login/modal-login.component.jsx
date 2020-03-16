@@ -26,7 +26,7 @@ const ModalLogin = () => {
 
   const sendLoginInfo = async () => {
     if (! validateInputs()) return;
-    resetInputs();
+    resetErrors();
 
     const response = await login(email, password);
 
@@ -51,7 +51,7 @@ const ModalLogin = () => {
     return true;
   }
 
-  const resetInputs = () => {
+  const resetErrors = () => {
     setEmailError('');
     setPasswordError('');
   }
@@ -84,11 +84,18 @@ const ModalLogin = () => {
     toggleLogin();
     toggleSignup();
   };
+
+  const closeLogin = () => {
+    setEmail('');
+    setPassword('');
+    toggleLogin();
+    resetErrors();
+  }
   
   return (
     <ModalDialog
       isOpen={isLoginOpen}
-      toggleOpen={toggleLogin}
+      toggleOpen={closeLogin}
       title={ModalLoginTitle}
     >
       <h1 className="modal-header">Login</h1>
