@@ -13,3 +13,13 @@ export function setNativeValue(element, value) {
         valueSetter.call(element, value);
     }
 }
+
+export function createMockFetch(ok, status, jsonFunc) {
+    const response = Promise.resolve({
+        ok, status, json: jsonFunc
+    });
+    const mock = jest.fn()
+        .mockName('Mocked fetch()')
+        .mockImplementation( () => response );
+    return mock;
+}

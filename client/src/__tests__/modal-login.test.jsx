@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import ReactModal from 'react-modal';
 import {
   render, screen, cleanup, fireEvent, getByText, queryByText, findByText
@@ -10,7 +10,7 @@ import { CurrentUserContext } from '../contexts/currentUser/currentUser';
 import { userApiLogin } from '../paths';
 import { act } from 'react-dom/test-utils';
 
-import { setNativeValue } from '../scripts/test-utilities';
+import { setNativeValue, createMockFetch } from '../scripts/test-utilities';
 
 const DEFAULT_USERINFO = {
   email: 'bobby@myforumapp.com',
@@ -75,16 +75,6 @@ function createMockSetUser() {
   return jest.fn().mockName('Mocked setCurrentUser()');
 }
 
-function createMockFetch(ok, status, jsonFunc) {
-  const response = Promise.resolve({
-    ok, status, json: jsonFunc
-  });
-  const mock = jest.fn()
-    .mockName('Mocked fetch()')
-    .mockImplementation( () => response );
-  return mock;
-}
-
 function createErrorJsonData(msg) {
   return {
     error: {
@@ -112,8 +102,8 @@ describe('Testing behavior of login modal', () => {
     createModalWithMocks();
 
     screen.getByTitle(ModalLoginTitle);
-    screen.getByAltText('modal input email');
-    screen.getByAltText('modal input password');
+    screen.getByAltText('login input email');
+    screen.getByAltText('login input password');
     screen.getByTitle('login-button')
     screen.getByTitle('google-login');
     screen.getByTitle('twitter-login');
@@ -177,7 +167,7 @@ describe('Testing behavior of login modal', () => {
 
     for (let email of emailsToTry) {
       createModalWithMocks();
-      const input = screen.getByAltText('modal input email');
+      const input = screen.getByAltText('login input email');
 
       const { password } = DEFAULT_USERINFO;
       await typeInputsAndClickLogin(email, password);
@@ -195,7 +185,7 @@ describe('Testing behavior of login modal', () => {
 
     for (let password of passwordToTry) {
       createModalWithMocks();
-      const input = screen.getByAltText('modal input password');
+      const input = screen.getByAltText('login input password');
 
       const { email } = DEFAULT_USERINFO;
       await typeInputsAndClickLogin(email, password);
@@ -216,8 +206,8 @@ describe('Testing behavior of login modal', () => {
       createModalWithMocks();
       const mockFetch = createMockFetch(true, 200, () => Promise.resolve(DEFAULT_API_RETURN_INFO) );
       window.fetch = mockFetch;
-      const emailInput = screen.getByAltText('modal input email');
-      const passwordInput = screen.getByAltText('modal input password');
+      const emailInput = screen.getByAltText('login input email');
+      const passwordInput = screen.getByAltText('login input password');
 
       // make error appear
       await typeInputsAndClickLogin(credential.email, credential.password);
@@ -235,7 +225,7 @@ describe('Testing behavior of login modal', () => {
       Promise.resolve( createErrorJsonData('Invalid email for testing') ) 
     );
     window.fetch = mockFetch;
-    const emailInput = screen.getByAltText('modal input email');
+    const emailInput = screen.getByAltText('login input email');
 
     const { email, password } = DEFAULT_USERINFO;
     await typeInputsAndClickLogin(email, password);
@@ -249,7 +239,7 @@ describe('Testing behavior of login modal', () => {
       Promise.resolve( createErrorJsonData('Invalid password for testing') ) 
     );
     window.fetch = mockFetch;
-    const passwordInput = screen.getByAltText('modal input password');
+    const passwordInput = screen.getByAltText('login input password');
 
     const { email, password } = DEFAULT_USERINFO;
     await typeInputsAndClickLogin(email, password);
@@ -284,8 +274,8 @@ describe('Testing behavior of login modal', () => {
 
   test('Closing dialog should clear input field', async () => {
     createModalWithMocks();
-    const emailInput = screen.getByAltText('modal input email');
-    const passwordInput = screen.getByAltText('modal input password');
+    const emailInput = screen.getByAltText('login input email');
+    const passwordInput = screen.getByAltText('login input password');
 
     const { email, password } = DEFAULT_USERINFO;
     await typeInputs(email, password);
@@ -319,8 +309,8 @@ async function typeInputsAndClickLogin(email, password) {
 
 // simluates user interaction with the inputs
 async function typeInputs(email, password) {
-  const emailInput = screen.getByAltText('modal input email');
-  const passwordInput = screen.getByAltText('modal input password');
+  const emailInput = screen.getByAltText('login input email');
+  const passwordInput = screen.getByAltText('login input password');
 
   // when not using react-testing library, need to wrap event emission with act()
   // https://reactjs.org/docs/testing-recipes.html#act

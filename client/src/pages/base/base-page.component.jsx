@@ -4,6 +4,7 @@ import Header from  '../../components/header/header.component';
 import Footer from  '../../components/footer/footer.component';
 import { ModalContextProvider } from '../../contexts/modal/modal';
 import ModalLogin from '../../components/modal-login/modal-login.component';
+import ModalSignup from '../../components/modal-signup/modal-signup.component';
 
 import './base-page.styles.scss';
 
@@ -16,6 +17,7 @@ const BasePage = () => {
     <div className={`base-page ${getBlurClass()}`}>
       <ModalContextProvider toggleBlur={toggleBlur}>
         <ModalLogin />
+        <ModalSignup />
         <Header />
         <div className='main-content'>
           

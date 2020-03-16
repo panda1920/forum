@@ -88,8 +88,8 @@ const ModalLogin = () => {
   const closeLogin = () => {
     setEmail('');
     setPassword('');
-    toggleLogin();
     resetErrors();
+    toggleLogin();
   }
   
   return (
@@ -102,8 +102,8 @@ const ModalLogin = () => {
 
       <div className='modal-content'>
         <FormInput
-          id='modal-input-email'
-          alt='modal input email'
+          id='login-input-email'
+          alt='login input email'
           type='text'
           placeholder='Email'
           value={email}
@@ -111,8 +111,8 @@ const ModalLogin = () => {
           errorMsg={emailError}
         />
         <FormInput
-          id='modal-input-password'
-          alt='modal input password'
+          id='login-input-password'
+          alt='login input password'
           type='password'
           placeholder='Password'
           value={password}

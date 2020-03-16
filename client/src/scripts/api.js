@@ -11,6 +11,15 @@ export function login(email, password) {
     );
 }
 
+export function signup(email, password) {
+    return apiCall(
+        paths.userApiLogin,
+        'POST',
+        { 'Content-Type': 'application/json' },
+        JSON.stringify({ userName: email, password }),
+    );
+}
+
 async function apiCall(url, method, headers, body) {
     try {
         let response = await fetch(url, { method, headers, body });
