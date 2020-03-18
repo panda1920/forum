@@ -1,10 +1,8 @@
 @import '../../base-style';
 
-$width: map-get($dimensions, 'main-content-width');
-$height: 600px;
 $vertical-spaces-between-widgets: map-get($spaces, 'small');
 
-.modal {
+.modal-login {
     .modal-header {
         font-size: map-get($font-size, 'header');
     }
@@ -30,8 +28,8 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
 
         .button-logo {
             display: inline-block;
-            width: 32px;
-            height: 32px;
+            width: 20px;
+            height: 20px;
         }
 
         &:hover {

@@ -6,7 +6,7 @@ import {
 
 import ModalLogin, { ModalLoginTitle } from '../components/modal-login/modal-login.component';
 import { ModalContext } from '../contexts/modal/modal';
-import { CurrentUserContext } from '../contexts/currentUser/currentUser';
+import { CurrentUserContext } from '../contexts/current-user/current-user';
 import { userApiLogin } from '../paths';
 import { act } from 'react-dom/test-utils';
 

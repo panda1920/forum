@@ -1,13 +1,13 @@
 import React, { useContext, useState } from 'react';
 
 import { ModalContext } from '../../contexts/modal/modal';
-import { CurrentUserContext } from '../../contexts/currentUser/currentUser';
+import { CurrentUserContext } from '../../contexts/current-user/current-user';
 import ModalDialog from '../modal-dialog/modal-dialog.component';
 import FormInput from '../form-input/form-input.component';
 import FormButton from '../form-button/form-button.component';
 import BlockText from '../block-text/block-text.component';
 import Button from '../button/button.component';
-import { ReactComponent as GoogleLogo } from '../../icons/google_signin_buttons/web/vector/btn_google_light_normal_ios.svg';
+import { ReactComponent as GoogleLogo } from '../../icons/google_signin_buttons/google.svg';
 import { ReactComponent as TwitterLogo } from '../../icons/Twitter_Logos/Twitter_Logo_Blue/Twitter_Logo_Blue.svg';
 
 import { login } from '../../scripts/api';
@@ -25,7 +25,7 @@ const ModalLogin = () => {
   const [ passwordError, setPasswordError ] = useState('');
 
   const sendLoginInfo = async () => {
-    if (! validateInputs()) return;
+    if ( !validateInputs() ) return;
     resetErrors();
 
     const response = await login(email, password);
@@ -94,9 +94,10 @@ const ModalLogin = () => {
   
   return (
     <ModalDialog
+      className={ModalLoginTitle}
+      title={ModalLoginTitle}
       isOpen={isLoginOpen}
       toggleOpen={closeLogin}
-      title={ModalLoginTitle}
     >
       <h1 className="modal-header">Login</h1>
 

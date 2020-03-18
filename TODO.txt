@@ -16,7 +16,6 @@ FORUM
             Some operation may require additional login despite already logged in, e.g. password reset.
         - Implement sanitization mechanism for incoming data
         - stop returning the saerch results directly; carefully select which information to disclose and which not to
-        - Handle entities inside the app as separate class instead of bare dictionary
         - Consider using Flask-Session for server-side session management
         - Session invalidation
             Invalidation by server and user-driven invaliation (logout)
@@ -34,11 +33,8 @@ FORUM
     [Deployment]
         - Deploy on amazon
             Figure out how to import secrets in the app.
-        - Try using docker
-        - Go over the basics of docker, especially creation of image
-        - Figure out containerization of the app
-        - Figure out the basic configuration of nginx, especially static file serving and routing depending on the requests domain name / path
+            Figure out howto upload docker images on dockerhub
+            Consider using ECR, ECS
 
     [TESTING]
         - figure out how to test session with flask
-        - figure out why dependency install takes so long on the CI despite caching

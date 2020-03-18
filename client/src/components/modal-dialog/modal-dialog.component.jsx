@@ -5,7 +5,7 @@ import Button from '../button/button.component';
 
 import './modal-dialog.styles.scss';
 
-const ModalDialog = ({ isOpen, toggleOpen, title, children}) => {
+const ModalDialog = ({ isOpen, toggleOpen, title, children, className }) => {
   // initial setup of modal
   useEffect(() => {
     ReactModal.setAppElement('#root');
@@ -15,7 +15,7 @@ const ModalDialog = ({ isOpen, toggleOpen, title, children}) => {
     <ReactModal
       isOpen={isOpen}
       onRequestClose={toggleOpen}
-      className='modal'
+      className={`modal ${className ? className : ''}`}
       overlayClassName='modal-overlay'
       portalClassName='ReactModalPortal-Login'
       contentLabel={title}

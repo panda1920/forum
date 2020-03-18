@@ -10,8 +10,8 @@ const ModalContextInitialValues = {
 export const ModalContext = createContext(ModalContextInitialValues);
 
 export const ModalContextProvider = ({ children, toggleBlur }) => {
-  const [isSignupOpen, setIsSignupOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [ isSignupOpen, setIsSignupOpen ] = useState(false);
+  const [ isLoginOpen, setIsLoginOpen ] = useState(false);
   const toggleSignup = () => {
     toggleBlur();
     setIsSignupOpen(!isSignupOpen);

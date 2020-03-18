@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 
 import Header from  '../../components/header/header.component';
 import Footer from  '../../components/footer/footer.component';
-import { ModalContextProvider } from '../../contexts/modal/modal';
 import ModalLogin from '../../components/modal-login/modal-login.component';
 import ModalSignup from '../../components/modal-signup/modal-signup.component';
+
+import { ModalContextProvider } from '../../contexts/modal/modal';
 
 import './base-page.styles.scss';
 
