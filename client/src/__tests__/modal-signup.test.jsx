@@ -14,7 +14,7 @@ import { act } from 'react-dom/test-utils';
 
 import { ModalContext } from '../contexts/modal/modal';
 import { CurrentUserContext } from '../contexts/current-user/current-user';
-import { setNativeValue, createMockFetch } from '../scripts/test-utilities';
+import { setNativeValue, createMockFetch, createErrorJsonData } from '../scripts/test-utilities';
 import { userApiLogin } from '../paths';
 
 import ModalSignup, { ModalSignupTitle } from '../components/modal-signup/modal-signup.component';
@@ -31,8 +31,9 @@ const IDENTIFIERS = {
   EMAIL_ALT_TEXT: 'signup input email',
   PW_ALT_TEXT: 'signup input password',
   CONFIRM_ALT_TEXT: 'signup input confirm password',
-  BUTTON_TITLE: 'signup-button',
-  LINK_LOGIN_TITLE: 'link-login-page',
+  SIGNUP_BUTTON_TITLE: 'signup button',
+  CLOSE_BUTTON_TITLE: 'modal close button',
+  LINK_LOGIN_TITLE: 'link login page',
 };
 
 // create signup dialog for a test case
@@ -104,7 +105,7 @@ describe('Testing behavior of signup modal', () => {
     getByAltText(signup, IDENTIFIERS.EMAIL_ALT_TEXT);
     getByAltText(signup, IDENTIFIERS.PW_ALT_TEXT);
     getByAltText(signup, IDENTIFIERS.CONFIRM_ALT_TEXT);
-    getByTitle(signup, IDENTIFIERS.BUTTON_TITLE);
+    getByTitle(signup, IDENTIFIERS.SIGNUP_BUTTON_TITLE);
     getByTitle(signup, IDENTIFIERS.LINK_LOGIN_TITLE);
   });
 
@@ -242,13 +243,13 @@ describe('Testing behavior of signup modal', () => {
   test('Mismatch of password and confirm should show error on confirm input', async () => {
     createSignup();
     window.fetch = createMockFetchSuccess();
-    const confirmPasswordInput = screen.getByAltText(IDENTIFIERS.CONFIRM_ALT_TEXT).parentElement;
+    const confirmPasswordInputContainer = screen.getByAltText(IDENTIFIERS.CONFIRM_ALT_TEXT).parentElement;
     const { email, password } = TEST_DATA.DEFAULT_USERINFO;
     const confirmPassword = 'not_the_same';
 
     await typeInputAndSignup(email, password, confirmPassword);
 
-    getByText(confirmPasswordInput, 'Passwords did not match');
+    getByText(confirmPasswordInputContainer, 'Passwords did not match');
   });
   
   test('Invalid input should not call the API ', async () => {
@@ -281,14 +282,14 @@ describe('Testing behavior of signup modal', () => {
       { email: '', password, confirmPassword: password },
       { email, password, confirmPassword: '' },
     ]
-    const inputExpectedToShowError = [
+    const nodesToExpectError = [
       passwordInputContainer, emailInputContainer, confirmInputContainer,
     ]
 
     for (let i = 0; i < invalidInputs.length; ++i) {
       const input = invalidInputs[i];
       const nextInput = invalidInputs[(i + 1) % invalidInputs.length];
-      const expectedNode = inputExpectedToShowError[i];
+      const expectedNode = nodesToExpectError[i];
       
       await typeInputAndSignup(input.email, input.password, input.confirmPassword);
       await typeInputAndSignup(nextInput.email, nextInput.password, nextInput.password);
@@ -298,29 +299,111 @@ describe('Testing behavior of signup modal', () => {
     }
   })
 
-  test('Error returned from API should show error message on email input', () => {
+  test('Error returned from API should show error message on email input', async () => {
+    createSignup();
+    const errorMsg = 'Email already registered'
+    window.fetch = createMockFetch(false, 400, () => {
+      return createErrorJsonData(errorMsg);
+    })
+    const { email, password } = TEST_DATA.DEFAULT_USERINFO;
+    const emailInputContainer = screen.getByAltText(IDENTIFIERS.EMAIL_ALT_TEXT).parentElement;
 
+    await typeInputAndSignup(email, password, password);
+
+    within(emailInputContainer).getByText(errorMsg);
   });
 
-  test('Error returned from API regarding password should show error message on password input', () => {
+  test('Error returned from API regarding password should show error message on password input', async () => {
+    createSignup();
+    const errorMsg = 'Wrong password'
+    window.fetch = createMockFetch(false, 400, () => {
+      return createErrorJsonData(errorMsg);
+    })
+    const { email, password } = TEST_DATA.DEFAULT_USERINFO;
+    const passwordInputContainer = screen.getByAltText(IDENTIFIERS.PW_ALT_TEXT).parentElement;
 
+    await typeInputAndSignup(email, password, password);
+
+    within(passwordInputContainer).getByText(errorMsg);
   });
 
-  test('Error returned from API with statuscode >=500 should show no error', () => {
+  test('Error returned from API with statuscode >=500 should show no error', async () => {
+    createSignup();
+    const errorMsg = 'Email already registered'
+    window.fetch = createMockFetch(false, 500, () => {
+      return createErrorJsonData(errorMsg);
+    })
+    const { email, password } = TEST_DATA.DEFAULT_USERINFO;
+    const emailInputContainer = screen.getByAltText(IDENTIFIERS.EMAIL_ALT_TEXT).parentElement;
 
+    await typeInputAndSignup(email, password, password);
+
+    expect( within(emailInputContainer).queryByText(errorMsg) ).toBeNull();
   });
 
-  test('Closing modal dialog should reset input state', () => {
+  test('Failed API call should not close dialog', async () => {
+    const { mocks: { mockToggleSignup } } = createSignup();
+    const errorMsg = 'Email already registered'
+    window.fetch = createMockFetch(false, 400, () => {
+      return createErrorJsonData(errorMsg);
+    })
+    const { email, password } = TEST_DATA.DEFAULT_USERINFO;
 
+    await typeInputAndSignup(email, password, password);
+
+    expect(mockToggleSignup).not.toHaveBeenCalled();
+  });
+
+  test('Failed API call should not clear input value', async () => {
+    createSignup();
+    const errorMsg = 'Email already registered'
+    window.fetch = createMockFetch(false, 400, () => {
+      return createErrorJsonData(errorMsg);
+    })
+    const { email, password } = TEST_DATA.DEFAULT_USERINFO;
+    const emailInput = screen.getByAltText(IDENTIFIERS.EMAIL_ALT_TEXT);
+    const passwordInput = screen.getByAltText(IDENTIFIERS.PW_ALT_TEXT);
+    const confirmInput = screen.getByAltText(IDENTIFIERS.CONFIRM_ALT_TEXT);
+
+    await typeInputAndSignup(email, password, password);
+
+    expect(emailInput.value).toBe(email);
+    expect(passwordInput.value).toBe(password);
+    expect(confirmInput.value).toBe(password);
+  });
+
+  test('Closing modal dialog should reset input state', async () => {
+    createSignup();
+    const errorMsg = 'Email already registered'
+    window.fetch = createMockFetch(false, 400, () => {
+      return createErrorJsonData(errorMsg);
+    })
+    const { email, password } = TEST_DATA.DEFAULT_USERINFO;
+    const emailInput = screen.getByAltText(IDENTIFIERS.EMAIL_ALT_TEXT);
+    const passwordInput = screen.getByAltText(IDENTIFIERS.PW_ALT_TEXT);
+    const confirmInput = screen.getByAltText(IDENTIFIERS.CONFIRM_ALT_TEXT);
+
+    await typeInputAndSignup(email, password, password);
+    clickClose();
+
+    expect(emailInput.value).toBe('');
+    expect(passwordInput.value).toBe('');
+    expect(confirmInput.value).toBe('');
+    expect( within(emailInput.parentElement).queryByText(errorMsg) ).toBeNull();
   });
 
   test('Clicking on link should close signup dialog and open login dialog', () => {
+    const { mocks: { mockToggleSignup, mockToggleLogin } } =  createSignup();
+    window.fetch = createMockFetchSuccess();
 
+    clickLogin();
+
+    expect(mockToggleSignup).toHaveBeenCalledTimes(1);
+    expect(mockToggleLogin).toHaveBeenCalledTimes(1);
   });
 });
 
 // simulate user input
-
 
 async function typeInputAndSignup(email, password, confirmPassword) {
   typeEmail(email);
@@ -353,9 +436,23 @@ function typeToInput(inputString, alt) {
 }
 
 async function clickSignup() {
-  const signupButton = screen.getByTitle(IDENTIFIERS.BUTTON_TITLE);
+  const signupButton = screen.getByTitle(IDENTIFIERS.SIGNUP_BUTTON_TITLE);
   
   await act(async () => {
     signupButton.click();
+  });
+}
+
+function clickClose() {
+  const closeButton = screen.getByTitle(IDENTIFIERS.CLOSE_BUTTON_TITLE)
+  act(() => {
+    closeButton.click();
+  });
+}
+
+function clickLogin() {
+  const loginButton = screen.getByTitle(IDENTIFIERS.LINK_LOGIN_TITLE)
+  act(() => {
+    loginButton.click();
   });
 }

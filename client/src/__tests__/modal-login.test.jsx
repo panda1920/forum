@@ -10,7 +10,7 @@ import { CurrentUserContext } from '../contexts/current-user/current-user';
 import { userApiLogin } from '../paths';
 import { act } from 'react-dom/test-utils';
 
-import { setNativeValue, createMockFetch } from '../scripts/test-utilities';
+import { setNativeValue, createMockFetch, createErrorJsonData } from '../scripts/test-utilities';
 
 const DEFAULT_USERINFO = {
   email: 'bobby@myforumapp.com',
@@ -73,14 +73,6 @@ function createMockSignupToggle() {
 
 function createMockSetUser() {
   return jest.fn().mockName('Mocked setCurrentUser()');
-}
-
-function createErrorJsonData(msg) {
-  return {
-    error: {
-      description: msg
-    }
-  };
 }
 
 let originalFetch = null;

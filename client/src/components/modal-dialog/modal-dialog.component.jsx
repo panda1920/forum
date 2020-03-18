@@ -22,10 +22,10 @@ const ModalDialog = ({ isOpen, toggleOpen, title, children, className }) => {
     >
       <div title={title}>
         <Button
-          className='modal-button-close'
+          className='modal-close-button'
           onClick={toggleOpen}
         >
-          <i className='material-icons md-36' title='button-close'>close</i>
+          <i className='material-icons md-36' title='modal close button'>close</i>
         </Button>
         {children}
       </div>

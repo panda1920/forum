@@ -23,3 +23,11 @@ export function createMockFetch(ok, status, jsonFunc) {
         .mockImplementation( () => response );
     return mock;
 }
+
+export function createErrorJsonData(msg) {
+    return {
+      error: {
+        description: msg
+      }
+    };
+  }

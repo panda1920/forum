@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useReducer } from 'react';
 
 import Header from  '../../components/header/header.component';
 import Footer from  '../../components/footer/footer.component';
@@ -9,10 +9,20 @@ import { ModalContextProvider } from '../../contexts/modal/modal';
 
 import './base-page.styles.scss';
 
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'toggleBlur':
+      return { ...state, isBlurred: !state.isBlurred };
+    default:
+      console.log(`unknown action type: ${action.type}`);
+      return state;
+  }
+}
+
 const BasePage = () => {
-  const [ isBlurred, setBlur ] = useState(false);
-  const getBlurClass = () => isBlurred ? 'blurred' : 'hello';
-  const toggleBlur = () => setBlur(!isBlurred);
+  const [ state, dispatch ] = useReducer(reducer, { isBlurred: false });
+  const getBlurClass = () => state.isBlurred ? 'blurred' : '';
+  const toggleBlur = () => dispatch({ type: 'toggleBlur' });
 
   return (
     <div className={`base-page ${getBlurClass()}`}>

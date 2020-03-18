@@ -63,7 +63,7 @@ describe('Testing behavior of modal dialog', () => {
     const mockFunction = createToggleOpen();
     setupModalDialog(mockFunction);
 
-    const close = screen.getByTitle('button-close');
+    const close = screen.getByTitle('modal close button');
     close.click();
 
     expect(mockFunction.mock.calls.length).toBe(1);

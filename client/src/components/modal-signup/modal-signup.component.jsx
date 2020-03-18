@@ -29,12 +29,13 @@ const reducer = (state, action) => {
     case 'setConfirmPasswordError':
       return { ...state, confirmPasswordError: action.payload };
     default:
+      console.log(`unknown action: ${action.type}`);
       return state;
   }
 }
 
 const ModalSignup = () => {
-  const { toggleSignup, isSignupOpen } = useContext(ModalContext);
+  const { toggleSignup, toggleLogin, isSignupOpen } = useContext(ModalContext);
   const { setCurrentUser } = useContext(CurrentUserContext);
   const [ state, dispatch ] = useReducer(reducer, {
     email: '',
@@ -49,22 +50,28 @@ const ModalSignup = () => {
     clearErrorMsg();
     if ( !validateInputs() ) return;
 
-    await signup(state.email, state.password);
+    const response = await signup(state.email, state.password);
+    if (response.ok)
+      await successApiCallHandler(response);
+    else
+      await failedApiCallHandler(response);
+  }
+  
+  const successApiCallHandler = async (response) => {
     setCurrentUser({ userName: state.email });
-    clearInputValue();
-    toggleSignup();
+    onDialogClose();
   }
 
-  const onEmailChange = (event) => {
-    dispatch({ type: 'setEmail', payload: event.target.value });
-  }
+  const failedApiCallHandler = async (response) => {
+    if (response.ignore) return;
 
-  const onPasswordChange = (event) => {
-    dispatch({ type: 'setPassword', payload: event.target.value });
-  }
+    const { error: { description } } = await response.json();
+    const includesPassword = (description) => /password/i.test(description);
 
-  const onConfirmPasswordChange = (event) => {
-    dispatch({ type: 'setConfirmPassword', payload: event.target.value });
+    if ( includesPassword(description) )
+      dispatch({ type: 'setPasswordError', payload: description });
+    else
+      dispatch({ type: 'setEmailError', payload: description });
   }
 
   const validateInputs = () => {
@@ -100,12 +107,35 @@ const ModalSignup = () => {
     dispatch({ type: 'setConfirmPasswordError', payload: '' });
   }
 
+  const onEmailChange = (event) => {
+    dispatch({ type: 'setEmail', payload: event.target.value });
+  }
+
+  const onPasswordChange = (event) => {
+    dispatch({ type: 'setPassword', payload: event.target.value });
+  }
+
+  const onConfirmPasswordChange = (event) => {
+    dispatch({ type: 'setConfirmPassword', payload: event.target.value });
+  }
+
+  const onDialogClose = () => {
+    clearInputValue();
+    clearErrorMsg();
+    toggleSignup();
+  }
+
+  const onLoginOpen = () => {
+    onDialogClose();
+    toggleLogin();
+  }
+
   return (
     <ModalDialog
       className={ModalSignupTitle}
       title={ModalSignupTitle}
       isOpen={isSignupOpen}
-      toggleOpen={toggleSignup}
+      toggleOpen={onDialogClose}
     >
       <h1 className='modal-header'>Signup</h1>
       <div className='modal-content'>
@@ -149,7 +179,7 @@ const ModalSignup = () => {
           errorMsg={state.confirmPasswordError}
         />
         <FormButton
-          title='signup-button'
+          title='signup button'
           onClick={signupHandler}
         >
           Signup
@@ -159,9 +189,9 @@ const ModalSignup = () => {
         <BlockText><span>
           Already have an account? Login&nbsp;
           <Button
-            title='link-login-page'
+            title='link login page'
             className='link-login-page'
-            onClick={() => {}}
+            onClick={onLoginOpen}
           >
             here
           </Button>
