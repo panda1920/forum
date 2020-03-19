@@ -143,3 +143,12 @@ class FailedAWSOperation(MyAppException):
     @classmethod
     def getStatusCode(cls):
         return 500
+
+
+class ValueNotFoundOnContext(MyAppException):
+    """
+    Failed to find value in flask context proxies like flask.g
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 500

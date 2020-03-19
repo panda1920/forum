@@ -43,7 +43,7 @@
   "devDependencies": {
     "concurrently": "^5.0.2",
     "http-proxy-middleware": "^0.20.0",
-    "jsdom": "^16.2.0",
+    "jsdom": "^16.2.1",
     "jsdom-global": "^3.0.2"
   }
 }
