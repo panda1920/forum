@@ -10,7 +10,7 @@ const INITIAL_STATE = {
 
 export const CurrentUserContext = createContext(INITIAL_STATE);
 
-export const CurrentUserContextProvider = (children) => {
+export const CurrentUserContextProvider = ({ children }) => {
   const [ userId, setUserId ] = useState('');
   const [ userName, setUserName ] = useState('');
   const [ displayName, setDisplayName ] = useState('');
