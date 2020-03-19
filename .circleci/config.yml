@@ -58,7 +58,7 @@ jobs:
           name: Install dependencies
           command: |
             cd ./client
-            sudo npm install
+            npm install
       - run:
           name: Run tests
           command: |
