@@ -50,10 +50,10 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-        name: Restoring dependency cache if possible
-        keys:
-          - deps-client-v1-{{ checksum "./client/package-lock.json"}}
-          - deps-client-v1-
+          name: Restoring dependency cache if possible
+          keys:
+            - deps-client-v1-{{ checksum "./client/package-lock.json"}}
+            - deps-client-v1-
       - run:
           name: Install dependencies
           command: |
