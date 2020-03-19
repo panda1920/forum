@@ -44,35 +44,35 @@ jobs:
             - "/usr/local/bin"
             - "/usr/local/bin/python3.7/site-packages"
   
-  # test_client:
-  #   docker:
-  #     - image: circleci/node:12.2
-  #   steps:
-  #     - checkout
-  #     - restore_cache:
-  #       name: Restoring dependency cache if possible
-  #       keys:
-  #         - deps-client-v1-{{ checksum "./client/package-lock.json"}}
-  #         - deps-client-v1-
-  #     - run:
-  #         name: Install dependencies
-  #         command: |
-  #           cd ./client
-  #           sudo npm install
-  #     - run:
-  #         name: Run tests
-  #         command: |
-  #           cd ./client
-  #           npm run test
-  #     - save_cache:
-  #         name: Saving dependency cache
-  #         key: deps-client-v1-{{ checksum "./client/package-lock.json"}}
-  #         paths:
-  #           - "./node_modules"
+  test_client:
+    docker:
+      - image: circleci/node:12.2
+    steps:
+      - checkout
+      - restore_cache:
+        name: Restoring dependency cache if possible
+        keys:
+          - deps-client-v1-{{ checksum "./client/package-lock.json"}}
+          - deps-client-v1-
+      - run:
+          name: Install dependencies
+          command: |
+            cd ./client
+            sudo npm install
+      - run:
+          name: Run tests
+          command: |
+            cd ./client
+            npm run test
+      - save_cache:
+          name: Saving dependency cache
+          key: deps-client-v1-{{ checksum "./client/package-lock.json"}}
+          paths:
+            - "./node_modules"
 
 workflows:
   version: 2.1
   test_codebase:
     jobs:
       - test_server
-      # - test_client
+      - test_client
