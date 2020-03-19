@@ -1,4 +1,4 @@
-import React, { useContext, useState, useReducer } from 'react';
+import React, { useContext, useReducer } from 'react';
 
 import ModalDialog from '../modal-dialog/modal-dialog.component';
 import FormInput from '../form-input/form-input.component';
@@ -58,7 +58,8 @@ const ModalSignup = () => {
   }
   
   const successApiCallHandler = async (response) => {
-    setCurrentUser({ userName: state.email });
+    const { sessionUser } = await response.json();
+    setCurrentUser(sessionUser);
     onDialogClose();
   }
 

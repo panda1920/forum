@@ -14,7 +14,11 @@ import { act } from 'react-dom/test-utils';
 
 import { ModalContext } from '../contexts/modal/modal';
 import { CurrentUserContext } from '../contexts/current-user/current-user';
-import { setNativeValue, createMockFetch, createErrorJsonData } from '../scripts/test-utilities';
+import {
+  setNativeValue,
+  createMockFetch,
+  createErrorJsonData
+} from '../scripts/test-utilities';
 import { userApiLogin } from '../paths';
 
 import ModalSignup, { ModalSignupTitle } from '../components/modal-signup/modal-signup.component';
@@ -25,6 +29,12 @@ const TEST_DATA = {
     password: 'mysecretpassword',
   },
 
+  API_RETURNED_SESSIONUSER: {
+    userId: '11223344',
+    userName: 'bobby@myforumwebapp.com',
+    displayName: 'bobby',
+    imageUrl: 'http://some_url_to_image.png',
+  },
 };
 
 const IDENTIFIERS = {
@@ -78,7 +88,9 @@ function createMockFunction(name) {
 
 function createMockFetchSuccess() {
   return createMockFetch(true, 200, () => {
-    return Promise.resolve('some value');
+    return Promise.resolve({
+      sessionUser: TEST_DATA.API_RETURNED_SESSIONUSER
+    });
   });
 }
 
@@ -155,7 +167,7 @@ describe('Testing behavior of signup modal', () => {
     });
   });
 
-  test.skip('Successful signup should call setuser of usercontext with newly created user', async () => {
+  test('Successful signup should call setuser of usercontext with newly created user', async () => {
     const { mocks: { mockSetCurrentUser } } = createSignup();
     window.fetch = createMockFetchSuccess();
     const { email, password } = TEST_DATA.DEFAULT_USERINFO;
@@ -163,13 +175,8 @@ describe('Testing behavior of signup modal', () => {
     await typeInputAndSignup(email, password, password);
 
     expect(mockSetCurrentUser).toHaveBeenCalledTimes(1);
-    const currentUser = mockSetCurrentUser.mock.calls[0];
-    expect(currentUser).toMatchObject({
-      userId: expect.any(String),
-      imageURL: expect.any(String),
-      displayName: expect.any(String),
-      userName: email,
-    });
+    const currentUser = mockSetCurrentUser.mock.calls[0][0];
+    expect(currentUser).toMatchObject(TEST_DATA.API_RETURNED_SESSIONUSER);
   });
   
   test('Successful signup should close modal', async () => {

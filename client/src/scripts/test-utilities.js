@@ -15,19 +15,19 @@ export function setNativeValue(element, value) {
 }
 
 export function createMockFetch(ok, status, jsonFunc) {
-    const response = Promise.resolve({
-        ok, status, json: jsonFunc
-    });
-    const mock = jest.fn()
-        .mockName('Mocked fetch()')
-        .mockImplementation( () => response );
-    return mock;
+    const fetchImpl = createMockFetchImplementation(ok, status, jsonFunc);
+    return jest.fn(fetchImpl).mockName('Mocked fetch()');
+}
+
+export function createMockFetchImplementation(ok, status, jsonFunc) {
+    const response = Promise.resolve({ ok, status, json: jsonFunc });
+    return () => response;
 }
 
 export function createErrorJsonData(msg) {
     return {
-      error: {
-        description: msg
-      }
+        error: {
+            description: msg
+        }
     };
-  }
+}
