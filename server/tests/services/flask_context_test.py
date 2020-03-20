@@ -9,7 +9,6 @@ import pytest
 from flask import session, g
 
 from server.services.flask_context import FlaskContext
-import server.exceptions as exceptions
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -50,9 +49,8 @@ class TestFlaskContextCrudGlobals:
 
         assert value == self.DEFAULT_VALUE
 
-    def test_read_globalShouldRaiseExceptionWhenKeyNotFound(self, context):
-        with pytest.raises(exceptions.ValueNotFoundOnContext):
-            context.read_global(self.DEFAULT_KEY)
+    def test_read_globalShouldReturnNoneWhenKeyNotFound(self, context):
+        assert context.read_global(self.DEFAULT_KEY) is None
 
     def test_delete_globalShouldRemoveKeyFromFlaskGlobal(self, context):
         setattr(g, self.DEFAULT_KEY, self.DEFAULT_VALUE)
@@ -101,9 +99,8 @@ class TestFlaskContextCrudSession:
 
         assert value == self.DEFAULT_VALUE
 
-    def test_read_sessionShouldRaiseExceptionWhenKeyNotFound(self, context):
-        with pytest.raises(exceptions.ValueNotFoundOnContext):
-            context.read_session(self.DEFAULT_KEY)
+    def test_read_sessionShouldReturnNoneWhenKeyNotFound(self, context):
+        assert context.read_session(self.DEFAULT_KEY) is None
 
     def test_delete_sessionShouldRemoveKeyFromFlaskGlobal(self, context):
         session[self.DEFAULT_KEY] = self.DEFAULT_VALUE

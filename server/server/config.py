@@ -11,12 +11,13 @@ from server.database.mongo_crudmanager import MongoCrudManager
 from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
+from server.services.flask_context import FlaskContext
 from server.services.userauth import UserAuthentication
 from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
 from server.services.update_service import UpdateService
 from server.services.image_scaler import ImageScaler
-from server.middleware.session import SessionManager
+from server.middleware.session_user import SessionUserManager
 
 
 class Config:
@@ -36,12 +37,13 @@ class Config:
     PAGING = Paging
 
     # services
+    FLASK_CONTEXT = FlaskContext()
     CREATION_SERVICE = EntityCreationService(DATABASE_REPOSITORY, SEARCH_FILTER)
     SEARCH_SERVICE = SearchService(DATABASE_REPOSITORY, SEARCH_FILTER, AGGREGATE_FILTER, PAGING)
     UPDATE_SERVICE = UpdateService(DATABASE_REPOSITORY, SEARCH_FILTER)
     IMAGE_SCALER = ImageScaler()
     USER_AUTHENTICATION = UserAuthentication(
-        DATABASE_REPOSITORY, SEARCH_FILTER, SessionManager()
+        DATABASE_REPOSITORY, SEARCH_FILTER, None
     )
 
     # for session
@@ -75,8 +77,8 @@ class Config:
         return app.config['USER_AUTHENTICATION']
 
     @staticmethod
-    def getSignup(app):
-        return app.config['SIGNUP']
+    def getFlaskContext(app):
+        return app.config['FLASK_CONTEXT']
 
     @staticmethod
     def getCreationService(app):

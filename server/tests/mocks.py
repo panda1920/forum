@@ -15,8 +15,9 @@ from server.services.userauth import UserAuthentication
 from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
 from server.services.update_service import UpdateService
+from server.services.flask_context import FlaskContext
 from server.services.image_scaler import ImageScalerBase
-from server.middleware.session import SessionManager
+from server.middleware.session_user import SessionUserManager
 
 
 def createMockDB():
@@ -60,7 +61,11 @@ def createMockSession(sessionInfo={}):
 
 
 def createMockSessionManager():
-    return create_autospec(SessionManager)
+    return create_autospec(SessionUserManager)
+
+
+def createMockFlaskContext():
+    return create_autospec(FlaskContext)
 
 
 def createMockSearchService():

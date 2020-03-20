@@ -68,15 +68,15 @@ class UserAuthentication:
             user(dict): user found in repo
         """
         userName, password = self._extractUserNameAndPassword(formdata)
+        user_indb = self._searchUserFromRepo(userName)
 
-        user = self._searchUserFromRepo(userName)
-        if not self.verifyPassword(password, user['password']):
+        if not self.verifyPassword(password, user_indb['password']):
             logging.info('Failed to verify password')
             raise exceptions.InvalidUserCredentials('Incorrect password')
 
-        self._session.setSessionUser(user)
+        self._session.setSessionUser(user_indb)
 
-        return self._makeSerializable(user)
+        return self._makeSerializable(user_indb)
 
     def _extractUserNameAndPassword(self, formdata):
         userName = formdata.get('userName', None)

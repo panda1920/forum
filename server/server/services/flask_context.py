@@ -41,8 +41,7 @@ class FlaskContext:
         """
         value = g.get(key, None)
         if value is None:
-            logging.error(f'Key {key} not found in flask.g')
-            raise ValueNotFoundOnContext('Failed to process request')
+            logging.warning(f'Key {key} not found in flask.g')
 
         return value
     
@@ -58,7 +57,7 @@ class FlaskContext:
         try:
             g.pop(key)
         except Exception:
-            logging.error(f'Key {key} not found in flask.g')
+            logging.warning(f'Key {key} not found in flask.g')
 
     def write_session(self, key, value):
         """
@@ -84,8 +83,7 @@ class FlaskContext:
         """
         value = session.get(key, None)
         if value is None:
-            logging.error(f'Key {key} not found in flask.session')
-            raise ValueNotFoundOnContext('Failed to process request')
+            logging.warning(f'Key {key} not found in flask.session')
 
         return value
     
@@ -101,4 +99,4 @@ class FlaskContext:
         try:
             session.pop(key)
         except Exception:
-            logging.error(f'Key {key} not found in flask.session')
+            logging.warning(f'Key {key} not found in flask.session')
