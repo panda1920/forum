@@ -69,3 +69,21 @@ class UpdateUser:
         ]
         
         return fields
+
+
+def removePrivateInfo(user):
+    """
+    removes sensitive information and implementation details from user
+    intended to be called from services that return user information to client
+    
+    Args:
+        user(dict): dict representing user entity
+    Returns:
+        dict: copy of arg user with fields removed
+    """
+    filtered_user = user.copy()
+    filtered_user.pop('_id', None)
+    filtered_user.pop('password', None)
+    filtered_user.pop('address', None)
+
+    return filtered_user

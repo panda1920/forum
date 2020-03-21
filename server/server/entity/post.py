@@ -63,3 +63,19 @@ class UpdatePost:
         ]
         
         return fields
+
+
+def removePrivateInfo(post):
+    """
+    removes sensitive information and implementation details from post
+    intended to be called from services that return post information to client
+    
+    Args:
+        post(dict): dict representing post entity
+    Returns:
+        dict: copy of arg post with fields removed
+    """
+    filtered_post = post.copy()
+    filtered_post.pop('_id', None)
+
+    return filtered_post

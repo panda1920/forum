@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+This file defines routes for post related API
+"""
+
 import urllib.parse
 
 from flask import Blueprint, request, current_app, make_response
@@ -116,7 +121,13 @@ def deletePostv1(postId):
 
     return route_utils.createTextResponse('delete successful!', 200)
 
-# error resposne
-# pass e
-# want to list the content to be included
-# optinally pass headers
+
+@routes.before_request
+def apply_middlewares_before():
+    Config.getSessionUser(current_app).setCurrentUser()
+
+
+@routes.after_request
+def apply_middleware_after(response):
+    Config.getSessionUser(current_app).addCurrentUserToResponse(response)
+    return response

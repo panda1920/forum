@@ -56,18 +56,18 @@ class UserAuthentication:
         self._filter = filter_class
         self._session = session_manager
 
-    def login(self, formdata):
+    def login(self, credential):
         """
         provides login service
-        checks credentials against user in repo,
+        checks credential against user in repo,
         and if matches put userinformation in session
         
         Args:
-            formdata(dict): dictionary that contains user credentials
+            credential(dict): dictionary that contains user credential
         Returns:
-            user(dict): user found in repo
+            None
         """
-        userName, password = self._extractUserNameAndPassword(formdata)
+        userName, password = self._extractUserNameAndPassword(credential)
         user_indb = self._searchUserFromRepo(userName)
 
         if not self.verifyPassword(password, user_indb['password']):
@@ -76,15 +76,13 @@ class UserAuthentication:
 
         self._session.setSessionUser(user_indb)
 
-        return self._makeSerializable(user_indb)
-
-    def _extractUserNameAndPassword(self, formdata):
-        userName = formdata.get('userName', None)
-        password = formdata.get('password', None)
+    def _extractUserNameAndPassword(self, credential):
+        userName = credential.get('userName', None)
+        password = credential.get('password', None)
 
         if not userName or not password:
-            logging.info('Invalid user credentials')
-            raise exceptions.InvalidUserCredentials('Invalid credentials')
+            logging.info('Invalid user credential')
+            raise exceptions.InvalidUserCredentials('Invalid credential')
 
         return (userName, password)
 
@@ -100,14 +98,13 @@ class UserAuthentication:
             logging.error(e)
             raise exceptions.InvalidUserCredentials('Email not registered')
 
-    def _makeSerializable(self, user):
+    def logout(self):
         """
-        remove fields that may not be serializable
+        provides logout service
         
         Args:
-            user(dict): dictionary of user entity
+            None
         Returns:
-            dict: serialized data
+            None
         """
-        user.pop('_id', None)
-        return user
+        self._session.removeSessionUser()

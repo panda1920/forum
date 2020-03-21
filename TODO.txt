@@ -19,6 +19,8 @@ FORUM
         - Consider using Flask-Session for server-side session management
         - Session invalidation
             Invalidation by server and user-driven invaliation (logout)
+        - consider how to apply search filters for search services
+            determine which field goes together as AND or OR
     
     [Frontend]
         - Figure out routing of SPA that utilizes HTML5 history
@@ -26,7 +28,6 @@ FORUM
             https://codeburst.io/full-stack-single-page-application-with-vue-js-and-flask-b1e036315532
         - Session invalidation
             To invalidate login state when session invalidation was detected
-        - Create signup dialog
         - Create menu dropdown
         - Create user profile page
 

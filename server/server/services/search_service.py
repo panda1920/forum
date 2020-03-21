@@ -2,6 +2,8 @@
 """
 This file houses buisness logic for searches made by apis
 """
+import server.entity.user as user
+import server.entity.post as post
 
 
 class SearchService:
@@ -36,15 +38,17 @@ class SearchService:
         searchFilters = self._createFiltersForDesignatedFields(
             keyValues, 'userName', 'displayName'
         )
+        searchFilters.extend( self._createFiltersForPredeterminedFields(keyValues) )
         if len(searchFilters) == 0:
             return dict(users=[], returnCount=0, matchedCount=0)
+            
         aggregate = self._aggregate.createFilter('or', searchFilters)
         paging = self._paging(keyValues)
 
         result = self._repo.searchUser(aggregate, paging)
 
         return dict(
-            users=self._makeSerializable( result['users'] ),
+            users=self._removeUserPrivateData( result['users'] ),
             returnCount=result['returnCount'],
             matchedCount=result['matchedCount'],
         )
@@ -64,9 +68,9 @@ class SearchService:
         
         postResult = self._repo.searchPost(aggregate, paging)
         
-        posts = self._makeSerializable( postResult['posts'] )
+        posts = self._removeUserPrivateData( postResult['posts'] )
         userSearchFilter = self._createEqFiltersFromRelatedIds('userId', posts)
-        users = self._makeSerializable( self._repo.searchUser(userSearchFilter)['users'] )
+        users = self._removePostPrivateData( self._repo.searchUser(userSearchFilter)['users'] )
         postsJoined = self._joinDocuments(posts, users, 'userId', 'user')
 
         return dict(
@@ -129,15 +133,24 @@ class SearchService:
 
         return joined
 
-    def _makeSerializable(self, entities):
+    def _removeUserPrivateData(self, users):
         """
-        remove fields that may not be serializable
+        Remove private fields from users
         
         Args:
-            entities(list of dict): list of entities
+            users(dict): list of users
         Returns:
-            list that is serializable
+            list of users that are filtered of private fields
         """
-        for entity in entities:
-            entity.pop('_id', None)
-        return entities
+        return [ user.removePrivateInfo(u) for u in users ]
+
+    def _removePostPrivateData(self, posts):
+        """
+        Remove private fields from posts
+        
+        Args:
+            posts(dict): list of posts
+        Returns:
+            list of posts that are filtered of private fields
+        """
+        return [ post.removePrivateInfo(u) for u in posts ]

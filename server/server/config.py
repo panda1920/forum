@@ -19,6 +19,20 @@ from server.services.update_service import UpdateService
 from server.services.image_scaler import ImageScaler
 from server.middleware.session_user import SessionUserManager
 
+# object initialization
+repo = MongoCrudManager(
+    os.environ.get('MONGO_DBNAME', 'TEST_MYFORUMWEBAPP'),
+    UserAuthentication
+)
+# repo = FileCrudManager(Path(DATA_LOCATION), USER_AUTHENTICATION)
+flask_context = FlaskContext()
+creation_service = EntityCreationService(repo, PrimitiveFilter)
+search_service = SearchService(repo, PrimitiveFilter, AggregateFilter, Paging)
+update_service = UpdateService(repo, PrimitiveFilter)
+image_scaler = ImageScaler()
+session_user = SessionUserManager(search_service, flask_context)
+user_authentication = UserAuthentication(repo, PrimitiveFilter, session_user)
+
 
 class Config:
     # when using file-based db, this is where data gets stored
@@ -27,24 +41,21 @@ class Config:
     # define classes/objects that are referenced in the app
     # can be replaced during tests
 
-    # DATABASE_REPOSITORY = FileCrudManager(Path(DATA_LOCATION), USER_AUTHENTICATION)
-    DATABASE_REPOSITORY = MongoCrudManager(
-        os.environ.get('MONGO_DBNAME', 'TEST_MYFORUMWEBAPP'),
-        UserAuthentication
-    )
+    DATABASE_REPOSITORY = repo
     SEARCH_FILTER = PrimitiveFilter
     AGGREGATE_FILTER = AggregateFilter
     PAGING = Paging
 
     # services
-    FLASK_CONTEXT = FlaskContext()
-    CREATION_SERVICE = EntityCreationService(DATABASE_REPOSITORY, SEARCH_FILTER)
-    SEARCH_SERVICE = SearchService(DATABASE_REPOSITORY, SEARCH_FILTER, AGGREGATE_FILTER, PAGING)
-    UPDATE_SERVICE = UpdateService(DATABASE_REPOSITORY, SEARCH_FILTER)
-    IMAGE_SCALER = ImageScaler()
-    USER_AUTHENTICATION = UserAuthentication(
-        DATABASE_REPOSITORY, SEARCH_FILTER, None
-    )
+    FLASK_CONTEXT = flask_context
+    CREATION_SERVICE = creation_service
+    SEARCH_SERVICE = search_service
+    UPDATE_SERVICE = update_service
+    IMAGE_SCALER = image_scaler
+    USER_AUTHENTICATION = user_authentication
+
+    # middlewares
+    SESSION_USER = session_user
 
     # for session
     SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -95,3 +106,7 @@ class Config:
     @staticmethod
     def getImageScaler(app):
         return app.config['IMAGE_SCALER']
+
+    @staticmethod
+    def getSessionUser(app):
+        return app.config['SESSION_USER']

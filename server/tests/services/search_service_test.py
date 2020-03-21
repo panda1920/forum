@@ -20,7 +20,7 @@ def service():
 
 class TestSearchUsersByKeyValues:
     MOCKDB_DEFAULT_RETURN = dict(
-        users=[ dict(userId=0), dict(userId=1) ],
+        users=[ dict(userId=0, _id='11223344'), dict(userId=1, _id='11223345') ],
         returnCount=2,
         matchedCount=2,
     )
@@ -69,6 +69,19 @@ class TestSearchUsersByKeyValues:
             'value': [ 'username1', 'username2' ]
         })
 
+    def test_searchUsersShouldConvertUserIdToEqFilter(self, service):
+        mockFilter = service._filter
+        userIdToSearch = '11223344'
+        keyValues = dict(userId=userIdToSearch)
+
+        service.searchUsersByKeyValues(keyValues)
+
+        mockFilter.createFilter.assert_any_call({
+            'field': 'userId',
+            'operator': 'eq',
+            'value': [ userIdToSearch ]
+        })
+
     def test_searchUsersPassesFiltersToAggregate(self, service):
         mockAggregate = service._aggregate
 
@@ -107,20 +120,31 @@ class TestSearchUsersByKeyValues:
             matchedCount=0
         )
 
-    def test_searchUsersByKeyValuesReturnWhatsReturnedFromQuery(self, service):
+    def test_searchUsersByKeyValuesReturnFilteredReturnUsersFromQuery(self, service):
+        # MOCKDB_DEFAULT_RETURN = dict(
+        #     users=[ dict(userId=0, _id='11223344'), dict(userId=1, _id='11223345') ],
+        #     returnCount=2,
+        #     matchedCount=2,
+        # )
+        expectedResult = dict(
+            users=[ dict(userId=0), dict(userId=1) ],
+            returnCount=2,
+            matchedCount=2,
+        )
+        
         searchResult = service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
 
-        assert searchResult == self.MOCKDB_DEFAULT_RETURN
+        assert searchResult == expectedResult
 
 
 class TestSearchPostsByKeyValues:
     MOCKDB_DEFAULT_RETURN = dict(
-        posts=[ dict(userId='11111111') ],
+        posts=[ dict(postId='2222', userId='11111111', _id='some_random_id') ],
         returnCount=1,
         matchedCount=1,
     )
     MOCKDB_USER_DEFAULT_RETURN = dict(
-        users=[ dict(userId='11111111', name='Alan')],
+        users=[ dict(userId='11111111', name='Alan', _id='some_random_id')],
         returnCount=1,
         matchedCount=1,
     )
@@ -245,9 +269,18 @@ class TestSearchPostsByKeyValues:
             self.MOCKFILTER_DEFAULT_RETURN
         )
 
-    def test_searchPostByKeyValuesReturnWhatReturnedFromBothQueries(self, service):
-        expectedResult = self.MOCKDB_DEFAULT_RETURN.copy()
-        expectedResult['posts'][0]['user'] = self.MOCKDB_USER_DEFAULT_RETURN['users'][0]
+    def test_searchPostByKeyValuesReturnFilteredReturnFromBothQueries(self, service):
+        expectedResult = dict(
+            posts=[
+                dict(
+                    postId='2222',
+                    userId='11111111',
+                    user=dict(userId='11111111', name='Alan'),
+                )
+            ],
+            returnCount=1,
+            matchedCount=1,
+        )
 
         searchResult = service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
 

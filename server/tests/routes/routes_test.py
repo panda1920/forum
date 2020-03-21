@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses tests for all routes available for this app
+"""
+
 import pytest
 
 import tests.mocks as mocks
@@ -42,6 +47,9 @@ def mockApp(app):
     mockUserAuth = mocks.createMockUserAuth()
     mockUserAuth.login.return_value = DEFAULT_USER_RETURNED
     app.config['USER_AUTHENTICATION'] = mockUserAuth
+
+    mockSessionUser = mocks.createMockSessionUserManager()
+    app.config['SESSION_USER'] = mockSessionUser
 
     yield app
 
@@ -535,6 +543,30 @@ class TestUserAPIs:
             with mockApp.test_client() as client:
                 
                 response = client.post(url, json=userCredentials)
+
+                assert response.status_code == e.getStatusCode()
+
+    def test_logoutShouldCallLogoutService(self, mockApp, client):
+        url = f'{self.USERAPI_BASE_URL}/logout'
+        userauth = Config.getUserAuth(mockApp)
+
+        response = client.post(url)
+
+        assert response.status_code == 200
+        userauth.logout.assert_called_once()
+
+    def test_logoutShouldReturnErrorWhenExpcetionWasRaised(self, mockApp):
+        url = f'{self.USERAPI_BASE_URL}/logout'
+        userauth = Config.getUserAuth(mockApp)
+        exceptionsToTest = [
+            exceptions.ServerMiscError
+        ]
+
+        for e in exceptionsToTest:
+            userauth.logout.side_effect = e('Some error')
+
+            with mockApp.test_client() as client:
+                response = client.post(url)
 
                 assert response.status_code == e.getStatusCode()
 

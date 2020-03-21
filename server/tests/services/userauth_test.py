@@ -8,13 +8,13 @@ import pytest
 import server.exceptions as exceptions
 from server.services.userauth import UserAuthentication
 from server.database.filter import PrimitiveFilter
-from tests.mocks import createMockDB, createMockSessionManager
+from tests.mocks import createMockDB, createMockSessionUserManager
 
 
 @pytest.fixture(scope='function')
 def user_auth():
     repo = createMockDB()
-    session = createMockSessionManager()
+    session = createMockSessionUserManager()
     return UserAuthentication(repo, PrimitiveFilter, session)
     
 
@@ -48,46 +48,16 @@ class TestPasswordHashing:
         assert not user_auth.verifyPassword(self.DEFAULT_PASSWORD, self.DIF_CONTEXT_HASHED)
 
 
-# class TestToken:
-#     TEST_SECRET = 'my_secret_key'
-#     TEST_PAYLOAD = dict(userId='1111')
-#     @pytest.fixture(scope='function', autouse=True)
-#     def setup_testenv(self):
-#         default_environ = os.environ
-#         os.environ['JWT_SECRET_KEY'] = self.TEST_SECRET
-#         yield
-#         os.environ = default_environ
-
-#     # token creation
-#     # data inside
-#     # token authorization by date
-#     # token authorization by userId
-#     def test_createTokenCreatesTokenWithRequiredPayload(self, user_auth):
-#         payload = self.TEST_PAYLOAD
-        
-#         token = user_auth.createToken(payload)
-
-#     def test_validateTokenShouldRaiseExceptionWhenIatExpired(self):
-#         pass
-
-#     def test_validateTokenShouldRaiseExceptionWhenWrongSecret(self):
-#         pass
-
-#     def test_validateTokenShouldPassWhenIatIsWithinBounds(self):
-#         pass
-
-#     def test_authorizeTokenShouldRaiseExceptionWhenUserIdDoesNotMatch(self):
-#         pass
-
 class TestLogin:
     DEFAULT_USER_CREDENTIALS = dict(
         userName='bobby@myforumwebapp.com',
         password='password'
     )
     DEFAULT_USER_IN_REPO = dict(
+        _id='some_random_id',
         userId='000',
         userName='bobby@myforumwebapp.com',
-        password='$pbkdf2-sha256$29000$6z0nxLh37v3fOydkjBHi3A$51waSF7m1N5sFyz/b9wfd6pcuWu4l0T1VceK3WcxJxI'
+        password='$pbkdf2-sha256$29000$6z0nxLh37v3fOydkjBHi3A$51waSF7m1N5sFyz/b9wfd6pcuWu4l0T1VceK3WcxJxI',
     )
 
     def test_loginShouldCallSearchUserOnRepo(self, user_auth):
@@ -104,8 +74,9 @@ class TestLogin:
         ))
         mockRepo.searchUser.assert_called_once_with(expectedFilter)
 
-    def test_loginShouldSetUserValueOnSession(self, user_auth):
+    def test_loginShouldSetSearchedUserInfoOnSession(self, user_auth):
         credentials = self.DEFAULT_USER_CREDENTIALS
+        mockSession = user_auth._session
         mockRepo = user_auth._repo
         mockRepo.searchUser.return_value = dict(
             returnCount=0, matchedCount=0, users=[ self.DEFAULT_USER_IN_REPO ]
@@ -113,18 +84,17 @@ class TestLogin:
 
         user_auth.login(credentials)
 
-        mockSession = user_auth._session
         mockSession.setSessionUser.assert_called_once_with(self.DEFAULT_USER_IN_REPO)
 
-    def test_loginUserShouldReturnUserInfoWhenSuccessful(self, user_auth):
+    def test_loginUserShouldReturnNoneWhenSuccessful(self, user_auth):
         credentials = self.DEFAULT_USER_CREDENTIALS
         mockRepo = user_auth._repo
         mockRepo.searchUser.return_value = dict(
             returnCount=0, matchedCount=0, users=[ self.DEFAULT_USER_IN_REPO ]
         )
 
-        user = user_auth.login(credentials)
-        assert user == self.DEFAULT_USER_IN_REPO
+        rv = user_auth.login(credentials)
+        assert rv is None
 
     def test_loginShouldRaiseExceptionWhenUserNotFound(self, user_auth):
         credentials = self.DEFAULT_USER_CREDENTIALS
@@ -162,3 +132,12 @@ class TestLogin:
         for credentials in credentialsList:
             with pytest.raises(exceptions.InvalidUserCredentials):
                 user_auth.login(credentials)
+
+
+class TestLogout:
+    def test_logoutShouldCallRemoveSessionUser(self, user_auth):
+        mockSession = user_auth._session
+
+        user_auth.logout()
+
+        mockSession.removeSessionUser.assert_called_once()

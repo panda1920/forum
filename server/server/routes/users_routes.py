@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This file houses routes for user related api
+This file houses routes for user related API
 """
 from flask import Blueprint, request, current_app
 
@@ -81,3 +81,24 @@ def loginUserv1():
         )
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
+
+
+@cors_wrapped_route(routes.route, '/v1/users/logout', methods=['POST'])
+def logoutUserv1():
+    try:
+        userauth = Config.getUserAuth(current_app)
+        userauth.logout()
+        return route_utils.createJSONResponse([], 200)
+    except MyAppException as e:
+        return route_utils.createJSONErrorResponse(e)
+
+
+@routes.before_request
+def apply_middlewares_before():
+    Config.getSessionUser(current_app).setCurrentUser()
+
+
+@routes.after_request
+def apply_middleware_after(response):
+    Config.getSessionUser(current_app).addCurrentUserToResponse(response)
+    return response

@@ -60,7 +60,7 @@ def createMockSession(sessionInfo={}):
     return mock
 
 
-def createMockSessionManager():
+def createMockSessionUserManager():
     return create_autospec(SessionUserManager)
 
 
