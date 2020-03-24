@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This file houses buisness logic for searches made by apis
+This file houses business logic for searches made by apis
 """
 import server.entity.user as user
 import server.entity.post as post
@@ -68,9 +68,9 @@ class SearchService:
         
         postResult = self._repo.searchPost(aggregate, paging)
         
-        posts = self._removeUserPrivateData( postResult['posts'] )
+        posts = self._removePostPrivateData( postResult['posts'] )
         userSearchFilter = self._createEqFiltersFromRelatedIds('userId', posts)
-        users = self._removePostPrivateData( self._repo.searchUser(userSearchFilter)['users'] )
+        users = self._removeUserPrivateData( self._repo.searchUser(userSearchFilter)['users'] )
         postsJoined = self._joinDocuments(posts, users, 'userId', 'user')
 
         return dict(

@@ -2,6 +2,7 @@ from cerberus import Validator
 
 from server.exceptions import FilterParseError, InvalidFilterOperatorError
 
+
 class Filter:
     """
     An object that defines search filter
@@ -19,7 +20,7 @@ class Filter:
 
     def getMongoFilter(self):
         """
-        forumlates a mongo filter that can be used for searching documents
+        formulates a mongo filter that can be used for searching documents
         """
         raise NotImplementedError
     
@@ -28,6 +29,7 @@ class Filter:
         Determines if target record matches the filter
         """
         raise NotImplementedError
+
 
 class PrimitiveFilter(Filter):
     """
@@ -78,7 +80,7 @@ class PrimitiveFilter(Filter):
             'required': True,
             'type': 'string'
         },
-        'operator' : {
+        'operator': {
             'required': True,
             'type': 'string'
         },
@@ -105,6 +107,7 @@ class PrimitiveFilter(Filter):
     def isFieldInRecord(self, record):
         return self._field in record.keys()
 
+
 class FuzzyStringFilter(PrimitiveFilter):
     """
     Allows fuzzy searches like searching for post that contains a certain substring
@@ -115,7 +118,7 @@ class FuzzyStringFilter(PrimitiveFilter):
     def getMongoFilter(self):
         concattedWithPipe = '|'.join(self._values)
         return {
-            self._field: { '$regex': f'{concattedWithPipe}', '$options': 'i'} 
+            self._field: { '$regex': f'{concattedWithPipe}', '$options': 'i'}
         }
 
     def matches(self, record):
@@ -127,6 +130,7 @@ class FuzzyStringFilter(PrimitiveFilter):
                 return True
 
         return False
+
 
 class GTFilter(PrimitiveFilter):
     """
@@ -146,6 +150,7 @@ class GTFilter(PrimitiveFilter):
         fieldValue = self._values[0]
         return record[self._field] > fieldValue
 
+
 class GTEFilter(PrimitiveFilter):
     """
     Greater than or equal to filter
@@ -159,6 +164,7 @@ class GTEFilter(PrimitiveFilter):
         
         fieldValue = self._values[0]
         return record[self._field] >= fieldValue
+
 
 class LTFilter(PrimitiveFilter):
     """
@@ -174,6 +180,7 @@ class LTFilter(PrimitiveFilter):
         fieldValue = self._values[0]
         return record[self._field] < fieldValue
 
+
 class LTEFilter(PrimitiveFilter):
     """
     Less than or equal to filter
@@ -188,6 +195,7 @@ class LTEFilter(PrimitiveFilter):
         fieldValue = self._values[0]
         return record[self._field] <= fieldValue
     
+
 class EQFilter(PrimitiveFilter):
     """
     Exact match filter
@@ -197,7 +205,7 @@ class EQFilter(PrimitiveFilter):
 
     def getMongoFilter(self):
         return {
-            self._field: { '$in': self._values } 
+            self._field: { '$in': self._values }
         }
 
     def matches(self, record):
@@ -210,6 +218,7 @@ class EQFilter(PrimitiveFilter):
 
         return False
     
+
 class RegexFilter(PrimitiveFilter):
     """
     Regular expression filter

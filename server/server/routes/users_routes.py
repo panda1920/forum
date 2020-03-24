@@ -61,13 +61,13 @@ def updateUserv1(userId):
 
 
 @cors_wrapped_route(routes.route, '/v1/users/<userId>/delete', methods=['DELETE'])
-def deleteUserv1(userId):
+def deleteUserByIdv1(userId):
     try:
-        Config.getDB(current_app).deleteUser([userId])
+        delete = Config.getDeleteService(current_app)
+        response = delete.deleteUserByKeyValues( dict(userId=userId) )
+        return route_utils.createJSONResponse([ response ], 200)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
-
-    return route_utils.createJSONResponse([], 200)
 
 
 @cors_wrapped_route(routes.route, '/v1/users/login', methods=['POST'])

@@ -113,13 +113,13 @@ def updatePostv1(postId):
 
 
 @cors_wrapped_route(routes.route, '/v1/posts/<postId>/delete', methods=['DELETE'])
-def deletePostv1(postId):
+def deletePostByIdv1(postId):
     try:
-        Config.getDB(current_app).deletePost([postId])
+        delete = Config.getDeleteService(current_app)
+        response = delete.deletePostByKeyValues( dict(postId=postId) )
+        return route_utils.createJSONResponse([ response ], 200)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
-
-    return route_utils.createTextResponse('delete successful!', 200)
 
 
 @routes.before_request

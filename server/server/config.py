@@ -16,6 +16,7 @@ from server.services.userauth import UserAuthentication
 from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
 from server.services.update_service import UpdateService
+from server.services.delete_service import DeleteService
 from server.services.image_scaler import ImageScaler
 from server.middleware.session_user import SessionUserManager
 
@@ -29,6 +30,7 @@ flask_context = FlaskContext()
 creation_service = EntityCreationService(repo, PrimitiveFilter)
 search_service = SearchService(repo, PrimitiveFilter, AggregateFilter, Paging)
 update_service = UpdateService(repo, PrimitiveFilter)
+delete_service = DeleteService(repo, flask_context)
 image_scaler = ImageScaler()
 session_user = SessionUserManager(search_service, flask_context)
 user_authentication = UserAuthentication(repo, PrimitiveFilter, session_user)
@@ -51,6 +53,7 @@ class Config:
     CREATION_SERVICE = creation_service
     SEARCH_SERVICE = search_service
     UPDATE_SERVICE = update_service
+    DELETE_SERVICE = delete_service
     IMAGE_SCALER = image_scaler
     USER_AUTHENTICATION = user_authentication
 
@@ -102,6 +105,10 @@ class Config:
     @staticmethod
     def getUpdateService(app):
         return app.config['UPDATE_SERVICE']
+
+    @staticmethod
+    def getDeleteService(app):
+        return app.config['DELETE_SERVICE']
 
     @staticmethod
     def getImageScaler(app):

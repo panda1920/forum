@@ -7,8 +7,6 @@ import logging
 
 from flask import g, session
 
-from server.exceptions import ValueNotFoundOnContext
-
 
 class FlaskContext:
     """

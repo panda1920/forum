@@ -97,6 +97,15 @@ class IdNotSpecifiedError(MyAppException):
     @classmethod
     def getStatusCode(cls):
         return 400
+
+
+class UnauthorizedError(MyAppException):
+    """
+    Raised when API was called by an unauthorized user
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 401
         
 
 class RecordNotFoundError(MyAppException):

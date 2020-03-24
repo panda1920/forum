@@ -15,6 +15,8 @@ DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES = 'some_value'
 DEFAULT_RETURN_SIGNUP = None
 DEFAULT_RETURN_UPDATEUSER = 'some_value_updateuser'
 DEFAULT_RETURN_UPDATEPOST = 'some_value_updatepost'
+DEFAULT_RETURN_DELETEUSER = dict(deleteCount=1)
+DEFAULT_RETURN_DELETEPOST = dict(deleteCount=1)
 DEFAULT_USER_RETURNED = dict(
     userId='1',
     displayName='Bobby',
@@ -43,6 +45,11 @@ def mockApp(app):
     mockUpdate.updateUserByKeyValues.return_value = DEFAULT_RETURN_UPDATEUSER
     mockUpdate.updatePostByKeyValues.return_value = DEFAULT_RETURN_UPDATEPOST
     app.config['UPDATE_SERVICE'] = mockUpdate
+
+    mockDelete = mocks.createMockDeleteService()
+    mockDelete.deleteUserByKeyValues.return_value = DEFAULT_RETURN_DELETEUSER
+    mockDelete.deletePostByKeyValues.return_value = DEFAULT_RETURN_DELETEPOST
+    app.config['DELETE_SERVICE'] = mockDelete
 
     mockUserAuth = mocks.createMockUserAuth()
     mockUserAuth.login.return_value = DEFAULT_USER_RETURNED
@@ -250,31 +257,52 @@ class TestPostAPIs:
 
             assert response.status_code == e.getStatusCode()
 
-    def test_deletePostReturns200(self, mockApp):
+    # def test_deletePostReturns200(self, mockApp):
+    #     postIdToDelete = '1'
+    #     url = f'{self.POSTSAPI_BASE_URL}/{postIdToDelete}/delete'
+    #     mockDB = Config.getDB(mockApp)
+
+    #     with mockApp.test_client() as client:
+    #         response = client.delete(url)
+
+    #         assert response.status_code == 200
+
+    #         assert mockDB.deletePost.call_count == 1
+    #         argPassed = mockDB.deletePost.call_args[0][0]
+    #         assert argPassed == [postIdToDelete]
+
+    def test_deletePostByIdShouldPassPostIdToService(self, mockApp):
         postIdToDelete = '1'
         url = f'{self.POSTSAPI_BASE_URL}/{postIdToDelete}/delete'
-        mockDB = Config.getDB(mockApp)
+        mockDelete = Config.getDeleteService(mockApp)
+
+        with mockApp.test_client() as client:
+            client.delete(url)
+
+            mockDelete.deletePostByKeyValues.assert_called_with( dict(postId=postIdToDelete) )
+
+    def test_deletePostByIdShouldReturn200AndResponseFromService(self, mockApp):
+        postIdToDelete = '1'
+        url = f'{self.POSTSAPI_BASE_URL}/{postIdToDelete}/delete'
 
         with mockApp.test_client() as client:
             response = client.delete(url)
 
             assert response.status_code == 200
+            responseJson = response.get_json()
+            responseJson['deleteCount'] == DEFAULT_RETURN_DELETEPOST
 
-            assert mockDB.deletePost.call_count == 1
-            argPassed = mockDB.deletePost.call_args[0][0]
-            assert argPassed == [postIdToDelete]
-
-    def test_whenDeletePostRaisesExceptionReturnsError(self, mockApp):
+    def test_deletePostByIdShouldReturnsErrorWhenExceptionRaised(self, mockApp):
         postIdToDelete = '1'
         url = f'{self.POSTSAPI_BASE_URL}/{postIdToDelete}/delete'
         exceptionsToTest = [
             exceptions.RecordNotFoundError('Some error'),
             exceptions.ServerMiscError('Some error'),
         ]
-        mockDB = Config.getDB(mockApp)
+        mockDelete = Config.getDeleteService(mockApp)
 
         for e in exceptionsToTest:
-            mockDB.deletePost.side_effect = e
+            mockDelete.deletePostByKeyValues.side_effect = e
             with mockApp.test_client() as client:
                 response = client.delete(url)
 
@@ -469,8 +497,19 @@ class TestUserAPIs:
 
             assert response.status_code == e.getStatusCode()
 
-    def test_deleteUserReturns200(self, mockApp):
-        mockDB = Config.getDB(mockApp)
+    def test_deleteUserByIdShouldPassUserIdToDeleteService(self, mockApp):
+        userIdToDelete = '1'
+        url = f'{self.USERAPI_BASE_URL}/{userIdToDelete}/delete'
+        mockDelete = Config.getDeleteService(mockApp)
+
+        with mockApp.test_client() as client:
+            client.delete(url)
+
+            mockDelete.deleteUserByKeyValues.assert_called_with(dict(
+                userId=userIdToDelete
+            ))
+
+    def test_deleteUserByIdShouldReturn200AndReturnValueFromService(self, mockApp):
         userIdToDelete = '1'
         url = f'{self.USERAPI_BASE_URL}/{userIdToDelete}/delete'
 
@@ -478,22 +517,20 @@ class TestUserAPIs:
             response = client.delete(url)
 
             assert response.status_code == 200
-
-            assert mockDB.deleteUser.call_count == 1
-            arg1Passed = mockDB.deleteUser.call_args[0][0]
-            assert arg1Passed == [userIdToDelete]
+            responseJson = response.get_json()
+            responseJson['deleteCount'] == DEFAULT_RETURN_DELETEUSER['deleteCount']
 
     def test_deleteUserReturnsErrorWhenDeleteUserRaisesException(self, mockApp):
-        mockDB = Config.getDB(mockApp)
         userIdToDelete = '1'
         url = f'{self.USERAPI_BASE_URL}/{userIdToDelete}/delete'
         exceptionsToTest = [
             exceptions.RecordNotFoundError('some error'),
             exceptions.ServerMiscError('some error'),
         ]
+        mockDelete = Config.getDeleteService(mockApp)
 
         for e in exceptionsToTest:
-            mockDB.deleteUser.side_effect = e
+            mockDelete.deleteUserByKeyValues.side_effect = e
             with mockApp.test_client() as client:
                 response = client.delete(url)
 
