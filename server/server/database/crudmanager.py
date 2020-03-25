@@ -27,7 +27,7 @@ class CrudManager:
     def searchPost(self, searchFilter, paging=None):
         raise NotImplementedError
 
-    def deletePost(self, postIds):
+    def deletePost(self, searchFilter):
         raise NotImplementedError
 
     def updatePost(self, searchFilter, post):

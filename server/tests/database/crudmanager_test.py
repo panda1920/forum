@@ -103,10 +103,11 @@ class TestUserCRUD:
 
     def test_deleteUserShouldRemoveUserFromDB(self, setupDB):
         userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
+        searchFilter = createSearchFilter('userId', 'eq', [ userIdToDelete ])
 
         assert len( setupDB.findUsers('userId', [userIdToDelete]) ) == 1
         
-        setupDB.getDB().deleteUser([userIdToDelete])
+        setupDB.getDB().deleteUser(searchFilter)
 
         assert setupDB.getUserCount() == len(setupDB.getOriginalUsers()) - 1
         assert len( setupDB.findUsers('userId', [userIdToDelete]) ) == 0
@@ -115,19 +116,50 @@ class TestUserCRUD:
         userIdsToDelete = [
             user['userId'] for user in setupDB.getOriginalUsers()[:3]
         ]
+        searchFilter = createSearchFilter('userId', 'eq', userIdsToDelete)
 
         assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 3
 
-        setupDB.getDB().deleteUser(userIdsToDelete)
+        setupDB.getDB().deleteUser(searchFilter)
 
         assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 0
 
+    def test_deleteUserByUsernameOrUserIdShouldRemoveBothFromDB(self, setupDB):
+        userIdsToDelete = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:3]
+        ]
+        userNamesToDelete = [
+            user['userName'] for user in setupDB.getOriginalUsers()[-2:]
+        ]
+        searchFilter = AggregateFilter.createFilter('or', [
+            createSearchFilter('userId', 'eq', userIdsToDelete),
+            createSearchFilter('userName', 'eq', userNamesToDelete),
+        ])
+
+        assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 3
+        assert len( setupDB.findUsers('userName', userNamesToDelete) ) == 2
+
+        setupDB.getDB().deleteUser(searchFilter)
+
+        assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 0
+        assert len( setupDB.findUsers('userName', userNamesToDelete) ) == 0
+
     def test_deleteUserWithNonExistantIdShouldDoNothing(self, setupDB):
         userIdToDelete = 'non_existant'
+        searchFilter = createSearchFilter('userId', 'eq', [ userIdToDelete ])
 
-        setupDB.getDB().deleteUser([userIdToDelete])
+        setupDB.getDB().deleteUser(searchFilter)
 
         setupDB.validateCreatedUsers()
+
+    def test_deleteUserShouldReturnResultAsDict(self, setupDB):
+        userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
+        searchFilter = createSearchFilter('userId', 'eq', [ userIdToDelete ])
+
+        result = setupDB.getDB().deleteUser(searchFilter)
+
+        assert 'deleteCount' in result
+        assert result['deleteCount'] == 1
 
     def test_searchUserByUserIdShouldReturnUserFromDB(self, setupDB):
         userIdsToSearch = [ setupDB.getOriginalUsers()[0]['userId'] ]
@@ -369,8 +401,9 @@ class TestPostCRUD:
 
     def test_deletePostShouldRemovePostFromDB(self, setupDB):
         postIdToDelete = setupDB.getOriginalPosts()[0]['postId']
+        searchFilter = createSearchFilter('postId', 'eq', [ postIdToDelete ])
 
-        setupDB.getDB().deletePost([postIdToDelete])
+        setupDB.getDB().deletePost(searchFilter)
 
         assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) - 1
         postsShouldHaveBeenDeleted = setupDB.findPosts('postId', [postIdToDelete])
@@ -380,8 +413,9 @@ class TestPostCRUD:
         postIdsToDelete = [
             post['postId'] for post in setupDB.getOriginalPosts()[:3]
         ]
+        searchFilter = createSearchFilter('postId', 'eq', postIdsToDelete)
 
-        setupDB.getDB().deletePost(postIdsToDelete)
+        setupDB.getDB().deletePost(searchFilter)
 
         assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) - len(postIdsToDelete)
         postsShouldHaveBeenDeleted = setupDB.findPosts('postId', postIdsToDelete)
@@ -389,10 +423,37 @@ class TestPostCRUD:
 
     def test_deletePostWithNonExistantIdShouldDoNothing(self, setupDB):
         postIdToDelete = 'non_existant'
+        searchFilter = createSearchFilter('postId', 'eq', [ postIdToDelete ])
 
-        setupDB.getDB().deletePost([postIdToDelete])
+        setupDB.getDB().deletePost(searchFilter)
 
         setupDB.validateCreatedPosts()
+
+    def test_deletePostWithDifferentCriteriasShouldDeleteAll(self, setupDB):
+        postIdsToDelete = [
+            post['postId'] for post in setupDB.getOriginalPosts()[:3]
+        ]
+        keywordToDelete = DataCreator.USERS[-1]
+        searchFilter = AggregateFilter.createFilter('or', [
+            createSearchFilter('postId', 'eq', postIdsToDelete),
+            createSearchFilter('content', 'fuzzy', [ keywordToDelete ]),
+        ])
+
+        setupDB.getDB().deletePost(searchFilter)
+
+        assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) - len(postIdsToDelete) - DataCreator.POSTCOUNT_PER_USER
+
+    # test return value
+    def test_deletePostShouldReturnResultAsDict(self, setupDB):
+        postIdsToDelete = [
+            post['postId'] for post in setupDB.getOriginalPosts()[:3]
+        ]
+        searchFilter = createSearchFilter('postId', 'eq', postIdsToDelete)
+
+        result = setupDB.getDB().deletePost(searchFilter)
+
+        assert 'deleteCount' in result
+        assert result['deleteCount'] == len(postIdsToDelete)
 
     def test_searchPostByPostIdsShouldReturnPostFromDB(self, setupDB):
         postIdsToSearch = [

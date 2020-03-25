@@ -100,8 +100,8 @@ class FileCrudManager(CrudManager):
             'matchedCount': len(matchedUsers),
         }
 
-    def deleteUser(self, userIds):
-        self._deleteUserImpl(userIds)
+    def deleteUser(self, searchFilter):
+        return self._deleteUserImpl(searchFilter)
 
     def updateUser(self, searchFilter, user):
         if not UpdateUser.validate(user):
@@ -138,8 +138,8 @@ class FileCrudManager(CrudManager):
             'matchedCount': len(matchedPosts),
         }
 
-    def deletePost(self, postIds):
-        self._deletePostImpl(postIds)
+    def deletePost(self, searchFilter):
+        return self._deletePostImpl(searchFilter)
 
     def updatePost(self, searchFilter, post):
         if not UpdatePost.validate(post):
@@ -154,11 +154,22 @@ class FileCrudManager(CrudManager):
         currentUsers.append(user)
 
     @updateJSONFileContent('_usersFile')
-    def _deleteUserImpl(self, userIds, currentUsers=None):
+    def _deleteUserImpl(self, searchFilter, currentUsers=None):
+        deleteCount = 0
+
+        def matches(user):
+            isMatched = searchFilter.matches(user)
+            if isMatched:
+                nonlocal deleteCount
+                deleteCount += 1
+            return isMatched
+
         currentUsers[:] = [
             user for user in currentUsers
-            if user['userId'] not in userIds
+            if not matches(user)
         ]
+
+        return dict(deleteCount=deleteCount)
                 
     @updateJSONFileContent('_usersFile')
     def _updateUserImpl(self, searchFilter, user, currentUsers=None):
@@ -188,8 +199,22 @@ class FileCrudManager(CrudManager):
         currentPosts.append(post)
 
     @updateJSONFileContent('_postsFile')
-    def _deletePostImpl(self, postIds, currentPosts=None):
-        currentPosts[:] = [ post for post in currentPosts if post['postId'] not in postIds ]
+    def _deletePostImpl(self, searchFilter, currentPosts=None):
+        deleteCount = 0
+
+        def matches(user):
+            isMatched = searchFilter.matches(user)
+            if isMatched:
+                nonlocal deleteCount
+                deleteCount += 1
+            return isMatched
+
+        currentPosts[:] = [
+            post for post in currentPosts
+            if not matches(post)
+        ]
+
+        return dict(deleteCount=deleteCount)
 
     @updateJSONFileContent('_postsFile')
     def _updatePostImpl(self, searchFilter, post, currentPosts=None):

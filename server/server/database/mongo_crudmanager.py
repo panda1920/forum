@@ -52,13 +52,13 @@ class MongoCrudManager(CrudManager):
             'matchedCount': matchedCount,
         }
 
-    def deleteUser(self, userIds):
-        userQuery = { 'userId': { '$in': userIds } }
-        postQuery = userQuery
+    def deleteUser(self, searchFilter):
+        userQuery = searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to delete user'):
-            self._db['users'].delete_many(userQuery)
-            self._db['posts'].delete_many(postQuery)
+            result = self._db['users'].delete_many(userQuery)
+
+        return dict(deleteCount=result.deleted_count)
 
     def updateUser(self, searchFilter, user):
         self._validateEntity(UpdateUser, user)
@@ -97,11 +97,13 @@ class MongoCrudManager(CrudManager):
             'matchedCount': matchedCount,
         }
 
-    def deletePost(self, postIds):
-        query = { 'postId': { '$in': postIds } }
+    def deletePost(self, searchFilter):
+        query = searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to create post'):
-            self._db['posts'].delete_many(query)
+            result = self._db['posts'].delete_many(query)
+
+        return dict(deleteCount=result.deleted_count)
 
     def updatePost(self, searchFilter, post):
         self._validateEntity(UpdatePost, post)
