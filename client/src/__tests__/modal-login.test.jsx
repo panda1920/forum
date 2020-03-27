@@ -17,14 +17,12 @@ const DEFAULT_USERINFO = {
   password: 'mysecretpassword',
 };
 const DEFAULT_API_RETURN_INFO = {
-  users: [
-    {
+  sessionUser: {
       userId: '111',
       userName: 'bobby@myforumapp.com',
       imageUrl: 'http://myforumwebapp.com',
       displayName: 'bobby',
     }
-  ]
 }
 const ERRORMSG_INVALID_EMAIL = 'Invalid email';
 const ERRORMSG_INVALID_PASSWORD = 'Invalid password';
@@ -138,7 +136,7 @@ describe('Testing behavior of login modal', () => {
     await typeInputsAndClickLogin(email, password);
 
     expect(mockSetUser.mock.calls).toHaveLength(1);
-    expect(mockSetUser.mock.calls[0][0]).toEqual(DEFAULT_API_RETURN_INFO.users[0]);
+    expect(mockSetUser.mock.calls[0][0]).toEqual(DEFAULT_API_RETURN_INFO.sessionUser);
   });
 
   test('Succesful login should close modal', async () => {

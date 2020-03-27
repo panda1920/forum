@@ -57,8 +57,8 @@ const ModalLogin = () => {
   }
 
   const loginSuccess = async (response) => {
-    const { users } = await response.json();
-    setCurrentUser(users[0]);
+    const { sessionUser } = await response.json();
+    setCurrentUser(sessionUser);
     toggleLogin();
   }
 

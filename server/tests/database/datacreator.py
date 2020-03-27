@@ -32,6 +32,7 @@ class DataCreator:
     POSTCOUNT_PER_USER_ENG = 48
     POSTCOUNT_PER_USER_JPN = 2
     POSTCOUNT_PER_USER = POSTCOUNT_PER_USER_ENG + POSTCOUNT_PER_USER_JPN
+    PLACEHOLDER_IMG_URL = 'https://upload.wikimedia.org/wikipedia/en/b/b1/Portrait_placeholder.png'
 
     def __init__(self, testDataPath):
         self._testDataPath = testDataPath
@@ -61,6 +62,7 @@ class DataCreator:
                 'userName': username.lower() + self.EMAIL_DOMAIN,
                 'password': UserAuthentication.hashPassword('12345678'),
                 'createdAt': now,
+                'imageUrl': self.PLACEHOLDER_IMG_URL,
             })
         
         return users

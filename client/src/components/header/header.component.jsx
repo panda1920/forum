@@ -1,15 +1,55 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useCallback } from 'react';
 
 import Button from '../button/button.component';
+import MenuDropdown from '../menu-dropdown/menu-dropdown.component';
+
+import { ModalContext } from '../../contexts/modal/modal';
+import { CurrentUserContext } from '../../contexts/current-user/current-user';
 
 import './header.styles.scss';
-import { ModalContext } from '../../contexts/modal/modal';
 
-const Header = ({ id }) => {
+const Header = () => {
   const { toggleSignup, toggleLogin } = useContext(ModalContext);
+  const { imageUrl, isLoggedin } = useContext(CurrentUserContext);
+  const [ isDropDownVisible, setIsDropDownVisible ] = useState(false);
+
+  const toggleDropDown = useCallback(() => {
+    setIsDropDownVisible(visibleState => !visibleState);
+  }, []);
+
+  const renderControlSectionBasedOnLoggedinState= () => {
+    if ( isLoggedin() )
+      return (
+        <div className='controls-section'>
+          <Button
+            onClick={toggleDropDown}
+          >
+            <img src={imageUrl} alt='portrait image of user' />
+          </Button>
+          { isDropDownVisible ? <MenuDropdown /> : null }
+        </div>
+      );
+    else
+      return (
+        <div className='controls-section'>
+          <Button
+            className='header-button button-signup'
+            onClick={toggleSignup}
+          >
+            SIGNUP
+          </Button>
+          <Button
+            className='header-button button-login'
+            onClick={toggleLogin}
+          >
+            LOGIN
+          </Button>
+        </div>
+      );
+  };
 
   return (
-    <header id={id}>
+    <header id='header'>
       <div className='logo-section'>
         <Button
           className='header-button button-logo'
@@ -17,20 +57,7 @@ const Header = ({ id }) => {
           MYFORUMAPP
         </Button>
       </div>
-      <div className='controls-section'>
-        <Button
-          className='header-button button-signup'
-          onClick={toggleSignup}
-        >
-          SIGNUP
-        </Button>
-        <Button
-          className='header-button button-login'
-          onClick={toggleLogin}
-        >
-          LOGIN
-        </Button>
-      </div>
+      { renderControlSectionBasedOnLoggedinState() }
     </header>
   );
 }

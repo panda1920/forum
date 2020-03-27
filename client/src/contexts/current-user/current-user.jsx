@@ -1,4 +1,4 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useCallback } from 'react';
 
 const INITIAL_STATE = {
     userId: '0',
@@ -6,6 +6,7 @@ const INITIAL_STATE = {
     displayName: 'anonymous',
     imageUrl: '',
     setCurrentUser: () => {},
+    isLoggedin: () => {},
 };
 
 export const CurrentUserContext = createContext(INITIAL_STATE);
@@ -24,9 +25,13 @@ export const CurrentUserContextProvider = ({ children }) => {
     setImageUrl(imageUrl);
   }
 
+  const isLoggedin = useCallback(() => {
+    return (userId !== '') && (userId !== '0');
+  }, [userId]);
+
   return (
     <CurrentUserContext.Provider
-      value={{ userId, userName, displayName, imageUrl, setCurrentUser }}
+      value={{ userId, userName, displayName, imageUrl, setCurrentUser, isLoggedin }}
     >
       { children }
     </CurrentUserContext.Provider>

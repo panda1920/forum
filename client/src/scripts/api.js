@@ -11,6 +11,13 @@ export function login(email, password) {
     );
 }
 
+export function logout() {
+    return apiCall(
+        paths.userApiLogout,
+        'POST',
+    );
+}
+
 export function signup(email, password) {
     return apiCall(
         paths.userApiLogin,
@@ -34,7 +41,8 @@ async function apiCall(url, method, headers, body) {
 
 async function defaultResponseHandler(response) {
     // ignore all server side error
-    // mimicks response by setting ok = true
-    if (response.status >= 500) return { ignore: true };
-    return response;
+    if (response.status >= 500)
+        return { ignore: true, ok: false };
+    else
+        return response;
 }
