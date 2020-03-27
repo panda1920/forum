@@ -53,10 +53,10 @@ def mockApp(app):
 
     mockUserAuth = mocks.createMockUserAuth()
     mockUserAuth.login.return_value = DEFAULT_USER_RETURNED
-    app.config['USER_AUTHENTICATION'] = mockUserAuth
+    app.config['AUTHENTICATION_SERVICE'] = mockUserAuth
 
-    mockSessionUser = mocks.createMockSessionUserManager()
-    app.config['SESSION_USER'] = mockSessionUser
+    mockSessionUser = mocks.createMockSessionMiddleware()
+    app.config['SESSION_MIDDLEWARE'] = mockSessionUser
 
     yield app
 
@@ -545,7 +545,7 @@ class TestUserAPIs:
 
         response = client.post(url, json=userCredentials)
 
-        userauth = Config.getUserAuth(mockApp)
+        userauth = Config.getAuthService(mockApp)
         assert response.status_code == 200
         assert userauth.login.call_count == 1
         userauth.login.assert_called_with(userCredentials)
@@ -569,7 +569,7 @@ class TestUserAPIs:
             password='password',
         )
         url = f'{self.USERAPI_BASE_URL}/login'
-        userauth = Config.getUserAuth(mockApp)
+        userauth = Config.getAuthService(mockApp)
         exceptionsToTest = [
             exceptions.InvalidUserCredentials,
             exceptions.ServerMiscError,
@@ -585,7 +585,7 @@ class TestUserAPIs:
 
     def test_logoutShouldCallLogoutService(self, mockApp, client):
         url = f'{self.USERAPI_BASE_URL}/logout'
-        userauth = Config.getUserAuth(mockApp)
+        userauth = Config.getAuthService(mockApp)
 
         response = client.post(url)
 
@@ -594,7 +594,7 @@ class TestUserAPIs:
 
     def test_logoutShouldReturnErrorWhenExpcetionWasRaised(self, mockApp):
         url = f'{self.USERAPI_BASE_URL}/logout'
-        userauth = Config.getUserAuth(mockApp)
+        userauth = Config.getAuthService(mockApp)
         exceptionsToTest = [
             exceptions.ServerMiscError
         ]

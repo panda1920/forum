@@ -124,10 +124,10 @@ def deletePostByIdv1(postId):
 
 @routes.before_request
 def apply_middlewares_before():
-    Config.getSessionUser(current_app).setCurrentUser()
+    Config.getSessionMiddleware(current_app).setCurrentUser()
 
 
 @routes.after_request
 def apply_middleware_after(response):
-    Config.getSessionUser(current_app).addCurrentUserToResponse(response)
+    Config.getSessionMiddleware(current_app).addCurrentUserToResponse(response)
     return response

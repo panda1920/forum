@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 from time import time
 
-from server.services.userauth import UserAuthentication
+from server.services.userauth import UserAuthenticationService
 
 
 class DataCreator:
@@ -60,7 +60,7 @@ class DataCreator:
                 'userId': str(idx),
                 'displayName': username,
                 'userName': username.lower() + self.EMAIL_DOMAIN,
-                'password': UserAuthentication.hashPassword('12345678'),
+                'password': UserAuthenticationService.hashPassword('12345678'),
                 'createdAt': now,
                 'imageUrl': self.PLACEHOLDER_IMG_URL,
             })

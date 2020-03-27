@@ -23,7 +23,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dockerize": "docker image build -t panda1920/forumapp-client:latest ."
+    "dockerize": "docker image build --no-cache --pull -t panda1920/forumapp-client:latest ."
   },
   "eslintConfig": {
     "extends": "react-app"

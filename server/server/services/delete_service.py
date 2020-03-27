@@ -7,7 +7,7 @@ import logging
 import server.exceptions as exceptions
 from server.database.filter import PrimitiveFilter
 from server.database.paging import PagingNoLimit
-from server.middleware.session_user import SessionUserManager
+from server.services.session import SessionService
 
 
 class DeleteService:
@@ -83,7 +83,7 @@ class DeleteService:
         Returns:
             None
         """
-        session_user = self._context.read_global(SessionUserManager.SESSION_USER_KEY)
+        session_user = self._context.read_global(SessionService.SESSION_USER_KEY)
         if (session_user is None) or (session_user['userId'] != userId):
             logging.error('Failed operation due to unauthorized user')
             raise exceptions.UnauthorizedError('Unauthorized action')

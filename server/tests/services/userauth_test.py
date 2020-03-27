@@ -6,46 +6,46 @@ This file houses tests for userauth.py
 import pytest
 
 import server.exceptions as exceptions
-from server.services.userauth import UserAuthentication
+from server.services.userauth import PasswordService, UserAuthenticationService
 from server.database.filter import PrimitiveFilter
-from tests.mocks import createMockDB, createMockSessionUserManager
+import tests.mocks as mocks
 
 
 @pytest.fixture(scope='function')
 def user_auth():
-    repo = createMockDB()
-    session = createMockSessionUserManager()
-    return UserAuthentication(repo, PrimitiveFilter, session)
+    repo = mocks.createMockDB()
+    session = mocks.createMockSessionService()
+    return UserAuthenticationService(repo, PrimitiveFilter, session)
     
 
-class TestPasswordHashing:
+class TestPasswordService:
     DEFAULT_PASSWORD = 'password'
-    # pre-generated hash for above password using the same context in UserAuthentication
+    # pre-generated hash for above password using the same context in PasswordService
     DEFAULT_HASHED = '$pbkdf2-sha256$29000$6z0nxLh37v3fOydkjBHi3A$51waSF7m1N5sFyz/b9wfd6pcuWu4l0T1VceK3WcxJxI'
     # pre-generated hash for above password using different context
     DIF_CONTEXT_HASHED = '$2b$12$m/c3kTn0DzeBAGAnUDqh3.yICIZAnQyqVB62aO6n9pLpW2uRsVVOa'
 
-    def test_passwordHashingOfDefaultPasswordYieldsHashedString(self, user_auth):
-        hashed = user_auth.hashPassword(self.DEFAULT_PASSWORD)
+    def test_passwordHashingOfDefaultPasswordYieldsHashedString(self):
+        hashed = PasswordService.hashPassword(self.DEFAULT_PASSWORD)
         
         assert hashed is not None
         assert type(hashed) is str
         assert hashed != self.DEFAULT_PASSWORD
         assert hashed != self.DEFAULT_HASHED
 
-    def test_passwordVerificationPassesAgainstDefaultPasswordAndDefaultHash(self, user_auth):
-        assert user_auth.verifyPassword(self.DEFAULT_PASSWORD, self.DEFAULT_HASHED)
+    def test_passwordVerificationPassesAgainstDefaultPasswordAndDefaultHash(self):
+        assert PasswordService.verifyPassword(self.DEFAULT_PASSWORD, self.DEFAULT_HASHED)
 
-    def test_passwordVeriicationPassesAgainstDefaultPasswordAndGeneratedHash(self, user_auth):
-        hashed = user_auth.hashPassword(self.DEFAULT_PASSWORD)
-        assert user_auth.verifyPassword(self.DEFAULT_PASSWORD, hashed)
+    def test_passwordVeriicationPassesAgainstDefaultPasswordAndGeneratedHash(self):
+        hashed = PasswordService.hashPassword(self.DEFAULT_PASSWORD)
+        assert PasswordService.verifyPassword(self.DEFAULT_PASSWORD, hashed)
 
-    def test_passwordVerificationFailsAgainstWrongPasswordAndDefaultHash(self, user_auth):
+    def test_passwordVerificationFailsAgainstWrongPasswordAndDefaultHash(self):
         password = 'wrong_password'
-        assert not user_auth.verifyPassword(password, self.DEFAULT_HASHED)
+        assert not PasswordService.verifyPassword(password, self.DEFAULT_HASHED)
 
     def test_passwordVerificationFailsAgainstHashGeneratedByDifferentContext(self, user_auth):
-        assert not user_auth.verifyPassword(self.DEFAULT_PASSWORD, self.DIF_CONTEXT_HASHED)
+        assert not PasswordService.verifyPassword(self.DEFAULT_PASSWORD, self.DIF_CONTEXT_HASHED)
 
 
 class TestLogin:
@@ -84,7 +84,7 @@ class TestLogin:
 
         user_auth.login(credentials)
 
-        mockSession.setSessionUser.assert_called_once_with(self.DEFAULT_USER_IN_REPO)
+        mockSession.set_user.assert_called_once_with(self.DEFAULT_USER_IN_REPO)
 
     def test_loginUserShouldReturnNoneWhenSuccessful(self, user_auth):
         credentials = self.DEFAULT_USER_CREDENTIALS
@@ -140,4 +140,4 @@ class TestLogout:
 
         user_auth.logout()
 
-        mockSession.removeSessionUser.assert_called_once()
+        mockSession.remove_user.assert_called_once()

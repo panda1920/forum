@@ -73,7 +73,7 @@ def deleteUserByIdv1(userId):
 @cors_wrapped_route(routes.route, '/v1/users/login', methods=['POST'])
 def loginUserv1():
     try:
-        userauth = Config.getUserAuth(current_app)
+        userauth = Config.getAuthService(current_app)
         authenticatedUser = userauth.login( route_utils.getJsonFromRequest(request) )
         return route_utils.createJSONResponse(
             [ route_utils.createUsersObject(authenticatedUser) ],
@@ -86,7 +86,7 @@ def loginUserv1():
 @cors_wrapped_route(routes.route, '/v1/users/logout', methods=['POST'])
 def logoutUserv1():
     try:
-        userauth = Config.getUserAuth(current_app)
+        userauth = Config.getAuthService(current_app)
         userauth.logout()
         return route_utils.createJSONResponse([], 200)
     except MyAppException as e:
@@ -95,10 +95,10 @@ def logoutUserv1():
 
 @routes.before_request
 def apply_middlewares_before():
-    Config.getSessionUser(current_app).setCurrentUser()
+    Config.getSessionMiddleware(current_app).setCurrentUser()
 
 
 @routes.after_request
 def apply_middleware_after(response):
-    Config.getSessionUser(current_app).addCurrentUserToResponse(response)
+    Config.getSessionMiddleware(current_app).addCurrentUserToResponse(response)
     return response

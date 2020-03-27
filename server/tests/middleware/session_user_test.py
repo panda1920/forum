@@ -19,7 +19,6 @@ DEFAULT_USER = {
     'userName': 'Bobby',
     'password': '12345678',
 }
-
 FILTERED_USER = {
     # '_id'
     'userId': '1',
@@ -27,30 +26,27 @@ FILTERED_USER = {
     'userName': 'Bobby',
     # 'password': '12345678',
 }
-
 DEFAULT_SESSION_USERINFO = {
     'userId': '1',
 }
-
 DEFAULT_RESPONSE_DATA = {
     'someData': [ 1, 2, 3 ],
 }
+ANONYMOUS_USER = dict(userId='0')
+SESSION_USER_KEY = 'sessionUser'
 
 
 @pytest.fixture(scope='function')
 def session_user():
+    mock_session = mocks.createMockSessionService()
+    mock_session.ANONYMOUS_USER = ANONYMOUS_USER
+    mock_session.SESSION_USER_KEY = SESSION_USER_KEY
+
     mock_context = mocks.createMockFlaskContext()
     mock_context.read_session.return_value = DEFAULT_SESSION_USERINFO
-    mock_context.read_global.return_value = DEFAULT_USER
+    mock_context.read_global.return_value = FILTERED_USER
 
-    mock_search = mocks.createMockSearchService()
-    mock_search.searchUsersByKeyValues.return_value = dict(
-        users=[ DEFAULT_USER ],
-        returnCount=1,
-        matchCount=1,
-    )
-
-    return SessionUserManager(mock_search, mock_context)
+    return SessionUserManager(mock_session, mock_context)
 
 
 def createMockResponse():
@@ -61,89 +57,28 @@ def createMockResponse():
 
 
 class TestSessionUserManager:
-    def test_setCurrentUserShouldRetrieveUserFromContext(self, session_user):
+    def test_setCurrentUserShouldRetrieveUserFromSession(self, session_user):
         mock_context = session_user._context
 
         session_user.setCurrentUser()
 
-        mock_context.read_session.assert_called_with(SessionUserManager.SESSION_USER_KEY)
+        mock_context.read_session.assert_called_with(SESSION_USER_KEY)
 
-    def test_setCurrentUserShouldSearchSessionUser(self, session_user):
-        mock_search = session_user._search
-
-        session_user.setCurrentUser()
-
-        mock_search.searchUsersByKeyValues.assert_called_with(
-            dict(userId=DEFAULT_SESSION_USERINFO['userId'])
-        )
-
-    def test_setCurrentUserShouldPutFilteredSearchedInformationOnGlobal(self, session_user):
-        mock_context = session_user._context
+    def test_setCurrentUserShouldPassSessionUserToService(self, session_user):
+        mock_session = session_user._session
 
         session_user.setCurrentUser()
 
-        mock_context.write_global.assert_called_with(
-            SessionUserManager.SESSION_USER_KEY,
-            FILTERED_USER
-        )
+        mock_session.set_global_user.assert_called_with(DEFAULT_SESSION_USERINFO)
 
-    def test_setCurrentUserShouldSearchAnonymousUserWhenNoSessionInfo(self, session_user):
+    def test_setCurrentUserShouldPassAnonymousUserWhenNoSessionInfo(self, session_user):
         mock_context = session_user._context
         mock_context.read_session.return_value = None
-        mock_search = session_user._search
+        mock_session = session_user._session
 
         session_user.setCurrentUser()
 
-        mock_search.searchUsersByKeyValues.assert_called_with(
-            dict(userId='0')
-        )
-
-    def test_setSessionUserShouldPutUserInSession(self, session_user):
-        mock_context = session_user._context
-
-        session_user.setSessionUser(DEFAULT_USER)
-
-        mock_context.write_session.assert_called_with(
-            SessionUserManager.SESSION_USER_KEY,
-            dict(userId=DEFAULT_USER['userId'])
-        )
-
-    def test_setSessionUserShouldPutUserInGlobal(self, session_user):
-        mock_context = session_user._context
-
-        session_user.setSessionUser(DEFAULT_USER)
-
-        mock_context.write_global.assert_called_with(
-            SessionUserManager.SESSION_USER_KEY,
-            FILTERED_USER
-        )
-
-    def test_removeSessionUserShouldPutAnonymousUserInSession(self, session_user):
-        mock_context = session_user._context
-
-        session_user.removeSessionUser()
-
-        mock_context.write_session.assert_called_with(
-            SessionUserManager.SESSION_USER_KEY,
-            SessionUserManager.ANONYMOUS_USER,
-        )
-
-    def test_removeSessionUserShouldWriteToGlobal(self, session_user):
-        mock_context = session_user._context
-        anonymous_user_indb = dict(userId='0', userName='anonymous@myforumwebapp.com')
-        mock_search = session_user._search
-        mock_search.searchUsersByKeyValues.return_value = dict(
-            users=[ anonymous_user_indb ],
-            returnCount=0,
-            matchedCount=0,
-        )
-
-        session_user.removeSessionUser()
-
-        mock_context.write_global.assert_called_with(
-            SessionUserManager.SESSION_USER_KEY,
-            anonymous_user_indb,
-        )
+        mock_session.set_global_user.assert_called_with(ANONYMOUS_USER)
 
     def test_addCurrentUserToResponseShouldRetrieveUserInfoFromGlobal(self, session_user):
         mock_context = session_user._context
@@ -151,10 +86,9 @@ class TestSessionUserManager:
 
         session_user.addCurrentUserToResponse(mock_response)
 
-        mock_context.read_global.assert_called_with(SessionUserManager.SESSION_USER_KEY)
+        mock_context.read_global.assert_called_with(SESSION_USER_KEY)
 
     def test_addCurrentUserToResponseShouldPlaceRetrievedUserInfoInResponse(self, session_user):
-        mock_response = MagicMock()
         mock_response = createMockResponse()
 
         session_user.addCurrentUserToResponse(mock_response)
@@ -163,7 +97,7 @@ class TestSessionUserManager:
         data_set, *_ = mock_response.set_data.call_args[0]
         assert json.loads(data_set) == {
             **DEFAULT_RESPONSE_DATA,
-            SessionUserManager.SESSION_USER_KEY: DEFAULT_USER
+            SESSION_USER_KEY: FILTERED_USER
         }
 
 
@@ -174,8 +108,8 @@ class TestSessionUserManagerAgainstRoute:
         app.testing = True
         yield app
     
-    def test_requestWithSetCurrentUserShouldHaveDefaultUserInGlobal(self, session_user, app):
-        mock_context = session_user._context
+    def test_requestWithSetCurrentUserShouldPassSessionUserToService(self, session_user, app):
+        mock_session = session_user._session
         path = '/test-route'
 
         @app.route(path, methods=['GET'])
@@ -190,7 +124,27 @@ class TestSessionUserManagerAgainstRoute:
             response = client.get(path)
 
             assert response.status_code == 200
-            mock_context.write_global.assert_called_with(SessionUserManager.SESSION_USER_KEY, FILTERED_USER)
+            mock_session.set_global_user.assert_called_with(DEFAULT_SESSION_USERINFO)
+
+    def test_requestWithSetCurrentUserShouldPassAnonymousUserWhenNoInfo(self, session_user, app):
+        mock_session = session_user._session
+        mock_context = session_user._context
+        mock_context.read_session.return_value = None
+        path = '/test-route'
+
+        @app.route(path, methods=['GET'])
+        def some_route():
+            return route_utils.createJSONResponse([], 200)
+
+        @app.before_request
+        def setuser():
+            session_user.setCurrentUser()
+
+        with app.test_client() as client:
+            response = client.get(path)
+
+            assert response.status_code == 200
+            mock_session.set_global_user.assert_called_with(ANONYMOUS_USER)
         
     def test_requestWithaddCurrentUserToResponseShouldHaveDefaultUserInResponse(self, session_user, app):
         path = '/test-route'
@@ -211,5 +165,5 @@ class TestSessionUserManagerAgainstRoute:
             responseJson = response.get_json()
             assert responseJson == {
                 **DEFAULT_RESPONSE_DATA,
-                SessionUserManager.SESSION_USER_KEY: DEFAULT_USER,
+                SESSION_USER_KEY: FILTERED_USER,
             }

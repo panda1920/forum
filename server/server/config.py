@@ -12,28 +12,31 @@ from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
 from server.services.flask_context import FlaskContext
-from server.services.userauth import UserAuthentication
+from server.services.userauth import PasswordService, UserAuthenticationService
 from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
 from server.services.update_service import UpdateService
 from server.services.delete_service import DeleteService
+from server.services.session import SessionService
 from server.services.image_scaler import ImageScaler
 from server.middleware.session_user import SessionUserManager
 
 # object initialization
 repo = MongoCrudManager(
     os.environ.get('MONGO_DBNAME', 'TEST_MYFORUMWEBAPP'),
-    UserAuthentication
+    PasswordService,
 )
-# repo = FileCrudManager(Path(DATA_LOCATION), USER_AUTHENTICATION)
+# repo = FileCrudManager(Path(DATA_LOCATION), AUTHENTICATION_SERVICE)
 flask_context = FlaskContext()
 creation_service = EntityCreationService(repo, PrimitiveFilter)
 search_service = SearchService(repo, PrimitiveFilter, AggregateFilter, Paging)
 update_service = UpdateService(repo, PrimitiveFilter)
 delete_service = DeleteService(repo, flask_context)
+session_service = SessionService(repo, flask_context)
 image_scaler = ImageScaler()
-session_user = SessionUserManager(search_service, flask_context)
-user_authentication = UserAuthentication(repo, PrimitiveFilter, session_user)
+authentication_service = UserAuthenticationService(repo, PrimitiveFilter, session_service)
+
+session_user = SessionUserManager(session_service, flask_context)
 
 
 class Config:
@@ -54,11 +57,12 @@ class Config:
     SEARCH_SERVICE = search_service
     UPDATE_SERVICE = update_service
     DELETE_SERVICE = delete_service
+    SESSION_SERVICE = session_service
     IMAGE_SCALER = image_scaler
-    USER_AUTHENTICATION = user_authentication
+    AUTHENTICATION_SERVICE = authentication_service
 
     # middlewares
-    SESSION_USER = session_user
+    SESSION_MIDDLEWARE = session_user
 
     # for session
     SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -87,8 +91,8 @@ class Config:
         return app.config['PAGING']
 
     @staticmethod
-    def getUserAuth(app):
-        return app.config['USER_AUTHENTICATION']
+    def getAuthService(app):
+        return app.config['AUTHENTICATION_SERVICE']
 
     @staticmethod
     def getFlaskContext(app):
@@ -111,9 +115,13 @@ class Config:
         return app.config['DELETE_SERVICE']
 
     @staticmethod
+    def getSessionService(app):
+        return app.config['SESSION_SERVICE']
+
+    @staticmethod
     def getImageScaler(app):
         return app.config['IMAGE_SCALER']
 
     @staticmethod
-    def getSessionUser(app):
-        return app.config['SESSION_USER']
+    def getSessionMiddleware(app):
+        return app.config['SESSION_MIDDLEWARE']

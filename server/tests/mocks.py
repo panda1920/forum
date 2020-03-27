@@ -11,11 +11,12 @@ from server.database.crudmanager import CrudManager
 from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
-from server.services.userauth import UserAuthentication
+from server.services.userauth import UserAuthenticationService
 from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
 from server.services.update_service import UpdateService
 from server.services.delete_service import DeleteService
+from server.services.session import SessionService
 from server.services.flask_context import FlaskContext
 from server.services.image_scaler import ImageScalerBase
 from server.middleware.session_user import SessionUserManager
@@ -38,7 +39,7 @@ def createMockPaging():
 
 
 def createMockUserAuth():
-    return create_autospec(UserAuthentication)
+    return create_autospec(UserAuthenticationService)
 
 
 def createMockRequest():
@@ -61,7 +62,7 @@ def createMockSession(sessionInfo={}):
     return mock
 
 
-def createMockSessionUserManager():
+def createMockSessionMiddleware():
     return create_autospec(SessionUserManager)
 
 
@@ -83,6 +84,10 @@ def createMockUpdateService():
 
 def createMockDeleteService():
     return create_autospec(DeleteService)
+
+
+def createMockSessionService():
+    return create_autospec(SessionService)
 
 
 def createMockImageScaler():
