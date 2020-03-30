@@ -4,6 +4,7 @@ This file houses configuration information for the main flask app
 """
 
 import os
+from datetime import timedelta
 # from pathlib import Path
 
 # from server.database.file_crudmanager import FileCrudManager
@@ -68,6 +69,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     # define how long persisting session information would be held by client
     # PERMANENT_SESSION_LIFETIME = os.environ.get('')
+    PERMANENT_SESSION_LIFETIME = timedelta(days=31)
 
     # cookies are only sent over SSL connection
     SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', True)

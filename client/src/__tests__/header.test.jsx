@@ -1,6 +1,5 @@
 import React from 'react';
-import { render, act, cleanup, getByAltText } from '@testing-library/react';
-import { toBeVisible } from '@testing-library/jest-dom';
+import { screen, render, act, cleanup, getByTitle } from '@testing-library/react';
 
 import Header from '../components/header/header.component';
 
@@ -24,8 +23,8 @@ const TEST_DATA = {
 };
 
 const ELEMENT_IDENTIFIER = {
-  HEADER_ID: 'header',
-  HEADER_PORTRAIT_ALT_TEXT: 'portrait image of user',
+  HEADER_TITLE: 'header',
+  HEADER_PORTRAIT_TITLE: 'header portrait',
   DROPDOWN_TITLE: 'dropdown',
 };
 
@@ -57,22 +56,22 @@ afterEach(cleanup);
   
 describe('Tests for Header component', () => {
     test('sub-components should be rendered when user not logged in', () => {
-        const { container, queryByAltText, getByText } = createLoggedoutHeader();
+        const { queryByTitle, getByText } = createLoggedoutHeader();
 
         getByText('MYFORUMAPP');
         getByText('SIGNUP');
         getByText('LOGIN');
-        expect( queryByAltText(ELEMENT_IDENTIFIER.HEADER_PORTRAIT_ALT_TEXT) )
+        expect( queryByTitle(ELEMENT_IDENTIFIER.HEADER_PORTRAIT_TITLE) )
           .toBeNull();
     });
 
     test('sub-components should be rendered when user is logged in', () => {
-        const { container, getByText, getByAltText, queryByText, queryByTitle } = createLoggedinHeader();
+        const { getByText, getByTitle, queryByText, queryByTitle } = createLoggedinHeader();
 
         getByText('MYFORUMAPP');
         expect( queryByText('SIGNUP') ).toBeNull();
         expect( queryByText('LOGIN') ).toBeNull();
-        getByAltText(ELEMENT_IDENTIFIER.HEADER_PORTRAIT_ALT_TEXT);
+        getByTitle(ELEMENT_IDENTIFIER.HEADER_PORTRAIT_TITLE);
         expect( queryByTitle(ELEMENT_IDENTIFIER.DROPDOWN_TITLE) ).toBeNull();
     });
 
@@ -87,8 +86,8 @@ describe('Tests for Header component', () => {
 
 // simulate user interaction with app
 function clickOnHeaderPortrait() {
-  const header = document.querySelector(`#${ELEMENT_IDENTIFIER.HEADER_ID}`);
-  const portrait = getByAltText(header, ELEMENT_IDENTIFIER.HEADER_PORTRAIT_ALT_TEXT);
+  const header = screen.getByTitle(ELEMENT_IDENTIFIER.HEADER_TITLE);
+  const portrait = getByTitle(header, ELEMENT_IDENTIFIER.HEADER_PORTRAIT_TITLE);
 
   act(() => {
     portrait.click();

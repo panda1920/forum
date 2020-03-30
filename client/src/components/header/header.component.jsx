@@ -1,6 +1,7 @@
 import React, { useContext, useState, useCallback } from 'react';
 
 import Button from '../button/button.component';
+import Portrait from '../portrait/portrait.component';
 import MenuDropdown from '../menu-dropdown/menu-dropdown.component';
 
 import { ModalContext } from '../../contexts/modal/modal';
@@ -11,22 +12,24 @@ import './header.styles.scss';
 const Header = () => {
   const { toggleSignup, toggleLogin } = useContext(ModalContext);
   const { imageUrl, isLoggedin } = useContext(CurrentUserContext);
-  const [ isDropDownVisible, setIsDropDownVisible ] = useState(false);
+  const [ isDropdownVisible, setIsDropdownVisible ] = useState(false);
 
-  const toggleDropDown = useCallback(() => {
-    setIsDropDownVisible(visibleState => !visibleState);
+  const toggleDropdown = useCallback(() => {
+    setIsDropdownVisible(visibleState => !visibleState);
   }, []);
 
   const renderControlSectionBasedOnLoggedinState= () => {
+
     if ( isLoggedin() )
       return (
         <div className='controls-section'>
           <Button
-            onClick={toggleDropDown}
+            className='button-portrait'
+            onClick={toggleDropdown}
           >
-            <img src={imageUrl} alt='portrait image of user' />
+            <Portrait title='header portrait' imageUrl={imageUrl} />
+            { isDropdownVisible ? <MenuDropdown /> : null }
           </Button>
-          { isDropDownVisible ? <MenuDropdown /> : null }
         </div>
       );
     else
@@ -49,7 +52,7 @@ const Header = () => {
   };
 
   return (
-    <header id='header'>
+    <header id='header' title='header'>
       <div className='logo-section'>
         <Button
           className='header-button button-logo'

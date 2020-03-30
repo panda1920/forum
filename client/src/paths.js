@@ -11,6 +11,8 @@ export const userApiLogin = userApi + '/login';
 
 export const userApiLogout = userApi + '/logout';
 
+export const userApiSession = userApi + '/session';
+
 // apiPath: userAPi, postsApi etc
 // id: id of entity to Delete
 export const createDeleteApiPath = (apiPath, id) => {

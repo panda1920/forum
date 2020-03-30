@@ -4,7 +4,7 @@ import './footer.styles.scss';
 
 const Footer = ({ id }) => {
   return (
-    <footer id={id}>
+    <footer id={id} title='footer'>
 
     </footer>
   );

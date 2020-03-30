@@ -18,9 +18,7 @@ header {
         font-weight: 600;
         letter-spacing: 2px;
         
-        .button-logo {
-            margin-left: 100px;
-        }
+        margin-left: map-get($dimensions, 'header-margin-h');
     }
 
     .controls-section {
@@ -29,9 +27,17 @@ header {
         display: flex;
         flex-direction: row;
         justify-content: flex-end;
+        align-items: center;
     
-        .button-login {
-            margin-right: 50px;
+        margin-right: map-get($dimensions, 'header-margin-h');
+
+        .button-portrait {
+            position: relative;
+    
+            .portrait {
+                width: map-get($dimensions, 'header-portrait-size');
+                height: map-get($dimensions, 'header-portrait-size');
+            }
         }
     }
 }

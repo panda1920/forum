@@ -22,9 +22,9 @@ const MenuDropdown = () => {
   return (
     <div className='menu-dropdown' title='dropdown'>
       <ul>
-        <li><Button onClick={() => {}}>Edit Profile</Button></li>
-        <li></li>
-        <li><Button onClick={logoutHandler}>Logout</Button></li>
+        <li className='noselect'><Button onClick={() => {}}>Edit Profile</Button></li>
+        <li className='noselect'></li>
+        <li className='noselect'><Button onClick={logoutHandler}>Logout</Button></li>
       </ul>
     </div>
   );

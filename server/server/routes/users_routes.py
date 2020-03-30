@@ -93,6 +93,11 @@ def logoutUserv1():
         return route_utils.createJSONErrorResponse(e)
 
 
+@cors_wrapped_route(routes.route, '/v1/users/session', methods=['GET'])
+def getSessionUserv1():
+    return route_utils.createJSONResponse([], 200)
+
+
 @routes.before_request
 def apply_middlewares_before():
     Config.getSessionMiddleware(current_app).setCurrentUser()
@@ -100,5 +105,9 @@ def apply_middlewares_before():
 
 @routes.after_request
 def apply_middleware_after(response):
-    Config.getSessionMiddleware(current_app).addCurrentUserToResponse(response)
-    return response
+    try:
+        session_middleware = Config.getSessionMiddleware(current_app)
+        updated_response = session_middleware.addCurrentUserToResponse(response)
+        return updated_response
+    except MyAppException as e:
+        return route_utils.createJSONErrorResponse(e)

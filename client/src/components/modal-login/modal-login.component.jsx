@@ -36,7 +36,7 @@ const ModalLogin = () => {
   }
 
   const validateInputs = () => {
-    const emailPattern = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    const emailPattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     if ( !emailPattern.test(email) ) {
       setEmailError('Invalid email');
       return false;
@@ -81,6 +81,9 @@ const ModalLogin = () => {
   };
 
   const openSignup = () => {
+    setEmail('');
+    setPassword('');
+    resetErrors();
     toggleLogin();
     toggleSignup();
   };
@@ -132,13 +135,13 @@ const ModalLogin = () => {
         <div className='login-thirdparty-button-section'>
           <FormButton title='google-login'>
             <div className='button-with-icons'>
-              <GoogleLogo className='button-logo' />
+              <GoogleLogo className='button-logo google-logo' />
               <span>Login with Google</span>
             </div>
           </FormButton>
           <FormButton title='twitter-login'>
             <div className='button-with-icons'>
-              <TwitterLogo className='button-logo' />
+              <TwitterLogo className='button-logo twitter-logo' />
               <span>Login with Twitter</span>
             </div>
           </FormButton>

@@ -2,6 +2,7 @@
 """
 This file houses tests for all routes available for this app
 """
+import json
 
 import pytest
 
@@ -56,6 +57,7 @@ def mockApp(app):
     app.config['AUTHENTICATION_SERVICE'] = mockUserAuth
 
     mockSessionUser = mocks.createMockSessionMiddleware()
+    mockSessionUser.addCurrentUserToResponse.side_effect = lambda response: response
     app.config['SESSION_MIDDLEWARE'] = mockSessionUser
 
     yield app
@@ -592,7 +594,7 @@ class TestUserAPIs:
         assert response.status_code == 200
         userauth.logout.assert_called_once()
 
-    def test_logoutShouldReturnErrorWhenExpcetionWasRaised(self, mockApp):
+    def test_logoutShouldReturnErrorWhenExceptionWasRaised(self, mockApp):
         url = f'{self.USERAPI_BASE_URL}/logout'
         userauth = Config.getAuthService(mockApp)
         exceptionsToTest = [
@@ -604,6 +606,39 @@ class TestUserAPIs:
 
             with mockApp.test_client() as client:
                 response = client.post(url)
+
+                assert response.status_code == e.getStatusCode()
+
+    def test_sessionShouldReturnResultFromSessionMiddlewareAsData(self, mockApp):
+        expectedData = { 'sessionUser': DEFAULT_USER_RETURNED }
+
+        def mockAddCurrentUser(response):
+            response.set_data( json.dumps(expectedData) )
+            return response
+
+        mockSessionUser = Config.getSessionMiddleware(mockApp)
+        mockSessionUser.addCurrentUserToResponse.side_effect = mockAddCurrentUser
+
+        url = f'{self.USERAPI_BASE_URL}/session'
+        with mockApp.test_client() as client:
+            response = client.get(url)
+
+            assert response.status_code == 200
+            mockSessionUser.addCurrentUserToResponse.assert_called_once()
+            assert response.get_json() == expectedData
+
+    def test_sessionShouldReturnErrorWhenExceptionWasRaised(self, mockApp):
+        exceptionsToTest = [
+            exceptions.FailedMongoOperation,
+            exceptions.ServerMiscError
+        ]
+        mockSessionUser = Config.getSessionMiddleware(mockApp)
+        url = f'{self.USERAPI_BASE_URL}/session'
+
+        for e in exceptionsToTest:
+            mockSessionUser.addCurrentUserToResponse.side_effect = e('some error')
+            with mockApp.test_client() as client:
+                response = client.get(url)
 
                 assert response.status_code == e.getStatusCode()
 

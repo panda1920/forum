@@ -1,6 +1,6 @@
 import React, { createContext, useState, useCallback } from 'react';
 
-const INITIAL_STATE = {
+export const INITIAL_STATE = {
     userId: '0',
     userName: 'anoynymous',
     displayName: 'anonymous',

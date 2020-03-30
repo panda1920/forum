@@ -19,22 +19,33 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
         color: map-get($colors, '00');
         font-weight: 600;
 
+        &:hover {
+            background-color: map-get($colors, '00');
+            color: lighten(map-get($colors, '01'), 10);
+        }
+    }
+
+    .login-thirdparty-button-section {
+        display: flex;
+        align-items: center;
+
         .button-with-icons {
             display: flex;
             flex-direction: row;
             justify-content: space-around;
             align-items: center;
-        }
 
-        .button-logo {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-        }
-
-        &:hover {
-            background-color: map-get($colors, '00');
-            color: lighten(map-get($colors, '01'), 10);
+            .button-logo {
+                display: inline-block;
+            }
+            .google-logo {
+                width: 20px;
+                height: 20px;
+            }
+            .twitter-logo {
+                width: 32px;
+                height: 32px;
+            }
         }
     }
 

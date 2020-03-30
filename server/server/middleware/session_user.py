@@ -36,10 +36,11 @@ class SessionUserManager:
         Args:
             response: response object of flask
         Returns:
-            None
+            update response object
         """
         session_user = self._context.read_global(self._session.SESSION_USER_KEY)
         response_data = json.loads( response.get_data() )
         response_data[self._session.SESSION_USER_KEY] = session_user
 
         response.set_data( json.dumps(response_data) )
+        return response

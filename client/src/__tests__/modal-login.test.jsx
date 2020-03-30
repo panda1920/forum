@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactModal from 'react-modal';
 import {
-  render, screen, cleanup, fireEvent, getByText, queryByText, findByText
+  render, screen, cleanup, fireEvent, getByText, queryByText, findByText, configure
 } from '@testing-library/react';
 
 import ModalLogin, { ModalLoginTitle } from '../components/modal-login/modal-login.component';
@@ -287,6 +287,23 @@ describe('Testing behavior of login modal', () => {
 
     expect( screen.queryByText('Invalid password for testing') ).toBeNull();
   });
+
+  test('Opening signup dialog should clear input field and error message', async () => {
+    createModalWithMocks();
+    const emailInput = screen.getByAltText('login input email');
+    const passwordInput = screen.getByAltText('login input password');
+    window.fetch = createMockFetch(false, 400, () => 
+      Promise.resolve( createErrorJsonData('Invalid password for testing') )
+    );
+
+    const { email, password } = DEFAULT_USERINFO;
+    await typeInputsAndClickLogin(email, password);
+    await clickSignup();
+    
+    expect(emailInput.value).toBe('');
+    expect(passwordInput.value).toBe('');
+    expect( screen.queryByText('Invalid password for testing') ).toBeNull();
+  });
 });
 
 // helper functions
@@ -321,6 +338,14 @@ async function clickLogin() {
     await act(async () => {
       loginButton.click();
     });
+}
+
+async function clickSignup() {
+  const signupLink = screen.getByTitle('link-signup-page');
+
+  await act(async () => {
+    signupLink.click();
+  });
 }
 
 // simulates user closing the dialog

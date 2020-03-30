@@ -129,5 +129,9 @@ def apply_middlewares_before():
 
 @routes.after_request
 def apply_middleware_after(response):
-    Config.getSessionMiddleware(current_app).addCurrentUserToResponse(response)
-    return response
+    try:
+        session_middleware = Config.getSessionMiddleware(current_app)
+        updated_response = session_middleware.addCurrentUserToResponse(response)
+        return updated_response
+    except MyAppException as e:
+        return route_utils.createJSONErrorResponse(e)

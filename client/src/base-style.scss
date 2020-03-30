@@ -21,6 +21,9 @@ $spaces: (
 
 $dimensions: (
     'header-height': 40px,
+    'header-margin-h': 100px,
+    'header-portrait-size': 32px,
+    'header-dropdown-width': 150px,
     'footer-height': 40px,
     'main-content-width': 1200px,
     'block-text-height': 2em,
@@ -40,3 +43,13 @@ $general-styling: (
 .material-icons.md-24 { font-size: 24px; }
 .material-icons.md-36 { font-size: 36px; }
 .material-icons.md-48 { font-size: 48px; }
+
+// prevents elements and subelements to be selectable and highlighted
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}

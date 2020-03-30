@@ -1,13 +1,17 @@
 import React from 'react';
-import { BrowserRouter, Switch, Route } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 import BasePage from './pages/base/base-page.component';
+
+import { CurrentUserContextProvider } from '../../contexts/current-user/current-user';
 
 function App() {
   return (
     <BrowserRouter>
       <div className="App">
-        <BasePage />
+        <CurrentUserContextProvider>
+          <BasePage />
+        </CurrentUserContextProvider>
       </div>
     </BrowserRouter>
   );

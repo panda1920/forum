@@ -27,6 +27,13 @@ export function signup(email, password) {
     );
 }
 
+export function getSessionUser() {
+    return apiCall(
+        paths.userApiSession,
+        'GET',
+    );
+}
+
 async function apiCall(url, method, headers, body) {
     try {
         let response = await fetch(url, { method, headers, body });

@@ -1,5 +1,26 @@
 @import '../../base-style';
 
 .menu-dropdown {
-    display: absolute;
+    position: absolute;
+
+    background-color: map-get($colors, '00');
+    width: map-get($dimensions, 'header-dropdown-width');
+
+    ul {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+
+        li {
+            padding: 5px;
+            color: map-get($colors, '01');
+            list-style: none;
+    
+            &:hover {
+                background-color: map-get($colors, '01');
+                color: map-get($colors, '00');
+            }
+        }
+    }
 }
