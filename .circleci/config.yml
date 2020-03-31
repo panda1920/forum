@@ -15,7 +15,7 @@ executors:
       - image: circleci/python:3.7.0
         environment: 
           PIPENV_VENV_IN_PROJECT: true
-  node-test:
+  node-env:
     docker:
       - image: circleci/node:12.2
 
@@ -57,7 +57,7 @@ jobs:
             - "/usr/local/bin/python3.7/site-packages"
   
   test_client:
-    executor: node-test
+    executor: node-env
     steps:
       - checkout
       - restore_cache:
@@ -104,6 +104,21 @@ jobs:
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker push panda1920/forumapp-server:latest
 
+  publish_client:
+    executor: node-env
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Dockerize the app and create image
+          command: |
+            npm run dockerize
+      - run:
+          name: Push created image to dockerhub
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push panda1920/forumapp-server:latest
+
 workflows:
   version: 2.1
   test_codebase:
@@ -113,3 +128,6 @@ workflows:
       - publish_server:
           requires:
             - test_server
+      - publish_client:
+          requires:
+            - test_client
