@@ -1,18 +1,17 @@
 version: 2.1
+executors:
+  python-environment:
+    docker:
+      - image: circleci/python:3.7.0
+        environment: 
+          PIPENV_VENV_IN_PROJECT: true
+          MONGO_HOSTNAME: localhost
+          MONGO_PORT: 27017
 jobs:
   test_server:
     # working_directory: ~/project/server
     # the default working directory is ~/project
-    docker:
-      - image: circleci/python:3.7.0
-        environment:
-          PIPENV_VENV_IN_PROJECT: true
-          MONGO_HOSTNAME: localhost
-          MONGO_PORT: 27017
-      
-      # docker image for test db
-      - image: circleci/mongo:4.2
-
+    executor: python-environment
     steps:
       - checkout
       - run:
@@ -71,11 +70,7 @@ jobs:
             - "./node_modules"
 
   publish_server:
-    docker:
-      - image: circleci/python:3.7.0
-        environment:
-          PIPENV_VENV_IN_PROJECT: true
-    
+    executor: python-environment
     steps:
       - checkout
       - setup_remote_docker
@@ -95,6 +90,7 @@ jobs:
           name: Push created image to dockerhub
           command: |
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push panda1920/forumapp-server:latest
 
 workflows:
   version: 2.1
