@@ -1,18 +1,30 @@
 version: 2.1
+# define environment as executors to be used in later jobs
+executors:
+  python-test:
+    docker:
+      - image: circleci/python:3.7.0
+        environment: 
+          PIPENV_VENV_IN_PROJECT: true
+          MONGO_HOSTNAME: localhost
+          MONGO_PORT: 27017
+      # docker image for test db
+      - image: circleci/mongo:4.2
+  python-build:
+    docker:
+      - image: circleci/python:3.7.0
+        environment: 
+          PIPENV_VENV_IN_PROJECT: true
+  node-env:
+    docker:
+      - image: circleci/node:12.2
+
+# define jobs to be performed
 jobs:
   test_server:
     # working_directory: ~/project/server
     # the default working directory is ~/project
-    docker:
-      - image: circleci/python:3.7.0
-        environment:
-          PIPENV_VENV_IN_PROJECT: true
-          MONGO_HOSTNAME: localhost
-          MONGO_PORT: 27017
-      
-      # docker image for test db
-      - image: circleci/mongo:4.2
-
+    executor: python-test
     steps:
       - checkout
       - run:
@@ -45,8 +57,7 @@ jobs:
             - "/usr/local/bin/python3.7/site-packages"
   
   test_client:
-    docker:
-      - image: circleci/node:12.2
+    executor: node-env
     steps:
       - checkout
       - restore_cache:
@@ -70,9 +81,52 @@ jobs:
           paths:
             - "./node_modules"
 
+  publish_server:
+    executor: python-build
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Install dependencies
+          command: |
+            cd ./server
+            sudo pip install pipenv
+      - run:
+          name: Dockerize the app and create image
+          command: |
+            cd ./server
+            pipenv run dockerize
+      - run:
+          name: Push created image to dockerhub
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push panda1920/forumapp-server:latest
+
+  publish_client:
+    executor: node-env
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Dockerize the app and create image
+          command: |
+            cd ./client
+            npm run dockerize
+      - run:
+          name: Push created image to dockerhub
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push panda1920/forumapp-server:latest
+
 workflows:
   version: 2.1
   test_codebase:
     jobs:
       - test_server
       - test_client
+      - publish_server:
+          requires:
+            - test_server
+      - publish_client:
+          requires:
+            - test_client
