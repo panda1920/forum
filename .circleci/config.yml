@@ -11,11 +11,13 @@ executors:
       # docker image for test db
       - image: circleci/mongo:4.2
   python-build:
+    environment:
+      IMAGE_NAME: panda1920/forumapp-server:latest
     docker:
       - image: circleci/python:3.7.0
-        environment: 
-          PIPENV_VENV_IN_PROJECT: true
   node-env:
+    environment:
+      IMAGE_NAME: panda1920/forumapp-client:latest
     docker:
       - image: circleci/node:12.2
 
@@ -87,36 +89,46 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
-          name: Install dependencies
-          command: |
-            cd ./server
-            sudo pip install pipenv
-      - run:
           name: Dockerize the app and create image
           command: |
             cd ./server
-            pipenv run dockerize
+            docker image build --no-cache --pull -t $IMAGE_NAME .
       - run:
           name: Push created image to dockerhub
           command: |
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker push panda1920/forumapp-server:latest
+            docker push $IMAGE_NAME
 
   publish_client:
     executor: node-env
     steps:
       - checkout
       - setup_remote_docker
+      - restore_cache:
+          name: Restoring dependency cache if possible
+          keys:
+            - deps-client-v1-{{ checksum "./client/package-lock.json"}}
+            - deps-client-v1-
+      - run:
+          name: Install dependencies
+          command: |
+            cd ./client
+            npm install
+      - run:
+          name: Build react app
+          command: |
+            cd ./client
+            npm run build
       - run:
           name: Dockerize the app and create image
           command: |
             cd ./client
-            npm run dockerize
+            docker image build --no-cache --pull -t $IMAGE_NAME .
       - run:
           name: Push created image to dockerhub
           command: |
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker push panda1920/forumapp-server:latest
+            docker push $IMAGE_NAME
 
 workflows:
   version: 2.1
