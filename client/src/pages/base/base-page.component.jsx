@@ -38,7 +38,7 @@ const BasePage = () => {
       setCurrentUser(sessionUser);
     }
     initSessionUser();
-  }, []);
+  }, [setCurrentUser]);
 
   return (
     <div className={`base-page ${getBlurClass()}`}>
