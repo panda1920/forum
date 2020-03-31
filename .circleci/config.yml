@@ -90,13 +90,11 @@ jobs:
           name: Install dependencies
           command: |
             cd ./server
-            pwd
             sudo pip install pipenv
       - run:
           name: Dockerize the app and create image
           command: |
             cd ./server
-            pwd
             pipenv run dockerize
       - run:
           name: Push created image to dockerhub
@@ -112,6 +110,7 @@ jobs:
       - run:
           name: Dockerize the app and create image
           command: |
+            cd ./client
             npm run dockerize
       - run:
           name: Push created image to dockerhub
