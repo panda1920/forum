@@ -132,13 +132,19 @@ jobs:
 
 workflows:
   version: 2.1
-  test_codebase:
+  test_and_build:
     jobs:
       - test_server
       - test_client
       - publish_server:
           requires:
             - test_server
+          filters:
+            branches:
+              only: master
       - publish_client:
           requires:
             - test_client
+          filters:
+            branches:
+              only: master
