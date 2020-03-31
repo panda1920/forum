@@ -44,7 +44,7 @@ class TestUserCRUD:
         return createNewProps(self.DEFAULT_UPDATE_USER, **kwargs)
 
     def test_createUserShouldCreateUserInDB(self, setupDB):
-        mockuserauth = setupDB.getMockUserAuth()
+        mockuserauth = setupDB.getMockPassword()
         mockuserauth.hashPassword.return_value = 'hashed'
         userProps = self.createNewUserProps()
 
@@ -64,7 +64,7 @@ class TestUserCRUD:
         assert mockuserauth.hashPassword.call_count == 1
 
     def test_createUserShouldHaveUserIdAndIncrementedCounter(self, setupDB):
-        mockuserauth = setupDB.getMockUserAuth()
+        mockuserauth = setupDB.getMockPassword()
         mockuserauth.hashPassword.return_value = 'hashed'
         userProps = self.createNewUserProps()
         nextUserId = setupDB.getCounter('userId')
@@ -264,7 +264,7 @@ class TestUserCRUD:
         assert result['returnCount'] == 2
 
     def test_updateUserShouldUpdateMatchedUserOnDB(self, setupDB):
-        mock = setupDB.getMockUserAuth()
+        mock = setupDB.getMockPassword()
         mock.hashPassword.return_value = 'hashed'
         userIdsToUpdate = [
             user['userId'] for user in setupDB.getOriginalUsers()[:2]
@@ -283,7 +283,7 @@ class TestUserCRUD:
                     assert user[field] == value
 
     def test_updateUserShouldReturnUpdateResult(self, setupDB):
-        mock = setupDB.getMockUserAuth()
+        mock = setupDB.getMockPassword()
         mock.hashPassword.return_value = 'hashed'
         userIdsToUpdate = [
             user['userId'] for user in setupDB.getOriginalUsers()[:2]
@@ -297,7 +297,7 @@ class TestUserCRUD:
         assert result['updatedCount'] == 2
 
     def test_updateUserShouldUpdateMatchedUsersWhenUsingAggregateFilters(self, setupDB):
-        mock = setupDB.getMockUserAuth()
+        mock = setupDB.getMockPassword()
         mock.hashPassword.return_value = 'hashed'
         userIdsToUpdate = [ user['userId'] for user in setupDB.getOriginalUsers()[:10] ]
         usernameToUpdate = [ user['displayName'] for user in setupDB.getOriginalUsers()[:1] ]

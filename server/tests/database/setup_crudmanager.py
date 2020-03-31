@@ -102,7 +102,7 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
-    def getMockUserAuth(self):
+    def getMockPassword(self):
         """
         returns a mock instance of user authentication class
         this is a depdency that is injected into database manager at its construction
@@ -135,8 +135,8 @@ class Setup_FileCrudManager(SetupCrudManager):
         self._postsFile = self._saveLocation / FileCrudManager.POSTS_FILENAME
         self._countersFile = self._saveLocation / FileCrudManager.COUNTERS_FILENAME
         self._testdata = self._readTestData()
-        self._userauth = mocks.createMockUserAuth()
-        self._db = FileCrudManager(self._saveLocation, self._userauth)
+        self._password = mocks.createMockPassword()
+        self._db = FileCrudManager(self._saveLocation, self._password)
 
     def setup(self):
         self._saveLocation.mkdir(exist_ok=True)
@@ -199,8 +199,8 @@ class Setup_FileCrudManager(SetupCrudManager):
                 return counter['value']
         return None
 
-    def getMockUserAuth(self):
-        return self._userauth
+    def getMockPassword(self):
+        return self._password
 
     def _readTestData(self):
         with TESTDATA.open('r', encoding='utf-8') as f:
@@ -223,8 +223,8 @@ class Setup_MongoCrudManager(SetupCrudManager):
         if dbname is None:
             dbname = self.TEST_DBNAME
         self._dbname = dbname
-        self._userauth = mocks.createMockUserAuth()
-        self._db = MongoCrudManager(dbname, self._userauth)
+        self._password = mocks.createMockPassword()
+        self._db = MongoCrudManager(dbname, self._password)
 
         hostname = os.getenv('MONGO_HOSTNAME')
         port = int( os.getenv('MONGO_PORT') )
@@ -288,8 +288,8 @@ class Setup_MongoCrudManager(SetupCrudManager):
         )
         return self._getDB()['counters'].find_one(query)['value']
 
-    def getMockUserAuth(self):
-        return self._userauth
+    def getMockPassword(self):
+        return self._password
 
     def _readJson(self, filepath):
         with filepath.open('r', encoding='utf-8') as f:
