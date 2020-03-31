@@ -3,7 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import BasePage from './pages/base/base-page.component';
 
-import { CurrentUserContextProvider } from '../../contexts/current-user/current-user';
+import { CurrentUserContextProvider } from './contexts/current-user/current-user';
 
 function App() {
   return (
