@@ -103,5 +103,5 @@ workflows:
       - test_server
       - test_client
       - publish_server:
-        requires:
-          - test_server
+          requires:
+            - test_server
