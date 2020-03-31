@@ -1,17 +1,30 @@
 version: 2.1
+# define environment as executors to be used in later jobs
 executors:
-  python-environment:
+  python-test:
     docker:
       - image: circleci/python:3.7.0
         environment: 
           PIPENV_VENV_IN_PROJECT: true
           MONGO_HOSTNAME: localhost
           MONGO_PORT: 27017
+      # docker image for test db
+      - image: circleci/mongo:4.2
+  python-build:
+    docker:
+      - image: circleci/python:3.7.0
+        environment: 
+          PIPENV_VENV_IN_PROJECT: true
+  node-test:
+    docker:
+      - image: circleci/node:12.2
+
+# define jobs to be performed
 jobs:
   test_server:
     # working_directory: ~/project/server
     # the default working directory is ~/project
-    executor: python-environment
+    executor: python-test
     steps:
       - checkout
       - run:
@@ -44,8 +57,7 @@ jobs:
             - "/usr/local/bin/python3.7/site-packages"
   
   test_client:
-    docker:
-      - image: circleci/node:12.2
+    executor: node-test
     steps:
       - checkout
       - restore_cache:
@@ -70,7 +82,7 @@ jobs:
             - "./node_modules"
 
   publish_server:
-    executor: python-environment
+    executor: python-build
     steps:
       - checkout
       - setup_remote_docker
