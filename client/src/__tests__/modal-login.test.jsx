@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactModal from 'react-modal';
 import {
-  render, screen, cleanup, fireEvent, getByText, queryByText, findByText, configure
+  render, screen, cleanup, fireEvent, getByText, queryByText, findByText
 } from '@testing-library/react';
 
 import ModalLogin, { ModalLoginTitle } from '../components/modal-login/modal-login.component';

@@ -33,7 +33,7 @@ const ModalLogin = () => {
     if (response.ignore)
       return;
     response.ok ? await loginSuccess(response) : await loginError(response);
-  }
+  };
 
   const validateInputs = () => {
     const emailPattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -49,18 +49,18 @@ const ModalLogin = () => {
     }
 
     return true;
-  }
+  };
 
   const resetErrors = () => {
     setEmailError('');
     setPasswordError('');
-  }
+  };
 
   const loginSuccess = async (response) => {
     const { sessionUser } = await response.json();
     setCurrentUser(sessionUser);
     toggleLogin();
-  }
+  };
 
   const loginError = async (response) => {
     const { error: { description } } = await response.json();
@@ -93,7 +93,7 @@ const ModalLogin = () => {
     setPassword('');
     resetErrors();
     toggleLogin();
-  }
+  };
   
   return (
     <ModalDialog
@@ -150,7 +150,7 @@ const ModalLogin = () => {
       
       <div className='modal-footer'>
         <BlockText><span>
-          Don't have an account? Sign up&nbsp;
+          Don&apos;t have an account? Sign up&nbsp;
           <Button
             title='link-signup-page'
             className='link-signup-page'
@@ -162,6 +162,6 @@ const ModalLogin = () => {
       </div>
     </ModalDialog>
   );
-}
+};
 
 export default ModalLogin;

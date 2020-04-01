@@ -2,7 +2,7 @@
 """
 This file houses routes for user related API
 """
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request, current_app, session
 
 from server.config import Config
 import server.routes.route_utils as route_utils
@@ -44,12 +44,6 @@ def createUserv1():
 
 @cors_wrapped_route(routes.route, '/v1/users/<userId>/update', methods=['PATCH'])
 def updateUserv1(userId):
-    # try:
-    #     userData = route_utils.getJsonFromRequest(request)
-    #     userData.update({ 'userId': userId })
-    #     Config.getDB(current_app).updateUser(userData)
-    # except MyAppException as e:
-    #     return route_utils.createJSONErrorResponse(e)
     try:
         update = Config.getUpdateService(current_app)
         userData = route_utils.getJsonFromRequest(request)

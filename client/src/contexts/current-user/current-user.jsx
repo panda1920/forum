@@ -17,13 +17,13 @@ export const CurrentUserContextProvider = ({ children }) => {
   const [ displayName, setDisplayName ] = useState('');
   const [ imageUrl, setImageUrl ] = useState('');
 
-  const setCurrentUser = (user) => {
+  const setCurrentUser = useCallback((user) => {
     const { userId, userName, displayName, imageUrl } = user;
     setUserId(userId);
     setUserName(userName);
     setDisplayName(displayName);
     setImageUrl(imageUrl);
-  }
+  }, []);
 
   const isLoggedin = useCallback(() => {
     return (userId !== '') && (userId !== '0');
@@ -36,4 +36,4 @@ export const CurrentUserContextProvider = ({ children }) => {
       { children }
     </CurrentUserContext.Provider>
   );
-}
+};

@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, screen, render, cleanup, getByText } from '@testing-library/react';
+import { act, screen, render, cleanup, getByText, fireEvent } from '@testing-library/react';
 
 import MenuDropdown from '../components/menu-dropdown/menu-dropdown.component';
 
@@ -18,22 +18,23 @@ const TEST_DATA = {
 
 function createMenuDropdown() {
   const mockSetCurrentUser = createMockFunction('Mocked setCurrentUser()');
-  const renderResult = renderMenuDropdown(mockSetCurrentUser);
+  const mockToggle = createMockFunction('Mocked toggle()');
+  const renderResult = renderMenuDropdown(mockSetCurrentUser, mockToggle);
 
   return {
     ...renderResult,
-    mocks: { mockSetCurrentUser }
+    mocks: { mockSetCurrentUser, mockToggle }
   };
 }
 
-function renderMenuDropdown(setCurrentUser) {
+function renderMenuDropdown(setCurrentUser, toggleDropdown) {
   return render(
     <CurrentUserContext.Provider
       value={{ setCurrentUser }}
     >
-      <MenuDropdown />
+      <MenuDropdown toggleDropdown={toggleDropdown} />
     </CurrentUserContext.Provider>
-  )
+  );
 }
 
 function createMockFunction(name) {
@@ -43,7 +44,7 @@ function createMockFunction(name) {
 let originalFetch = null;
 beforeEach(() => {
   originalFetch = window.fetch;
-})
+});
 afterEach(() => {
   window.fetch = originalFetch;
   cleanup();
@@ -51,7 +52,7 @@ afterEach(() => {
 
 describe('testing behavior of menu dropdown component', () => {
   test('all sub elements should be rendrered as intended', () => {
-    const { getByText, getByTitle } = createMenuDropdown();
+    const { getByText } = createMenuDropdown();
     getByText('Edit Profile');
     getByText('Logout');
   });
@@ -95,6 +96,25 @@ describe('testing behavior of menu dropdown component', () => {
     await clickLogout();
 
     expect(mockSetCurrentUser).toBeCalledTimes(0);
+  });
+
+  test('menu dropdown rendered should gain focus', () => {
+    createMenuDropdown();
+    const dropdown = screen.getByTitle('dropdown');
+
+    expect(document.activeElement).toBe(dropdown);
+  });
+
+  test('when menu dropdown lose focus should fire toggle dropdown', () => {
+    const { mocks: { mockToggle } } = createMenuDropdown();
+    const dropdown = screen.getByTitle('dropdown');
+    const blurevent = new FocusEvent('blur');
+
+    act(() => {
+      fireEvent(dropdown, blurevent);
+    });
+
+    expect(mockToggle).toHaveBeenCalled();
   });
 });
 

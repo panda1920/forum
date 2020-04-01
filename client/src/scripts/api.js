@@ -36,7 +36,7 @@ export function getSessionUser() {
 
 async function apiCall(url, method, headers, body) {
     try {
-        let response = await fetch(url, { method, headers, body });
+        let response = await fetch(url, { method, headers, body, credentials: 'same-origin' });
         return defaultResponseHandler(response);
     }
     catch(err) {

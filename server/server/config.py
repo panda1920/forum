@@ -72,7 +72,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=31)
 
     # cookies are only sent over SSL connection
-    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', True)
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', False)
 
     # methods to extract config from app
 

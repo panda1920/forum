@@ -28,7 +28,7 @@ const Header = () => {
             onClick={toggleDropdown}
           >
             <Portrait title='header portrait' imageUrl={imageUrl} />
-            { isDropdownVisible ? <MenuDropdown /> : null }
+            { isDropdownVisible ? <MenuDropdown toggleDropdown={toggleDropdown} /> : null }
           </Button>
         </div>
       );
@@ -63,6 +63,6 @@ const Header = () => {
       { renderControlSectionBasedOnLoggedinState() }
     </header>
   );
-}
+};
 
 export default Header;

@@ -15,11 +15,11 @@ export const ModalContextProvider = ({ children, toggleBlur }) => {
   const toggleSignup = () => {
     toggleBlur();
     setIsSignupOpen(!isSignupOpen);
-  }
+  };
   const toggleLogin = () => {
     toggleBlur();
     setIsLoginOpen(!isLoginOpen);
-  }
+  };
 
   return (
     <ModalContext.Provider
@@ -28,4 +28,4 @@ export const ModalContextProvider = ({ children, toggleBlur }) => {
       { children }
     </ModalContext.Provider>
   );
-}
+};

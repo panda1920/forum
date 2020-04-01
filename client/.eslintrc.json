@@ -30,7 +30,9 @@
     "root": true,
     "rules": {
         "semi": [1, "always"],
-        "quotes": [1, "single", { "allowTemplateLiterals": true }]
+        "quotes": [1, "single", { "allowTemplateLiterals": true }],
+
+        "react/prop-types": 0
     },
     "overrides": [
         {
