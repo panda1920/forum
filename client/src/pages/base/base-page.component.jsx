@@ -19,7 +19,7 @@ const reducer = (state, action) => {
       console.log(`unknown action type: ${action.type}`);
       return state;
   }
-}
+};
 
 const BasePage = () => {
   const [ state, dispatch ] = useReducer(reducer, { isBlurred: false });
@@ -36,7 +36,7 @@ const BasePage = () => {
   
       const { sessionUser } = await response.json();
       setCurrentUser(sessionUser);
-    }
+    };
     initSessionUser();
   }, [setCurrentUser]);
 
@@ -53,6 +53,6 @@ const BasePage = () => {
       </ModalContextProvider>
     </div>
   );
-}
+};
 
 export default BasePage;

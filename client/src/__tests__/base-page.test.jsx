@@ -55,7 +55,7 @@ let originalFetch = null;
 beforeEach(() => {
   originalFetch = window.fetch;
   window.fetch = createFetchSuccess();
-})
+});
 afterEach(() => {
   window.fetch = originalFetch;
   cleanup();
@@ -73,7 +73,7 @@ describe('Testing BasePage', () => {
     const { container } = renderBasePage();
     const getBasePageClasses = () => {
       return container.firstChild.firstChild.getAttribute('Class').split(' ');
-    }
+    };
 
     const beforeClasses = getBasePageClasses();
     expect(beforeClasses).not.toContain('blurred');
@@ -98,7 +98,7 @@ describe('Testing BasePage', () => {
     const { container } = renderBasePage();
     const getBasePageClasses = () => {
       return container.firstChild.firstChild.getAttribute('Class').split(' ');
-    }
+    };
 
     const beforeClasses = getBasePageClasses();
     expect(beforeClasses).not.toContain('blurred');

@@ -15,9 +15,9 @@ const MenuDropdown = () => {
     if (!response.ok)
       return;
     
-    const { sessionUser } = await response.json()
+    const { sessionUser } = await response.json();
     setCurrentUser(sessionUser);
-  }
+  };
 
   return (
     <div className='menu-dropdown' title='dropdown'>
