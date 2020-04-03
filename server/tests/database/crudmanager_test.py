@@ -12,6 +12,7 @@ from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
 from server.entity.post import UpdatePost
 from server.exceptions import EntityValidationError
+from server.services.entity_creation_service import EntityCreationService
 
 
 @pytest.mark.slow
@@ -31,6 +32,7 @@ class TestUserCRUD:
         'displayName': 'Timmy',
         'userName': 'timmy@myforumwebapp.com',
         'password': '222',
+        'imageUrl': EntityCreationService.GENERIC_PORTRAIT_IMAGE_URL,
     }
     DEFAULT_UPDATE_USER = {
         'displayName': 'Timmy',

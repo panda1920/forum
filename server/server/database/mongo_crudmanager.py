@@ -121,6 +121,8 @@ class MongoCrudManager(CrudManager):
     def _createMongoUpdate(self, entitySchema, updateProps):
         update = { '$set': {} }
         for field in entitySchema.getUpdatableFields():
+            if field not in updateProps:
+                continue
             update['$set'][field] = updateProps[field]
         return update
 

@@ -11,9 +11,15 @@ import server.exceptions as exceptions
 from server.services.entity_creation_service import EntityCreationService
 
 
+CREATE_USER_RETURN = dict(createdCount=1)
+CREATE_POST_RETURN = dict(createdCount=1)
+
+
 @pytest.fixture(scope='function')
 def service():
     mockDB = mocks.createMockDB()
+    mockDB.createUser.return_value = CREATE_USER_RETURN
+    mockDB.createPost.return_value = CREATE_POST_RETURN
     mockFilter = mocks.createMockFilter()
     yield EntityCreationService(mockDB, mockFilter)
 
@@ -49,7 +55,8 @@ class TestSignupUser:
         mockDB.searchUser.assert_called_with(self.DEFAULT_CREATED_FILTER)
         mockDB.createUser.assert_called_with(dict(
             **self.DEFAULT_KEYVALUES,
-            displayName='tommy'
+            displayName='tommy',
+            imageUrl=EntityCreationService.GENERIC_PORTRAIT_IMAGE_URL
         ))
 
     def test_sigupRaisesExceptionWhenSearchUserReturnsUsers(self, service):
@@ -86,6 +93,11 @@ class TestSignupUser:
         with pytest.raises(exception):
             service.signup(keyValues)
 
+    def test_signupShouldReturnResultFromRepo(self, service):
+        result = service.signup(self.DEFAULT_KEYVALUES)
+        
+        assert result == { 'result': CREATE_USER_RETURN }
+
 
 class TestCreateNewPost:
     DEFAULT_KEYVALUES = dict(
@@ -112,3 +124,8 @@ class TestCreateNewPost:
         service.createNewPost(keyValues)
 
         mockDB.createPost.call_count == 1
+
+    def test_createNewPostShouldReturnResultFromRepo(self, service):
+        result = service.createNewPost(self.DEFAULT_KEYVALUES)
+        
+        assert result == { 'result': CREATE_POST_RETURN }

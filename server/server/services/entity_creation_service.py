@@ -8,17 +8,21 @@ from server.entity.post import NewPost
 
 
 class EntityCreationService:
+    GENERIC_PORTRAIT_IMAGE_URL = 'https://www.seekpng.com/png/detail/365-3651600_default-portrait-image-generic-profile.png'
+
     def __init__(self, repo, filterClass):
         self._repo = repo
         self._filter = filterClass
 
     def signup(self, keyValues):
         self._checkUserExists(keyValues)
-        self._createUser(keyValues)
+        result = self._createUser(keyValues)
+        return dict(result=result)
 
     def createNewPost(self, keyValues):
         postProps = self._generateNewPostProps(keyValues)
-        self._repo.createPost(postProps)
+        result = self._repo.createPost(postProps)
+        return dict(result=result)
 
     def _checkUserExists(self, keyValues):
         if 'userName' not in keyValues:
@@ -39,10 +43,12 @@ class EntityCreationService:
     def _createUser(self, keyValues):
         atIdx = keyValues['userName'].find('@')
         defaultName = keyValues['userName'][:atIdx]
+        defaultImage = self.GENERIC_PORTRAIT_IMAGE_URL
 
-        self._repo.createUser(dict(
+        return self._repo.createUser(dict(
             **keyValues,
             displayName=defaultName,
+            imageUrl=defaultImage
         ))
 
     def _generateNewPostProps(self, keyValues):

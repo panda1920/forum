@@ -182,6 +182,8 @@ class FileCrudManager(CrudManager):
         # apply update
         for idx in userIdxToUpdate:
             for field in UpdateUser.getUpdatableFields():
+                if field not in user:
+                    continue
                 if field == 'password':
                     hashed = self._userauth.hashPassword( user[field] )
                     currentUsers[idx][field] = hashed

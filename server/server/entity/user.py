@@ -33,6 +33,10 @@ class NewUser:
             'type': 'float',
             'required': False,
         },
+        'imageUrl': {
+            'type': 'string',
+            'required': True,
+        },
     }
     _validator = Validator(_schema, allow_unknown=False)
 
@@ -51,6 +55,10 @@ class UpdateUser:
             'required': False,
         },
         'displayName': {
+            'type': 'string',
+            'required': False,
+        },
+        'imageUrl': {
             'type': 'string',
             'required': False,
         },
