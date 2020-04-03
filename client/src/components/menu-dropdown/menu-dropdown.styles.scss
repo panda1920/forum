@@ -35,8 +35,8 @@ $dropdown-border-left: 5px solid map-get($colors, '00');
         }
 
         .separator {
-            margin: 5px 10px;
-            border-top: 1px solid map-get($colors, '01');
+            margin: 5px 0;
+            border-top: 1px solid lighten(map-get($colors, '00'), 10%);
         }
 
         .button {

@@ -99,11 +99,13 @@ beforeEach(() => {
   // here I want to take a backup of fetch so that I can restore later
   // this is because I am intending to mock this function during tests
   originalFetch = window.fetch;
-})
+  jest.useFakeTimers();
+});
 
 afterEach(() => {
   cleanup();
   window.fetch = originalFetch;
+  jest.useRealTimers();
 });
 
 // suppress warnings
@@ -217,7 +219,7 @@ describe('Testing behavior of signup modal', () => {
       'bobby @myforumwebapp.com',
       ' bobby@myforumwebapp.com',
       'bobby@myforumwebapp.com ',
-    ]
+    ];
     const { password } = TEST_DATA.DEFAULT_USERINFO;
 
     for (const email of emailsToTest) {
@@ -237,7 +239,7 @@ describe('Testing behavior of signup modal', () => {
       ' mysecretpassword',
       'mysecretpassword ',
       'my secretpassword',
-    ]
+    ];
     const { email, password } = TEST_DATA.DEFAULT_USERINFO;
 
     for (const badPassword of passwordsToTest) {
@@ -268,7 +270,7 @@ describe('Testing behavior of signup modal', () => {
       { email, password: '', confirmPassword: password },
       { email: '', password, confirmPassword: password },
       { email, password, confirmPassword: '' },
-    ]
+    ];
 
     for (const input of invalidInputs) {
       await typeInputAndSignup(input.email, input.password, input.confirmPassword);
@@ -288,10 +290,10 @@ describe('Testing behavior of signup modal', () => {
       { email, password: '', confirmPassword: password },
       { email: '', password, confirmPassword: password },
       { email, password, confirmPassword: '' },
-    ]
+    ];
     const nodesToExpectError = [
       passwordInputContainer, emailInputContainer, confirmInputContainer,
-    ]
+    ];
 
     for (let i = 0; i < invalidInputs.length; ++i) {
       const input = invalidInputs[i];
@@ -299,19 +301,20 @@ describe('Testing behavior of signup modal', () => {
       const expectedNode = nodesToExpectError[i];
       
       await typeInputAndSignup(input.email, input.password, input.confirmPassword);
+      act( () => jest.advanceTimersByTime(1000) );
       await typeInputAndSignup(nextInput.email, nextInput.password, nextInput.password);
 
       const errorMsg = within(expectedNode).queryByText(/^Invalid|Passwords/);
       expect(errorMsg).toBeNull();
     }
-  })
+  });
 
   test('Error returned from API should show error message on email input', async () => {
     createSignup();
-    const errorMsg = 'Email already registered'
+    const errorMsg = 'Email already registered';
     window.fetch = createMockFetch(false, 400, () => {
       return createErrorJsonData(errorMsg);
-    })
+    });
     const { email, password } = TEST_DATA.DEFAULT_USERINFO;
     const emailInputContainer = screen.getByAltText(IDENTIFIERS.EMAIL_ALT_TEXT).parentElement;
 
@@ -322,10 +325,10 @@ describe('Testing behavior of signup modal', () => {
 
   test('Error returned from API regarding password should show error message on password input', async () => {
     createSignup();
-    const errorMsg = 'Wrong password'
+    const errorMsg = 'Wrong password';
     window.fetch = createMockFetch(false, 400, () => {
       return createErrorJsonData(errorMsg);
-    })
+    });
     const { email, password } = TEST_DATA.DEFAULT_USERINFO;
     const passwordInputContainer = screen.getByAltText(IDENTIFIERS.PW_ALT_TEXT).parentElement;
 
@@ -336,10 +339,10 @@ describe('Testing behavior of signup modal', () => {
 
   test('Error returned from API with statuscode >=500 should show no error', async () => {
     createSignup();
-    const errorMsg = 'Email already registered'
+    const errorMsg = 'Email already registered';
     window.fetch = createMockFetch(false, 500, () => {
       return createErrorJsonData(errorMsg);
-    })
+    });
     const { email, password } = TEST_DATA.DEFAULT_USERINFO;
     const emailInputContainer = screen.getByAltText(IDENTIFIERS.EMAIL_ALT_TEXT).parentElement;
 
@@ -350,10 +353,10 @@ describe('Testing behavior of signup modal', () => {
 
   test('Failed API call should not close dialog', async () => {
     const { mocks: { mockToggleSignup } } = createSignup();
-    const errorMsg = 'Email already registered'
+    const errorMsg = 'Email already registered';
     window.fetch = createMockFetch(false, 400, () => {
       return createErrorJsonData(errorMsg);
-    })
+    });
     const { email, password } = TEST_DATA.DEFAULT_USERINFO;
 
     await typeInputAndSignup(email, password, password);
@@ -363,10 +366,10 @@ describe('Testing behavior of signup modal', () => {
 
   test('Failed API call should not clear input value', async () => {
     createSignup();
-    const errorMsg = 'Email already registered'
+    const errorMsg = 'Email already registered';
     window.fetch = createMockFetch(false, 400, () => {
       return createErrorJsonData(errorMsg);
-    })
+    });
     const { email, password } = TEST_DATA.DEFAULT_USERINFO;
     const emailInput = screen.getByAltText(IDENTIFIERS.EMAIL_ALT_TEXT);
     const passwordInput = screen.getByAltText(IDENTIFIERS.PW_ALT_TEXT);
@@ -381,10 +384,10 @@ describe('Testing behavior of signup modal', () => {
 
   test('Closing modal dialog should reset input state', async () => {
     createSignup();
-    const errorMsg = 'Email already registered'
+    const errorMsg = 'Email already registered';
     window.fetch = createMockFetch(false, 400, () => {
       return createErrorJsonData(errorMsg);
-    })
+    });
     const { email, password } = TEST_DATA.DEFAULT_USERINFO;
     const emailInput = screen.getByAltText(IDENTIFIERS.EMAIL_ALT_TEXT);
     const passwordInput = screen.getByAltText(IDENTIFIERS.PW_ALT_TEXT);
@@ -451,14 +454,14 @@ async function clickSignup() {
 }
 
 function clickClose() {
-  const closeButton = screen.getByTitle(IDENTIFIERS.CLOSE_BUTTON_TITLE)
+  const closeButton = screen.getByTitle(IDENTIFIERS.CLOSE_BUTTON_TITLE);
   act(() => {
     closeButton.click();
   });
 }
 
 function clickLogin() {
-  const loginButton = screen.getByTitle(IDENTIFIERS.LINK_LOGIN_TITLE)
+  const loginButton = screen.getByTitle(IDENTIFIERS.LINK_LOGIN_TITLE);
   act(() => {
     loginButton.click();
   });

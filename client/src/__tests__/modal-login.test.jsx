@@ -23,7 +23,7 @@ const DEFAULT_API_RETURN_INFO = {
       imageUrl: 'http://myforumwebapp.com',
       displayName: 'bobby',
     }
-}
+};
 const ERRORMSG_INVALID_EMAIL = 'Invalid email';
 const ERRORMSG_INVALID_PASSWORD = 'Invalid password';
 
@@ -76,12 +76,14 @@ function createMockSetUser() {
 let originalFetch = null;
 beforeEach(() => {
   originalFetch = window.fetch;
+  jest.useFakeTimers();
 });
 
 // cleanup after every test case
 afterEach(() => {
   cleanup();
   window.fetch = originalFetch;
+  jest.useRealTimers();
 });
 
 // suppress warnings
@@ -94,7 +96,7 @@ describe('Testing behavior of login modal', () => {
     screen.getByTitle(ModalLoginTitle);
     screen.getByAltText('login input email');
     screen.getByAltText('login input password');
-    screen.getByTitle('login-button')
+    screen.getByTitle('login-button');
     screen.getByTitle('google-login');
     screen.getByTitle('twitter-login');
     screen.getByTitle('link-signup-page');
@@ -153,7 +155,7 @@ describe('Testing behavior of login modal', () => {
   test('Malformed email should show validation error notification under input', async () => {
     const emailsToTry = [
       'bobby', 'bobby@', 123, 'bobby@123123', '@foo.com', '', '   ',
-    ]
+    ];
 
     for (let email of emailsToTry) {
       createModalWithMocks();
@@ -171,7 +173,7 @@ describe('Testing behavior of login modal', () => {
   test('Invalid password should show validation error notification under input', async () => {
     const passwordToTry = [
       '', '         ', '   password   ',
-    ]
+    ];
 
     for (let password of passwordToTry) {
       createModalWithMocks();
@@ -190,7 +192,7 @@ describe('Testing behavior of login modal', () => {
     const invalidCredentials = [
       { email: '', password },
       { email, password: '' },
-    ]
+    ];
 
     for (let credential in invalidCredentials) {
       createModalWithMocks();
@@ -201,6 +203,7 @@ describe('Testing behavior of login modal', () => {
 
       // make error appear
       await typeInputsAndClickLogin(credential.email, credential.password);
+      act(() => jest.advanceTimersByTime(1000) );
       await typeInputsAndClickLogin(email, password);
 
       expect( queryByText(emailInput.parentElement, ERRORMSG_INVALID_EMAIL) ).toBeNull();
@@ -211,8 +214,8 @@ describe('Testing behavior of login modal', () => {
 
   test('Login failure should show warning under email input', async () => {
     createModalWithMocks();
-    const mockFetch = createMockFetch(false, 400, () => 
-      Promise.resolve( createErrorJsonData('Invalid email for testing') ) 
+    const mockFetch = createMockFetch(false, 400, () =>
+      Promise.resolve( createErrorJsonData('Invalid email for testing') )
     );
     window.fetch = mockFetch;
     const emailInput = screen.getByAltText('login input email');
@@ -225,8 +228,8 @@ describe('Testing behavior of login modal', () => {
 
   test('Failed password authentication should show warning under password input', async () => {
     createModalWithMocks();
-    const mockFetch = createMockFetch(false, 400, () => 
-      Promise.resolve( createErrorJsonData('Invalid password for testing') ) 
+    const mockFetch = createMockFetch(false, 400, () =>
+      Promise.resolve( createErrorJsonData('Invalid password for testing') )
     );
     window.fetch = mockFetch;
     const passwordInput = screen.getByAltText('login input password');
@@ -239,8 +242,8 @@ describe('Testing behavior of login modal', () => {
 
   test('Error code 500 should not store information or close modal', async () => {
     const { mocks: { mockSetUser } } = createModalWithMocks();
-    window.fetch = createMockFetch(false, 500, () => 
-      Promise.resolve( createErrorJsonData('Invalid password for testing') ) 
+    window.fetch = createMockFetch(false, 500, () =>
+      Promise.resolve( createErrorJsonData('Invalid password for testing') )
     );
 
     const { email, password } = DEFAULT_USERINFO;
@@ -252,8 +255,8 @@ describe('Testing behavior of login modal', () => {
 
   test('Error code 500 should not display erorr information', async () => {
     createModalWithMocks();
-    window.fetch = createMockFetch(false, 500, () => 
-      Promise.resolve( createErrorJsonData('Invalid password for testing') ) 
+    window.fetch = createMockFetch(false, 500, () =>
+      Promise.resolve( createErrorJsonData('Invalid password for testing') )
     );
 
     const { email, password } = DEFAULT_USERINFO;
@@ -277,7 +280,7 @@ describe('Testing behavior of login modal', () => {
 
   test('Closing dialog should clear error message', async () => {
     createModalWithMocks();
-    window.fetch = createMockFetch(false, 400, () => 
+    window.fetch = createMockFetch(false, 400, () =>
       Promise.resolve( createErrorJsonData('Invalid password for testing') )
     );
 
@@ -292,7 +295,7 @@ describe('Testing behavior of login modal', () => {
     createModalWithMocks();
     const emailInput = screen.getByAltText('login input email');
     const passwordInput = screen.getByAltText('login input password');
-    window.fetch = createMockFetch(false, 400, () => 
+    window.fetch = createMockFetch(false, 400, () =>
       Promise.resolve( createErrorJsonData('Invalid password for testing') )
     );
 

@@ -1,9 +1,15 @@
 import React from 'react';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, act } from '@testing-library/react';
 
 import Button from '../components/button/button.component';
 
-afterEach(cleanup);
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+afterEach(() => {
+  cleanup();
+  jest.useRealTimers();
+});
 
 describe('testing behavior of Button component', () => {
   test('designated classname should be set on Button', () => {
@@ -16,16 +22,36 @@ describe('testing behavior of Button component', () => {
     expect( classes ).toContain(classname);
   });
 
-  test('designated onClick should trigger when Button is clicked', () => {
+  test('designated onClick should trigger when Button is clicked',  () => {
     const mockFunction = createMockOnClick();
     setupButton(null, mockFunction);
-    const button = getTestButton();
 
     expect( mockFunction.mock.calls.length ).toBe(0);
 
-    button.click();
+    clickButton();
 
     expect( mockFunction.mock.calls.length ).toBe(1);
+  });
+
+  test('onClick should not trigger twice when two consecutive clicks',  () => {
+    const mockFunction = createMockOnClick();
+    setupButton(null, mockFunction);
+
+    clickButton();
+    clickButton();
+
+    expect(mockFunction).toHaveBeenCalledTimes(1);
+  });
+
+  test('when there is a wait between clicks onClick should trigger twice', () => {
+    const mockFunction = createMockOnClick();
+    setupButton(null, mockFunction);
+
+    clickButton();
+    act( () => jest.advanceTimersByTime(1000) );
+    clickButton();
+    
+    expect(mockFunction).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -49,4 +75,12 @@ function getTestButton() {
 
 function createMockOnClick() {
   return jest.fn().mockName('Mocking onClick()');
+}
+
+function clickButton() {
+  const button = getTestButton();
+
+  act(() => {
+    button.click();
+  });
 }
