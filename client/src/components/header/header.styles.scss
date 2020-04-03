@@ -3,7 +3,7 @@
 header {
     display: flex;
     flex-direction: row;
-    line-height: map-get($dimensions, 'header-height');
+    height: map-get($dimensions, 'header-height');
 
     background-color: map-get($colors, '00');
     color: map-get($colors, '01');
@@ -13,6 +13,7 @@ header {
         
         display: flex;
         flex-direction: row;
+        align-items: center;
         justify-content: flex-start;
 
         font-weight: 600;
@@ -28,16 +29,19 @@ header {
         flex-direction: row;
         justify-content: flex-end;
         align-items: center;
+        position: relative;
     
         margin-right: map-get($dimensions, 'header-margin-h');
 
-        .button-portrait {
-            position: relative;
     
-            .portrait {
-                width: map-get($dimensions, 'header-portrait-size');
-                height: map-get($dimensions, 'header-portrait-size');
-            }
+        .portrait {
+            width: map-get($dimensions, 'header-portrait-size');
+            height: map-get($dimensions, 'header-portrait-size');
+        }
+        .menu-dropdown {
+            position: absolute;
+            top: map-get($dimensions, 'header-height');
+            right: 0px;
         }
     }
 }

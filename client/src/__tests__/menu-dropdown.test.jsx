@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, screen, render, cleanup, getByText, fireEvent } from '@testing-library/react';
+import { act, screen, render, cleanup, getByText, fireEvent, wait } from '@testing-library/react';
 
 import MenuDropdown from '../components/menu-dropdown/menu-dropdown.component';
 
@@ -96,6 +96,17 @@ describe('testing behavior of menu dropdown component', () => {
     await clickLogout();
 
     expect(mockSetCurrentUser).toBeCalledTimes(0);
+  });
+
+  test('logout should call toggledropdown', async () => {
+    const { mocks: { mockToggle } } = createMenuDropdown();
+    window.fetch = createMockFetch(
+      true, 200, () => Promise.resolve({ sessionUser: TEST_DATA.TEST_USER })
+    );
+
+    await clickLogout();
+
+    expect(mockToggle).toHaveBeenCalled();
   });
 
   test('menu dropdown rendered should gain focus', () => {

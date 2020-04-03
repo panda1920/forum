@@ -25,14 +25,19 @@
     },
     "plugins": [
         "react",
+        "react-hooks",
         "jest"
     ],
     "root": true,
     "rules": {
         "semi": [1, "always"],
         "quotes": [1, "single", { "allowTemplateLiterals": true }],
+        "no-trailing-spaces": [1, { "skipBlankLines": true, "ignoreComments": true }],
 
-        "react/prop-types": 0
+        "react/prop-types": 0,
+        "react-hooks/rules-of-hooks": 2,
+        "react-hooks/exhaustive-deps": 1
+
     },
     "overrides": [
         {

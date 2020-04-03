@@ -1,4 +1,4 @@
-// here I put all api call related code made from frontend
+// here I put all api calls to backend
 
 import * as paths from '../paths';
 

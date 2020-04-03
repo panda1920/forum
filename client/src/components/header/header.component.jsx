@@ -10,16 +10,23 @@ import { CurrentUserContext } from '../../contexts/current-user/current-user';
 import './header.styles.scss';
 
 const Header = () => {
+  const [ isDropdownVisible, setIsDropdownVisible ] = useState(false);
+  const [ isToggledRecently, setIsToggledRecently ] = useState(false);
   const { toggleSignup, toggleLogin } = useContext(ModalContext);
   const { imageUrl, isLoggedin } = useContext(CurrentUserContext);
-  const [ isDropdownVisible, setIsDropdownVisible ] = useState(false);
 
   const toggleDropdown = useCallback(() => {
+    if (isToggledRecently)
+      return;
+    
     setIsDropdownVisible(visibleState => !visibleState);
-  }, []);
+    setIsToggledRecently(true);
+    setTimeout(() => {
+      setIsToggledRecently(false);
+    }, 200);
+  }, [isToggledRecently]);
 
   const renderControlSectionBasedOnLoggedinState= () => {
-
     if ( isLoggedin() )
       return (
         <div className='controls-section'>
@@ -28,8 +35,8 @@ const Header = () => {
             onClick={toggleDropdown}
           >
             <Portrait title='header portrait' imageUrl={imageUrl} />
-            { isDropdownVisible ? <MenuDropdown toggleDropdown={toggleDropdown} /> : null }
           </Button>
+          { isDropdownVisible ? <MenuDropdown toggleDropdown={toggleDropdown} /> : null }
         </div>
       );
     else

@@ -1,25 +1,51 @@
 @import '../../base-style';
 
+$dropdown-padding: 5px 0;
+$dropdown-item-padding: 5px 20px 5px 15px;
+$dropdown-border-left: 5px solid map-get($colors, '00');
+
 .menu-dropdown {
     position: absolute;
-
+    line-height: none;
     background-color: map-get($colors, '00');
-    width: map-get($dimensions, 'header-dropdown-width');
+    padding: $dropdown-padding;
 
     ul {
         margin: 0;
         display: flex;
         flex-direction: column;
         padding: 0;
+        font-size: map-get($font-size, 'medium');
 
         li {
-            padding: 5px;
             color: map-get($colors, '01');
             list-style: none;
-    
+        }
+
+        .dropdown-userinfo {
+            padding: $dropdown-item-padding;
+            border-left: $dropdown-border-left;
+
+            .dropdown-username {
+                font-weight: 600;
+            }
+            .dropdown-email {
+                font-size: map-get($font-size, 'small');
+            }
+        }
+
+        .separator {
+            margin: 5px 10px;
+            border-top: 1px solid map-get($colors, '01');
+        }
+
+        .button {
+            padding: $dropdown-item-padding;
+            border-left: $dropdown-border-left;
+
             &:hover {
-                background-color: map-get($colors, '01');
-                color: map-get($colors, '00');
+                border-color: map-get($colors, '02');
+                color: map-get($colors, '02');
             }
         }
     }

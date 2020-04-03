@@ -8,7 +8,7 @@ const Button = (props) => {
   const classes = convertClassNamePropToString(className);
   return (
     <div
-      className={`Button ${classes}`}
+      className={`button ${classes}`}
       onClick={onClick}
       data-testid={testid}
       {...otherProps}

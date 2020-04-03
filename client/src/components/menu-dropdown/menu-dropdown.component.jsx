@@ -6,9 +6,10 @@ import { logout } from '../../scripts/api';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
 
 import './menu-dropdown.styles.scss';
+import BlockText from '../block-text/block-text.component';
 
 const MenuDropdown = ({ toggleDropdown }) => {
-  const { setCurrentUser } = useContext(CurrentUserContext);
+  const { displayName, userName, setCurrentUser } = useContext(CurrentUserContext);
 
   const logoutHandler = useCallback(async () => {
     const response = await logout();
@@ -17,9 +18,11 @@ const MenuDropdown = ({ toggleDropdown }) => {
     
     const { sessionUser } = await response.json();
     setCurrentUser(sessionUser);
-  }, [setCurrentUser]);
+    toggleDropdown();
+  }, [setCurrentUser, toggleDropdown]);
 
   const refCallback = useCallback((dropdown) => {
+    // focus when this component first renders
     if (dropdown) dropdown.focus();
   }, []);
 
@@ -32,9 +35,19 @@ const MenuDropdown = ({ toggleDropdown }) => {
       onBlur={toggleDropdown}
     >
       <ul>
-        <li className='noselect'><Button onClick={() => {}}>Edit Profile</Button></li>
-        <li className='noselect'></li>
-        <li className='noselect'><Button onClick={logoutHandler}>Logout</Button></li>
+        <li className='noselect'>
+          <div className='dropdown-userinfo'>
+            <BlockText className='dropdown-username'>{displayName}</BlockText>
+            <BlockText className='dropdown-email'>{userName}</BlockText>
+          </div>
+        </li>
+        <li className='noselect separator'></li>
+        <li className='noselect'>
+          <BlockText><Button onClick={() => {}}>Edit Profile</Button></BlockText>
+        </li>
+        <li className='noselect'>
+          <BlockText><Button onClick={logoutHandler}>Logout</Button></BlockText>
+        </li>
       </ul>
     </div>
   );

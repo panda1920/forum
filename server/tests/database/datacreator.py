@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 from time import time
 
-from server.services.userauth import UserAuthenticationService
+from server.services.userauth import PasswordService
 
 
 class DataCreator:
@@ -29,10 +29,12 @@ class DataCreator:
         'Johnson',
     ]
     EMAIL_DOMAIN = '@myforumwebapp.com'
-    POSTCOUNT_PER_USER_ENG = 48
-    POSTCOUNT_PER_USER_JPN = 2
-    POSTCOUNT_PER_USER = POSTCOUNT_PER_USER_ENG + POSTCOUNT_PER_USER_JPN
     PLACEHOLDER_IMG_URL = 'https://upload.wikimedia.org/wikipedia/en/b/b1/Portrait_placeholder.png'
+    THREAD_COUNT = len(USERS)
+    POSTCOUNT_PER_THREAD_ENG = 2
+    POSTCOUNT_PER_THREAD_JPN = 1
+    POSTCOUNT_PER_THREAD = POSTCOUNT_PER_THREAD_ENG + POSTCOUNT_PER_THREAD_JPN
+    POSTCOUNT_PER_USER = POSTCOUNT_PER_THREAD * THREAD_COUNT
 
     def __init__(self, testDataPath):
         self._testDataPath = testDataPath
@@ -42,13 +44,15 @@ class DataCreator:
         self._testDataPath.touch()
 
         users = self._createUsers()
-        posts = self._createPosts(users)
+        threads = self._createThreads(users)
+        posts = self._createPosts(users, threads)
         counters = self._createCounters()
 
         with self._testDataPath.open('w', encoding='utf-8') as f:
             json.dump({
                 'users': users,
                 'posts': posts,
+                'threads': threads,
                 'counters': counters,
             }, f)
 
@@ -60,44 +64,70 @@ class DataCreator:
                 'userId': str(idx),
                 'displayName': username,
                 'userName': username.lower() + self.EMAIL_DOMAIN,
-                'password': UserAuthenticationService.hashPassword('12345678'),
+                'password': PasswordService.hashPassword('12345678'),
                 'createdAt': now,
-                'imageUrl': self.PLACEHOLDER_IMG_URL,
+                'imageUrl': self.PLACEHOLDER_IMG_URL if idx == 0 else f'https://randomuser.me/api/portraits/men/{idx}.jpg'
             })
         
         return users
 
-    def _createPosts(self, users):
+    def _createThreads(self, users):
+        threads = []
+        now = time()
+        for idx, user in enumerate(users):
+            threads.append(dict(
+                threadId=str(idx),
+                userId=user['userId'],
+                title=f'{user["displayName"]}\'s thread',
+                subject='Subject of this thread',
+                createdAt=now,
+            ))
+
+        return threads
+
+    def _createPosts(self, users, threads):
         posts = []
+        postCreatedCount = 0
         now = time()
 
-        for userCount, user in enumerate(users):
-            for n in range(self.POSTCOUNT_PER_USER):
-                postId = str(userCount * self.POSTCOUNT_PER_USER + n)
+        # for each user create posts in a way that
+        # posts for each threads
+        # some english post in thread
+        # some japanese post in thread
 
-                if n < self.POSTCOUNT_PER_USER_ENG:
-                    posts.append(self._createEnglishPost(
-                        user, n, postId, now
-                    ))
-                else:
-                    posts.append(self._createJapanesePost(
-                        user, n, postId, now
-                    ))
+        for userCount, user in enumerate(users):
+            for threadCount, thread in enumerate(threads):
+                postNum = threadCount * self.POSTCOUNT_PER_THREAD
+                for engCount in range(self.POSTCOUNT_PER_THREAD_ENG):
+                    posts.append(
+                        self._createEnglishPost(user, thread, postNum, postCreatedCount, now)
+                    )
+                    postCreatedCount += 1
+                    postNum += 1
+
+                for jpnCount in range(self.POSTCOUNT_PER_THREAD_JPN):
+                    posts.append(
+                        self._createJapanesePost(user, thread, postNum, postCreatedCount, now)
+                    )
+                    postCreatedCount += 1
+                    postNum += 1
 
         return posts
 
-    def _createEnglishPost(self, user, postNum, postId, createdAt):
+    def _createEnglishPost(self, user, thread, postNum, postId, createdAt):
         return {
             'postId': postId,
             'userId': user['userId'],
+            'threadId': thread['threadId'],
             'content': f'{user["displayName"]}\'s post {postNum}',
             'createdAt': createdAt
         }
 
-    def _createJapanesePost(self, user, postNum, postId, createdAt):
+    def _createJapanesePost(self, user, thread, postNum, postId, createdAt):
         return {
             'postId': postId,
             'userId': user['userId'],
+            'threadId': thread['threadId'],
             'content': f'ユーザ名：{user["displayName"]}による{postNum}番目の投稿です',
             'createdAt': createdAt
         }
@@ -106,6 +136,7 @@ class DataCreator:
         return [
             dict( fieldname='userId', value=len( self.USERS ) ),
             dict( fieldname='postId', value=self.getTotalPostCount() ),
+            dict( fieldname='threadId', value=self.getTotalThreadCount() ),
         ]
 
     @classmethod
@@ -119,6 +150,10 @@ class DataCreator:
     @classmethod
     def getTotalPostCount(cls):
         return len(cls.USERS) * cls.POSTCOUNT_PER_USER
+
+    @classmethod
+    def getTotalThreadCount(cls):
+        return cls.THREAD_COUNT
 
 
 if __name__ == '__main__':

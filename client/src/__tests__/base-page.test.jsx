@@ -75,13 +75,11 @@ describe('Testing BasePage', () => {
       return container.firstChild.firstChild.getAttribute('Class').split(' ');
     };
 
-    const beforeClasses = getBasePageClasses();
-    expect(beforeClasses).not.toContain('blurred');
+    expect( getBasePageClasses() ).not.toContain('blurred');
 
     clickHeaderLogin();
 
-    const afterClasses = getBasePageClasses();
-      expect(afterClasses).toContain('blurred');
+    expect( getBasePageClasses() ).toContain('blurred');
   });
 
   test('Clicking on login should bring up modal', () => {
@@ -100,13 +98,11 @@ describe('Testing BasePage', () => {
       return container.firstChild.firstChild.getAttribute('Class').split(' ');
     };
 
-    const beforeClasses = getBasePageClasses();
-    expect(beforeClasses).not.toContain('blurred');
+    expect( getBasePageClasses() ).not.toContain('blurred');
 
     clickHeaderSignup();
 
-    const afterClasses = getBasePageClasses();
-    expect(afterClasses).toContain('blurred');
+    expect( getBasePageClasses() ).toContain('blurred');
   });
 
   test('Clicking on signup should bring up modal', () => {
@@ -126,6 +122,7 @@ describe('Testing BasePage', () => {
 
     // async operation in useeffect of base page
     // sometimes assertions fail because promise is not resolved when test runs
+    // which is why async wait is being used here
     await wait(() => {
       expect(mockFetch).toHaveBeenCalled();
       const [ url, options ] = mockFetch.mock.calls[0];
