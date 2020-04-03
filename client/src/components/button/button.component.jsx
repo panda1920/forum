@@ -1,51 +1,62 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React from 'react';
 
 import './button.styles.scss';
 
-const Button = (props) => {
-  const { className, onClick, children, ...otherProps  } = props;
-  const [ clickedRecently, setClickedRecently ] = useState(false);
-  const [ timerTaskId, setTimerTaskId ] = useState(null);
-  
-  const testid = props['data-testid'];
-  const classes = convertClassNamePropToString(className);
+class Button extends React.Component {
+  constructor(props) {
+    super(props);
 
-  const resetClickedRecentlyLater = () => {
-    const id = setTimeout(() => {
-      setClickedRecently(false);
-    }, 200);
-    setTimerTaskId(id);
-  };
+    this.state = {
+      clickedRecently: false,
+      timerTaskId: null,
+    };
+  }
 
-  // prevents onclick triggering too often
-  const onClickHandler = useCallback(() => {
+  // prevent click being triggered rapidly
+  onClickHandler() {
+    const { clickedRecently } = this.state;
+    const { onClick } = this.props;
+    
     if (clickedRecently)
       return;
     
     onClick();
-    setClickedRecently(true);
-    resetClickedRecentlyLater();
+    this.setState({ clickedRecently: true });
+    this.resetClickedRecentlyLater();
+  }
 
-  }, [clickedRecently, onClick]);
-  
-  useEffect(() => {
-    return () => {
-      setClickedRecently(false);
-      clearTimeout(timerTaskId);
-    };
-  });
+  resetClickedRecentlyLater() {
+    const id = setTimeout(() => {
+      this.setState({ clickedRecently: false });
+    }, 200);
+    this.setState({ timerTaskId: id });
+  }
 
-  return (
-    <div
-      className={`button ${classes}`}
-      onClick={onClickHandler}
-      data-testid={testid}
-      {...otherProps}
-    >
-      { children }
-    </div>
-  );
-};
+  // unregister async task to update component state because button will unmount
+  componentWillUnmount() {
+    const { timerTaskId } = this.state;
+
+    clearTimeout(timerTaskId);
+  }
+
+  render() {
+    const { className, onClick, children, ...otherProps } = this.props;
+    const testid = this.props['data-testid'];
+    const classes = convertClassNamePropToString(className);
+    const onClickHandlerCallback = () => { this.onClickHandler(); };
+
+    return (
+      <div
+        className={`button ${classes}`}
+        onClick={onClickHandlerCallback}
+        data-testid={testid}
+        {...otherProps}
+      >
+        { children }
+      </div>
+    );
+  }
+}
 
 const convertClassNamePropToString = (className) => {
   return (className ? `${className}` : '');
