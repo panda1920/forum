@@ -8,7 +8,7 @@ import BlockText from '../block-text/block-text.component';
 
 import { ModalContext } from '../../contexts/modal/modal';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
-import { signup } from '../../scripts/api';
+import { signup, login } from '../../scripts/api';
 
 import './modal-signup.styles.scss';
 
@@ -32,7 +32,7 @@ const reducer = (state, action) => {
       console.log(`unknown action: ${action.type}`);
       return state;
   }
-}
+};
 
 const ModalSignup = () => {
   const { toggleSignup, toggleLogin, isSignupOpen } = useContext(ModalContext);
@@ -52,16 +52,20 @@ const ModalSignup = () => {
 
     const response = await signup(state.email, state.password);
     if (response.ok)
-      await successApiCallHandler(response);
+      await successApiCallHandler();
     else
       await failedApiCallHandler(response);
-  }
+  };
   
-  const successApiCallHandler = async (response) => {
+  const successApiCallHandler = async () => {
+    const response = await login(state.email, state.password);
+    if (!response.ok)
+      return;
+
     const { sessionUser } = await response.json();
     setCurrentUser(sessionUser);
     onDialogClose();
-  }
+  };
 
   const failedApiCallHandler = async (response) => {
     if (response.ignore) return;
@@ -73,7 +77,7 @@ const ModalSignup = () => {
       dispatch({ type: 'setPasswordError', payload: description });
     else
       dispatch({ type: 'setEmailError', payload: description });
-  }
+  };
 
   const validateInputs = () => {
     const emailPattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -94,42 +98,42 @@ const ModalSignup = () => {
     }
 
     return true;
-  }
+  };
 
   const clearInputValue = () => {
     dispatch({ type: 'setEmail', payload: '' });
     dispatch({ type: 'setPassword', payload: '' });
     dispatch({ type: 'setConfirmPassword', payload: '' });
-  }
+  };
 
   const clearErrorMsg = () => {
     dispatch({ type: 'setEmailError', payload: '' });
     dispatch({ type: 'setPasswordError', payload: '' });
     dispatch({ type: 'setConfirmPasswordError', payload: '' });
-  }
+  };
 
   const onEmailChange = (event) => {
     dispatch({ type: 'setEmail', payload: event.target.value });
-  }
+  };
 
   const onPasswordChange = (event) => {
     dispatch({ type: 'setPassword', payload: event.target.value });
-  }
+  };
 
   const onConfirmPasswordChange = (event) => {
     dispatch({ type: 'setConfirmPassword', payload: event.target.value });
-  }
+  };
 
   const onDialogClose = () => {
     clearInputValue();
     clearErrorMsg();
     toggleSignup();
-  }
+  };
 
   const onLoginOpen = () => {
     onDialogClose();
     toggleLogin();
-  }
+  };
 
   return (
     <ModalDialog
@@ -202,6 +206,6 @@ const ModalSignup = () => {
 
     </ModalDialog>
   );
-}
+};
 
 export default ModalSignup;

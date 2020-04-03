@@ -17,9 +17,10 @@ import { CurrentUserContext } from '../contexts/current-user/current-user';
 import {
   setNativeValue,
   createMockFetch,
-  createErrorJsonData
+  createMockFetchImplementation,
+  createErrorJsonData,
 } from '../scripts/test-utilities';
-import { userApiLogin } from '../paths';
+import { userApiLogin, userApiCreate } from '../paths';
 
 import ModalSignup, { ModalSignupTitle } from '../components/modal-signup/modal-signup.component';
 
@@ -27,6 +28,10 @@ const TEST_DATA = {
   DEFAULT_USERINFO: {
     email: 'bobby@myforumwebapp.com',
     password: 'mysecretpassword',
+  },
+
+  SIGNUP_RETURNED_RESULT: {
+    userCreated: 1,
   },
 
   API_RETURNED_SESSIONUSER: {
@@ -87,11 +92,15 @@ function createMockFunction(name) {
 }
 
 function createMockFetchSuccess() {
-  return createMockFetch(true, 200, () => {
-    return Promise.resolve({
-      sessionUser: TEST_DATA.API_RETURNED_SESSIONUSER
-    });
-  });
+  const mockFetch = jest.fn().mockName('Mocked fetch()')
+    .mockImplementationOnce(createMockFetchImplementation(
+      true, 201, () => Promise.resolve({ result: TEST_DATA.SIGNUP_RETURNED_RESULT })
+    ))
+    .mockImplementationOnce(createMockFetchImplementation(
+      true, 200, () => Promise.resolve({ sessionUser: TEST_DATA.API_RETURNED_SESSIONUSER })
+    ));
+
+  return mockFetch;
 }
 
 let originalFetch = null;
@@ -161,8 +170,24 @@ describe('Testing behavior of signup modal', () => {
     
     await typeInputAndSignup(email, password, password);
 
-    expect(mockedFetch).toHaveBeenCalledTimes(1);
+    expect(mockedFetch).toHaveBeenCalled();
     const [ url, options ] = mockedFetch.mock.calls[0];
+    expect(url).toBe(userApiCreate);
+    expect(options).toMatchObject({
+      body: JSON.stringify( { userName: email, password } )
+    });
+  });
+
+  test('Pressing signup button should call login after signup', async () => {
+    createSignup();
+    const mockedFetch = createMockFetchSuccess();
+    window.fetch = mockedFetch;
+    const { email, password } = TEST_DATA.DEFAULT_USERINFO;
+    
+    await typeInputAndSignup(email, password, password);
+
+    expect(mockedFetch).toHaveBeenCalled();
+    const [ url, options ] = mockedFetch.mock.calls[1];
     expect(url).toBe(userApiLogin);
     expect(options).toMatchObject({
       body: JSON.stringify( { userName: email, password } )

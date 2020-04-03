@@ -20,7 +20,7 @@ export function logout() {
 
 export function signup(email, password) {
     return apiCall(
-        paths.userApiLogin,
+        paths.userApiCreate,
         'POST',
         { 'Content-Type': 'application/json' },
         JSON.stringify({ userName: email, password }),

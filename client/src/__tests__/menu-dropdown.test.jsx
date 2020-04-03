@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, screen, render, cleanup, getByText, fireEvent, wait } from '@testing-library/react';
+import { act, screen, render, cleanup, getByText, fireEvent } from '@testing-library/react';
 
 import MenuDropdown from '../components/menu-dropdown/menu-dropdown.component';
 
