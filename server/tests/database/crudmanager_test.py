@@ -24,6 +24,9 @@ class TestFixture:
     def test_fixtureCreatedPosts(self, setupDB):
         setupDB.validateCreatedPosts()
 
+    def test_fixtureCreatedThreads(self, setupDB):
+        setupDB.validateCreatedThreads()
+
 
 @pytest.mark.slow
 @pytest.mark.parametrize('createDB', [Setup_FileCrudManager, Setup_MongoCrudManager], indirect=True)
@@ -52,7 +55,7 @@ class TestUserCRUD:
 
         assert len( setupDB.findUsers('userName', [ userProps['userName'] ]) ) == 0
         
-        setupDB.getDB().createUser(userProps)
+        setupDB.getRepo().createUser(userProps)
 
         assert setupDB.getUserCount() == len( setupDB.getOriginalUsers() ) + 1
         createdUsers = setupDB.findUsers('userName', [ userProps['userName'] ])
@@ -71,7 +74,7 @@ class TestUserCRUD:
         userProps = self.createNewUserProps()
         nextUserId = setupDB.getCounter('userId')
 
-        setupDB.getDB().createUser(userProps)
+        setupDB.getRepo().createUser(userProps)
 
         createdUser = setupDB.findUsers('userName', [ userProps['userName'] ])[0]
 
@@ -89,7 +92,7 @@ class TestUserCRUD:
 
         for userProp in userProps:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().createUser(userProp)
+                setupDB.getRepo().createUser(userProp)
 
     def test_createUserByWrongPropertyTypeShouldRaiseException(self, setupDB):
         userProps = [
@@ -101,7 +104,7 @@ class TestUserCRUD:
 
         for userProp in userProps:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().createUser(userProp)
+                setupDB.getRepo().createUser(userProp)
 
     def test_deleteUserShouldRemoveUserFromDB(self, setupDB):
         userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
@@ -109,7 +112,7 @@ class TestUserCRUD:
 
         assert len( setupDB.findUsers('userId', [userIdToDelete]) ) == 1
         
-        setupDB.getDB().deleteUser(searchFilter)
+        setupDB.getRepo().deleteUser(searchFilter)
 
         assert setupDB.getUserCount() == len(setupDB.getOriginalUsers()) - 1
         assert len( setupDB.findUsers('userId', [userIdToDelete]) ) == 0
@@ -122,7 +125,7 @@ class TestUserCRUD:
 
         assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 3
 
-        setupDB.getDB().deleteUser(searchFilter)
+        setupDB.getRepo().deleteUser(searchFilter)
 
         assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 0
 
@@ -141,7 +144,7 @@ class TestUserCRUD:
         assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 3
         assert len( setupDB.findUsers('userName', userNamesToDelete) ) == 2
 
-        setupDB.getDB().deleteUser(searchFilter)
+        setupDB.getRepo().deleteUser(searchFilter)
 
         assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 0
         assert len( setupDB.findUsers('userName', userNamesToDelete) ) == 0
@@ -150,7 +153,7 @@ class TestUserCRUD:
         userIdToDelete = 'non_existant'
         searchFilter = createSearchFilter('userId', 'eq', [ userIdToDelete ])
 
-        setupDB.getDB().deleteUser(searchFilter)
+        setupDB.getRepo().deleteUser(searchFilter)
 
         setupDB.validateCreatedUsers()
 
@@ -158,7 +161,7 @@ class TestUserCRUD:
         userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
         searchFilter = createSearchFilter('userId', 'eq', [ userIdToDelete ])
 
-        result = setupDB.getDB().deleteUser(searchFilter)
+        result = setupDB.getRepo().deleteUser(searchFilter)
 
         assert 'deleteCount' in result
         assert result['deleteCount'] == 1
@@ -167,7 +170,7 @@ class TestUserCRUD:
         userIdsToSearch = [ setupDB.getOriginalUsers()[0]['userId'] ]
         searchFilter = createSearchFilter('userId', 'eq', userIdsToSearch)
 
-        result = setupDB.getDB().searchUser(searchFilter)
+        result = setupDB.getRepo().searchUser(searchFilter)
         users = result['users']
 
         assert len(users) == 1
@@ -179,7 +182,7 @@ class TestUserCRUD:
         userIdsToSearch = ['non_existant']
         searchFilter = createSearchFilter('userId', 'eq', userIdsToSearch)
 
-        result = setupDB.getDB().searchUser(searchFilter)
+        result = setupDB.getRepo().searchUser(searchFilter)
         users = result['users']
 
         assert len(users) == 0
@@ -192,7 +195,7 @@ class TestUserCRUD:
         ]
         searchFilter = createSearchFilter('userId', 'eq', userIdsToSearch)
 
-        result = setupDB.getDB().searchUser(searchFilter)
+        result = setupDB.getRepo().searchUser(searchFilter)
         users = result['users']
 
         assert len(users) == 2
@@ -204,7 +207,7 @@ class TestUserCRUD:
     def test_searchUserByNoFilterShouldReturnAllUsers(self, setupDB):
         searchFilter = None
         
-        result = setupDB.getDB().searchUser(searchFilter)
+        result = setupDB.getRepo().searchUser(searchFilter)
         users = result['users']
 
         assert len(users) == len( setupDB.getOriginalUsers() )
@@ -217,7 +220,7 @@ class TestUserCRUD:
             createSearchFilter('userId', 'eq', ['2']),
         ])
 
-        result = setupDB.getDB().searchUser(searchFilter)
+        result = setupDB.getRepo().searchUser(searchFilter)
         users = result['users']
 
         assert len(users) == 0
@@ -230,7 +233,7 @@ class TestUserCRUD:
             createSearchFilter('userId', 'eq', ['2']),
         ])
 
-        result = setupDB.getDB().searchUser(searchFilter)
+        result = setupDB.getRepo().searchUser(searchFilter)
         users = result['users']
 
         assert len(users) == 2
@@ -244,7 +247,7 @@ class TestUserCRUD:
         paging = Paging({ 'limit': 5 })
         searchFilter = createSearchFilter('userId', 'eq', userIdsToSearch)
 
-        result = setupDB.getDB().searchUser(searchFilter, paging)
+        result = setupDB.getRepo().searchUser(searchFilter, paging)
 
         users = result['users']
         assert len(users) == 5
@@ -258,7 +261,7 @@ class TestUserCRUD:
         paging = Paging({ 'limit': 5, 'offset': 8 })
         searchFilter = createSearchFilter('userId', 'eq', userIdsToSearch)
 
-        result = setupDB.getDB().searchUser(searchFilter, paging)
+        result = setupDB.getRepo().searchUser(searchFilter, paging)
 
         users = result['users']
         assert len(users) == 2
@@ -274,7 +277,7 @@ class TestUserCRUD:
         searchFilter = createSearchFilter('userId', 'eq', userIdsToUpdate)
         userProps = self.createUpdateUserProps()
 
-        setupDB.getDB().updateUser(searchFilter, userProps)
+        setupDB.getRepo().updateUser(searchFilter, userProps)
 
         updatedUsers = setupDB.findUsers('userId', userIdsToUpdate)
         for user in updatedUsers:
@@ -293,7 +296,7 @@ class TestUserCRUD:
         searchFilter = createSearchFilter('userId', 'eq', userIdsToUpdate)
         userProps = self.createUpdateUserProps()
 
-        result = setupDB.getDB().updateUser(searchFilter, userProps)
+        result = setupDB.getRepo().updateUser(searchFilter, userProps)
 
         assert result['matchedCount'] == 2
         assert result['updatedCount'] == 2
@@ -309,7 +312,7 @@ class TestUserCRUD:
         ])
         userProps = self.createUpdateUserProps()
 
-        result = setupDB.getDB().updateUser(searchFilter, userProps)
+        result = setupDB.getRepo().updateUser(searchFilter, userProps)
 
         assert result['matchedCount'] == 1
         assert result['updatedCount'] == 1
@@ -325,7 +328,7 @@ class TestUserCRUD:
 
         for userUpdate in userUpdateProperties:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().updateUser(searchFilter, userUpdate)
+                setupDB.getRepo().updateUser(searchFilter, userUpdate)
 
     def test_updateUserWithUnexpectedPropertiesRaisesException(self, setupDB):
         userIdsToUpdate = [ user['userId'] for user in setupDB.getOriginalUsers()[:10] ]
@@ -338,7 +341,7 @@ class TestUserCRUD:
 
         for userUpdate in userUpdateProperties:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().updateUser(searchFilter, userUpdate)
+                setupDB.getRepo().updateUser(searchFilter, userUpdate)
 
 
 @pytest.mark.slow
@@ -361,7 +364,7 @@ class TestPostCRUD:
     def test_createPostShouldCreatePostInDB(self, setupDB):
         postProps = self.createNewPostProps()
 
-        setupDB.getDB().createPost(postProps)
+        setupDB.getRepo().createPost(postProps)
 
         assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) + 1
         createdPost = setupDB.findPosts('content', [ postProps['content'] ])
@@ -373,7 +376,7 @@ class TestPostCRUD:
         postProps = self.createNewPostProps()
         nextPostId = setupDB.getCounter('postId')
 
-        setupDB.getDB().createPost(postProps)
+        setupDB.getRepo().createPost(postProps)
 
         createdPost = setupDB.findPosts('content', [ postProps['content'] ])[0]
 
@@ -389,7 +392,7 @@ class TestPostCRUD:
 
         for postToCreate in postsToCreate:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().createPost(postToCreate)
+                setupDB.getRepo().createPost(postToCreate)
 
     def test_createPostWithWrongPropertyTypeShouldRaiseException(self, setupDB):
         postsToCreate = [
@@ -399,13 +402,13 @@ class TestPostCRUD:
 
         for postToCreate in postsToCreate:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().createPost(postToCreate)
+                setupDB.getRepo().createPost(postToCreate)
 
     def test_deletePostShouldRemovePostFromDB(self, setupDB):
         postIdToDelete = setupDB.getOriginalPosts()[0]['postId']
         searchFilter = createSearchFilter('postId', 'eq', [ postIdToDelete ])
 
-        setupDB.getDB().deletePost(searchFilter)
+        setupDB.getRepo().deletePost(searchFilter)
 
         assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) - 1
         postsShouldHaveBeenDeleted = setupDB.findPosts('postId', [postIdToDelete])
@@ -417,7 +420,7 @@ class TestPostCRUD:
         ]
         searchFilter = createSearchFilter('postId', 'eq', postIdsToDelete)
 
-        setupDB.getDB().deletePost(searchFilter)
+        setupDB.getRepo().deletePost(searchFilter)
 
         assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) - len(postIdsToDelete)
         postsShouldHaveBeenDeleted = setupDB.findPosts('postId', postIdsToDelete)
@@ -427,7 +430,7 @@ class TestPostCRUD:
         postIdToDelete = 'non_existant'
         searchFilter = createSearchFilter('postId', 'eq', [ postIdToDelete ])
 
-        setupDB.getDB().deletePost(searchFilter)
+        setupDB.getRepo().deletePost(searchFilter)
 
         setupDB.validateCreatedPosts()
 
@@ -441,7 +444,7 @@ class TestPostCRUD:
             createSearchFilter('content', 'fuzzy', [ keywordToDelete ]),
         ])
 
-        setupDB.getDB().deletePost(searchFilter)
+        setupDB.getRepo().deletePost(searchFilter)
 
         assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) - len(postIdsToDelete) - DataCreator.POSTCOUNT_PER_USER
 
@@ -452,7 +455,7 @@ class TestPostCRUD:
         ]
         searchFilter = createSearchFilter('postId', 'eq', postIdsToDelete)
 
-        result = setupDB.getDB().deletePost(searchFilter)
+        result = setupDB.getRepo().deletePost(searchFilter)
 
         assert 'deleteCount' in result
         assert result['deleteCount'] == len(postIdsToDelete)
@@ -463,7 +466,7 @@ class TestPostCRUD:
         ]
         searchFilter = createSearchFilter('postId', 'eq', postIdsToSearch)
 
-        result = setupDB.getDB().searchPost(searchFilter)
+        result = setupDB.getRepo().searchPost(searchFilter)
 
         posts = result['posts']
         assert len(posts) == 1
@@ -477,7 +480,7 @@ class TestPostCRUD:
         ]
         searchFilter = createSearchFilter('postId', 'eq', postIdsToSearch)
 
-        result = setupDB.getDB().searchPost(searchFilter)
+        result = setupDB.getRepo().searchPost(searchFilter)
 
         posts = result['posts']
         assert len(posts) == 2
@@ -489,7 +492,7 @@ class TestPostCRUD:
     def test_searchPostByNonExitantPostIdShouldReturnNoPosts(self, setupDB):
         searchFilter = createSearchFilter('postId', 'eq', ['non_existant'])
 
-        result = setupDB.getDB().searchPost(searchFilter)
+        result = setupDB.getRepo().searchPost(searchFilter)
 
         posts = result['posts']
         assert len(posts) == 0
@@ -502,7 +505,7 @@ class TestPostCRUD:
         ]
         searchFilter = createSearchFilter('userId', 'eq', userIdsToSearch)
 
-        result = setupDB.getDB().searchPost(searchFilter)
+        result = setupDB.getRepo().searchPost(searchFilter)
 
         posts = result['posts']
         assert len(posts) == Paging.DEFAULT_LIMIT
@@ -519,7 +522,7 @@ class TestPostCRUD:
             limit=DataCreator.POSTCOUNT_PER_USER
         ))
 
-        result = setupDB.getDB().searchPost(searchFilter, paging)
+        result = setupDB.getRepo().searchPost(searchFilter, paging)
 
         posts = result['posts']
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER - 1
@@ -537,7 +540,7 @@ class TestPostCRUD:
         ])
         paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })
 
-        result = setupDB.getDB().searchPost(searchFilter, paging)
+        result = setupDB.getRepo().searchPost(searchFilter, paging)
 
         posts = result['posts']
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER
@@ -555,7 +558,7 @@ class TestPostCRUD:
         ])
         paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })
 
-        result = setupDB.getDB().searchPost(searchFilter, paging)
+        result = setupDB.getRepo().searchPost(searchFilter, paging)
 
         posts = result['posts']
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER * 3
@@ -565,7 +568,7 @@ class TestPostCRUD:
     def test_searchPostWithNoFilterShouldReturnDefaultCount(self, setupDB):
         searchFilter = None
 
-        result = setupDB.getDB().searchPost(searchFilter)
+        result = setupDB.getRepo().searchPost(searchFilter)
 
         posts = result['posts']
         assert len(posts) == Paging.DEFAULT_LIMIT
@@ -577,7 +580,7 @@ class TestPostCRUD:
         searchFilter = createSearchFilter('postId', 'eq', postIdsToUpdate)
         update = self.createUpdatePostProps()
 
-        setupDB.getDB().updatePost(searchFilter, update)
+        setupDB.getRepo().updatePost(searchFilter, update)
 
         postsInDB = setupDB.findPosts('postId', postIdsToUpdate)
         for post in postsInDB:
@@ -589,7 +592,7 @@ class TestPostCRUD:
         searchFilter = createSearchFilter('postId', 'eq', postIdsToUpdate)
         update = self.createUpdatePostProps()
 
-        result = setupDB.getDB().updatePost(searchFilter, update)
+        result = setupDB.getRepo().updatePost(searchFilter, update)
 
         assert result['matchedCount'] == len(postIdsToUpdate)
         assert result['updatedCount'] == len(postIdsToUpdate)
@@ -603,7 +606,7 @@ class TestPostCRUD:
         ])
         update = self.createUpdatePostProps()
 
-        result = setupDB.getDB().updatePost(searchFilter, update)
+        result = setupDB.getRepo().updatePost(searchFilter, update)
 
         assert result['matchedCount'] == len(contentToSearch)
         assert result['updatedCount'] == len(contentToSearch)
@@ -619,7 +622,7 @@ class TestPostCRUD:
 
         for postProps in updatePostProperties:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().updatePost(searchFilter, postProps)
+                setupDB.getRepo().updatePost(searchFilter, postProps)
 
     def test_updatePostByWrongPropertyTypeRaisesException(self, setupDB):
         postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]
@@ -630,7 +633,209 @@ class TestPostCRUD:
 
         for postProps in updatePostProperties:
             with pytest.raises(EntityValidationError):
-                setupDB.getDB().updatePost(searchFilter, postProps)
+                setupDB.getRepo().updatePost(searchFilter, postProps)
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize('createDB', [Setup_FileCrudManager, Setup_MongoCrudManager], indirect=True)
+class TestThreadCRUD:
+    DEFAULT_NEW_THREAD = dict(
+        userId='1',
+        title='test_thread_title',
+        subject='test_thread_subject',
+    )
+    DEFAULT_UPDATE_THREAD = dict(
+        userId='123123',
+        title='test_thread_update',
+        subject='test_thread_update',
+        view='123123'
+    )
+
+    def createNewThreadProps(self, **kwargs):
+        return createNewProps(self.DEFAULT_NEW_THREAD, **kwargs)
+
+    def createUpdateThreadProps(self, **kwargs):
+        return createNewProps(self.DEFAULT_UPDATE_THREAD, **kwargs)
+
+    def test_createThreadShouldCreateEntryInDB(self, setupDB):
+        originalThreadCount = setupDB.getThreadCount()
+        props = self.createNewThreadProps()
+
+        setupDB.getRepo().createThread(props)
+
+        assert setupDB.getThreadCount() == originalThreadCount + 1
+        newThread = setupDB.findThreads(createSearchFilter(
+            'title', 'eq', [ self.DEFAULT_NEW_THREAD['title'] ]
+        ))[0]
+        for field, value in self.DEFAULT_NEW_THREAD.items():
+            assert newThread[field] == value
+
+    def test_createThreadShouldAutoGenerateFields(self, setupDB):
+        props = self.createNewThreadProps()
+
+        setupDB.getRepo().createThread(props)
+
+        newThread = setupDB.findThreads(createSearchFilter(
+            'title', 'eq', [ self.DEFAULT_NEW_THREAD['title'] ]
+        ))[0]
+        assert 'threadId' in newThread
+        assert 'createdAt' in newThread
+
+    def test_createThreadRaisesExceptionWhenUnknownField(self, setupDB):
+        props = self.createNewThreadProps(test_field=True)
+
+        with pytest.raises(EntityValidationError):
+            setupDB.getRepo().createThread(props)
+
+    def test_createThreadShouldRaiseExceptionWhenMissingRequiredFields(self, setupDB):
+        propsPatterns = [
+            self.createNewThreadProps(userId=None),
+            self.createNewThreadProps(title=None),
+            self.createNewThreadProps(subject=None),
+            self.createNewThreadProps(userId=None, subject=None),
+        ]
+
+        for props in propsPatterns:
+            with pytest.raises(EntityValidationError):
+                setupDB.getRepo().createThread(props)
+
+    def test_createThreadShouldRaiseExceptionWhenFieldTypesDiffer(self, setupDB):
+        propsPatterns = [
+            self.createNewThreadProps(userId=1),
+            self.createNewThreadProps(title=23.33),
+            self.createNewThreadProps(subject=False),
+            self.createNewThreadProps(userId=1.111, subject=True),
+        ]
+
+        for props in propsPatterns:
+            with pytest.raises(EntityValidationError):
+                setupDB.getRepo().createThread(props)
+
+    def test_createThreadShouldIncrementThreadIdCounter(self, setupDB):
+        originalCounter = setupDB.getCounter('threadId')
+        props = self.createNewThreadProps()
+
+        setupDB.getRepo().createThread(props)
+
+        assert setupDB.getCounter('threadId') == originalCounter + 1
+
+    def test_createThreadShouldReturnResult(self, setupDB):
+        props = self.createNewThreadProps()
+
+        result = setupDB.getRepo().createThread(props)
+
+        assert result == dict(createdCount=1)
+
+    def test_searchThreadByThreadIdsShouldReturnThreadFromDB(self, setupDB):
+        threadIdsToSearch = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()[:1]
+        ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToSearch)
+
+        result = setupDB.getRepo().searchThread(searchFilter)
+
+        threads = result['threads']
+        assert len(threads) == 1
+        assert threads[0]['threadId'] in threadIdsToSearch
+        assert result['returnCount'] == 1
+        assert result['matchedCount'] == 1
+
+    def test_searchThreadByMultipleThreadIdsShouldReturnThreadFromDB(self, setupDB):
+        threadIdsToSearch = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()[:2]
+        ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToSearch)
+
+        result = setupDB.getRepo().searchThread(searchFilter)
+
+        threads = result['threads']
+        assert len(threads) == 2
+        for thread in threads:
+            assert thread['threadId'] in threadIdsToSearch
+        assert result['returnCount'] == 2
+        assert result['matchedCount'] == 2
+
+    def test_searchThreadByNonExitantThreadIdShouldReturnNoThreads(self, setupDB):
+        searchFilter = createSearchFilter('threadId', 'eq', ['non_existant'])
+
+        result = setupDB.getRepo().searchThread(searchFilter)
+
+        threads = result['threads']
+        assert len(threads) == 0
+        assert result['returnCount'] == 0
+        assert result['matchedCount'] == 0
+
+    def test_searchThreadWithExplicitPagingShouldBeLimited(self, setupDB):
+        threadIdsToSearch = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()
+        ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToSearch)
+        paging = Paging(dict(
+            offset=8,
+            limit=DataCreator.THREAD_COUNT
+        ))
+
+        result = setupDB.getRepo().searchThread(searchFilter, paging)
+
+        threads = result['threads']
+        assert len(threads) == DataCreator.THREAD_COUNT - 8
+        assert result['returnCount'] == DataCreator.THREAD_COUNT - 8
+        assert result['matchedCount'] == DataCreator.THREAD_COUNT
+
+    def test_searchThreadByAggregateAndFilter(self, setupDB):
+        userIdCount = 2
+        expectedReturnCount = userIdCount
+        threadIdsToSearch = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()
+        ]
+        userIdsToSearch = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:userIdCount]
+        ]
+        searchFilter = AggregateFilter.createFilter('and', [
+            createSearchFilter('threadId', 'eq', threadIdsToSearch),
+            createSearchFilter('userId', 'eq', userIdsToSearch),
+        ])
+
+        result = setupDB.getRepo().searchThread(searchFilter)
+
+        threads = result['threads']
+        assert len(threads) == expectedReturnCount
+        assert result['returnCount'] == expectedReturnCount
+        assert result['matchedCount'] == expectedReturnCount
+
+    def test_searchThreadByAggregateORFilter(self, setupDB):
+        userIdCount = 2
+        expectedReturnCount = DataCreator.THREAD_COUNT
+        threadIdsToSearch = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()
+        ]
+        userIdsToSearch = [
+            user['userId'] for user in setupDB.getOriginalUsers()[:userIdCount]
+        ]
+        searchFilter = AggregateFilter.createFilter('or', [
+            createSearchFilter('threadId', 'eq', threadIdsToSearch),
+            createSearchFilter('userId', 'eq', userIdsToSearch),
+        ])
+
+        result = setupDB.getRepo().searchThread(searchFilter)
+
+        threads = result['threads']
+        assert len(threads) == expectedReturnCount
+        assert result['returnCount'] == expectedReturnCount
+        assert result['matchedCount'] == expectedReturnCount
+
+    def test_searchThreadWithNoFilterShouldReturnAllThreads(self, setupDB):
+        searchFilter = None
+
+        result = setupDB.getRepo().searchThread(searchFilter)
+
+        threads = result['threads']
+        assert len(threads) == DataCreator.THREAD_COUNT
+        assert result['returnCount'] == DataCreator.THREAD_COUNT
+        assert result['matchedCount'] == DataCreator.THREAD_COUNT
+    # search
+    # update
+    # delete
 
 
 ### utility functions here

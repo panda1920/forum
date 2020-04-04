@@ -4,6 +4,7 @@ This file houses the class MongoCrudManager.
 It implements the CrudManager class to make CRUD operations to a mongoDB.
 """
 import os
+import time
 
 from pymongo import MongoClient
 from contextlib import contextmanager
@@ -12,6 +13,7 @@ from server.database.crudmanager import CrudManager
 from server.database.paging import Paging
 from server.entity.user import NewUser, UpdateUser
 from server.entity.post import NewPost, UpdatePost
+from server.entity.thread import NewThread
 import server.exceptions as exceptions
 
 
@@ -110,13 +112,47 @@ class MongoCrudManager(CrudManager):
         query = searchFilter.getMongoFilter()
         update = self._createMongoUpdate(UpdatePost, post)
 
-        with self._mongoOperationHandling('Failed to create post'):
+        with self._mongoOperationHandling('Failed to update post'):
             result = self._db['posts'].update_many(query, update)
 
         return dict(
             matchedCount=result.matched_count,
             updatedCount=result.modified_count,
         )
+
+    def createThread(self, thread):
+        if not NewThread.validate(thread):
+            raise exceptions.EntityValidationError('failed to validate new thread object')
+
+        nextThreadId = self._getCounterAndIncrement('threadId')
+        thread['threadId'] = str(nextThreadId)
+        thread['createdAt'] = time.time()
+
+        with self._mongoOperationHandling('Failed to create new thread'):
+            self._db['threads'].insert_one(thread)
+
+        return dict(createdCount=1)
+
+    def searchThread(self, searchFilter, paging=None):
+        if paging is None:
+            paging = Paging()
+        query = {} if searchFilter is None else searchFilter.getMongoFilter()
+
+        with self._mongoOperationHandling('Failed to search for threads'):
+            threads = list( paging.slice(self._db['threads'].find(query)) )
+            matchedCount = self._db['threads'].count_documents(query)
+
+        return dict(
+            threads=threads,
+            matchedCount=matchedCount,
+            returnCount=len(threads),
+        )
+
+    def updateThread(self, searchFilter, thread):
+        raise NotImplementedError
+
+    def deleteThread(self, searchFilter):
+        raise NotImplementedError
 
     def _createMongoUpdate(self, entitySchema, updateProps):
         update = { '$set': {} }

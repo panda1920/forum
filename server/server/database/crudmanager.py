@@ -32,3 +32,15 @@ class CrudManager:
 
     def updatePost(self, searchFilter, post):
         raise NotImplementedError
+
+    def createThread(self, thread):
+        raise NotImplementedError
+
+    def searchThread(self, searchFilter, paging=None):
+        raise NotImplementedError
+
+    def updateThread(self, searchFilter, thread):
+        raise NotImplementedError
+
+    def deleteThread(self, searchFilter):
+        raise NotImplementedError
