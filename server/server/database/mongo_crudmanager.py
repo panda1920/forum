@@ -5,6 +5,8 @@ It implements the CrudManager class to make CRUD operations to a mongoDB.
 """
 import os
 import time
+import logging
+from collections import defaultdict
 
 from pymongo import MongoClient
 from contextlib import contextmanager
@@ -13,7 +15,7 @@ from server.database.crudmanager import CrudManager
 from server.database.paging import Paging
 from server.entity.user import NewUser, UpdateUser
 from server.entity.post import NewPost, UpdatePost
-from server.entity.thread import NewThread
+from server.entity.thread import NewThread, UpdateThread
 import server.exceptions as exceptions
 
 
@@ -121,14 +123,12 @@ class MongoCrudManager(CrudManager):
         )
 
     def createThread(self, thread):
-        if not NewThread.validate(thread):
-            raise exceptions.EntityValidationError('failed to validate new thread object')
-
-        nextThreadId = self._getCounterAndIncrement('threadId')
-        thread['threadId'] = str(nextThreadId)
-        thread['createdAt'] = time.time()
+        self._validateEntity(NewThread, thread)
 
         with self._mongoOperationHandling('Failed to create new thread'):
+            nextThreadId = self._getCounterAndIncrement('threadId')
+            thread['threadId'] = str(nextThreadId)
+            thread['createdAt'] = time.time()
             self._db['threads'].insert_one(thread)
 
         return dict(createdCount=1)
@@ -149,21 +149,42 @@ class MongoCrudManager(CrudManager):
         )
 
     def updateThread(self, searchFilter, thread):
-        raise NotImplementedError
+        self._validateEntity(UpdateThread, thread)
+
+        fil = searchFilter.getMongoFilter()
+        update = self._createMongoUpdate(UpdateThread, thread)
+        with self._mongoOperationHandling('Failed to update thread'):
+            result = self._db['threads'].update_many(fil, update)
+
+        return dict(
+            matchedCount=result.matched_count,
+            updatedCount=result.modified_count,
+        )
 
     def deleteThread(self, searchFilter):
-        raise NotImplementedError
+        query = searchFilter.getMongoFilter()
+        with self._mongoOperationHandling('Failed to delete thread'):
+            result = self._db['threads'].delete_many(query)
+
+        return dict(
+            deleteCount=result.deleted_count,
+        )
 
     def _createMongoUpdate(self, entitySchema, updateProps):
-        update = { '$set': {} }
-        for field in entitySchema.getUpdatableFields():
-            if field not in updateProps:
-                continue
-            update['$set'][field] = updateProps[field]
+        update = defaultdict(lambda: defaultdict(int))
+        fieldUpdates = updateProps.copy()
+        incrementField = fieldUpdates.pop('increment', None)
+
+        for field, value in fieldUpdates.items():
+            update['$set'][field] = value
+        if incrementField is not None:
+            update['$inc'][incrementField] = 1
+        
         return update
 
     def _validateEntity(self, entitySchema, entity):
         if not entitySchema.validate(entity):
+            logging.error(f'Failed to validate object: {entity}')
             raise exceptions.EntityValidationError(f'failed to validate {entitySchema.__name__}')
 
     def _createCounterQuery(self, fieldname):
@@ -173,16 +194,15 @@ class MongoCrudManager(CrudManager):
 
     def _getCounterAndIncrement(self, fieldname):
         counterQuery = self._createCounterQuery(fieldname)
-        counterValue = self._db['counters'].find_one(counterQuery)['value']
         update = { '$inc': { 'value': 1 } }
-        self._db['counters'].update_one(counterQuery, update)
+        counterValue = self._db['counters'].find_one_and_update(counterQuery, update)
 
-        return counterValue
+        return counterValue['value']
 
     @contextmanager
     def _mongoOperationHandling(self, errormsg):
         try:
             yield
         except Exception as e:
-            print(e)
+            logging.error(e)
             raise exceptions.FailedMongoOperation(errormsg)

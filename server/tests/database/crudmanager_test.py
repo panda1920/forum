@@ -52,13 +52,14 @@ class TestUserCRUD:
         mockuserauth = setupDB.getMockPassword()
         mockuserauth.hashPassword.return_value = 'hashed'
         userProps = self.createNewUserProps()
+        searchFilter = createSearchFilter('userName', 'eq', [ userProps['userName'] ])
 
-        assert len( setupDB.findUsers('userName', [ userProps['userName'] ]) ) == 0
+        assert len( setupDB.findUsers(searchFilter) ) == 0
         
         setupDB.getRepo().createUser(userProps)
 
         assert setupDB.getUserCount() == len( setupDB.getOriginalUsers() ) + 1
-        createdUsers = setupDB.findUsers('userName', [ userProps['userName'] ])
+        createdUsers = setupDB.findUsers(searchFilter)
         assert len(createdUsers) == 1
         createdUser = createdUsers[0]
         for prop, value in userProps.items():
@@ -72,11 +73,12 @@ class TestUserCRUD:
         mockuserauth = setupDB.getMockPassword()
         mockuserauth.hashPassword.return_value = 'hashed'
         userProps = self.createNewUserProps()
+        searchFilter = createSearchFilter('userName', 'eq', [ userProps['userName'] ])
         nextUserId = setupDB.getCounter('userId')
 
         setupDB.getRepo().createUser(userProps)
 
-        createdUser = setupDB.findUsers('userName', [ userProps['userName'] ])[0]
+        createdUser = setupDB.findUsers(searchFilter)[0]
 
         assert setupDB.getCounter('userId') == nextUserId + 1
         assert createdUser['userId'] == str(nextUserId)
@@ -110,12 +112,12 @@ class TestUserCRUD:
         userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
         searchFilter = createSearchFilter('userId', 'eq', [ userIdToDelete ])
 
-        assert len( setupDB.findUsers('userId', [userIdToDelete]) ) == 1
+        assert len( setupDB.findUsers(searchFilter) ) == 1
         
         setupDB.getRepo().deleteUser(searchFilter)
 
         assert setupDB.getUserCount() == len(setupDB.getOriginalUsers()) - 1
-        assert len( setupDB.findUsers('userId', [userIdToDelete]) ) == 0
+        assert len( setupDB.findUsers(searchFilter) ) == 0
 
     def test_deleteUserShouldRemoveMultipleUsersFromDB(self, setupDB):
         userIdsToDelete = [
@@ -123,11 +125,11 @@ class TestUserCRUD:
         ]
         searchFilter = createSearchFilter('userId', 'eq', userIdsToDelete)
 
-        assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 3
+        assert len( setupDB.findUsers(searchFilter) ) == 3
 
         setupDB.getRepo().deleteUser(searchFilter)
 
-        assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 0
+        assert len( setupDB.findUsers(searchFilter) ) == 0
 
     def test_deleteUserByUsernameOrUserIdShouldRemoveBothFromDB(self, setupDB):
         userIdsToDelete = [
@@ -136,18 +138,17 @@ class TestUserCRUD:
         userNamesToDelete = [
             user['userName'] for user in setupDB.getOriginalUsers()[-2:]
         ]
-        searchFilter = AggregateFilter.createFilter('or', [
-            createSearchFilter('userId', 'eq', userIdsToDelete),
-            createSearchFilter('userName', 'eq', userNamesToDelete),
-        ])
+        userIdSearch = createSearchFilter('userId', 'eq', userIdsToDelete)
+        userNameSearch = createSearchFilter('userName', 'eq', userNamesToDelete)
+        searchFilter = AggregateFilter.createFilter('or', [ userIdSearch, userNameSearch ])
 
-        assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 3
-        assert len( setupDB.findUsers('userName', userNamesToDelete) ) == 2
+        assert len( setupDB.findUsers(userIdSearch) ) == 3
+        assert len( setupDB.findUsers(userNameSearch) ) == 2
 
         setupDB.getRepo().deleteUser(searchFilter)
 
-        assert len( setupDB.findUsers('userId', userIdsToDelete) ) == 0
-        assert len( setupDB.findUsers('userName', userNamesToDelete) ) == 0
+        assert len( setupDB.findUsers(userIdSearch) ) == 0
+        assert len( setupDB.findUsers(userNameSearch) ) == 0
 
     def test_deleteUserWithNonExistantIdShouldDoNothing(self, setupDB):
         userIdToDelete = 'non_existant'
@@ -279,7 +280,7 @@ class TestUserCRUD:
 
         setupDB.getRepo().updateUser(searchFilter, userProps)
 
-        updatedUsers = setupDB.findUsers('userId', userIdsToUpdate)
+        updatedUsers = setupDB.findUsers(searchFilter)
         for user in updatedUsers:
             for field, value in userProps.items():
                 if field == 'password':
@@ -367,7 +368,9 @@ class TestPostCRUD:
         setupDB.getRepo().createPost(postProps)
 
         assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) + 1
-        createdPost = setupDB.findPosts('content', [ postProps['content'] ])
+        createdPost = setupDB.findPosts(createSearchFilter(
+            'content', 'eq', [ postProps['content'] ]
+        ))
         assert len(createdPost) == 1
         for field, value in postProps.items():
             assert createdPost[0][field] == value
@@ -378,8 +381,9 @@ class TestPostCRUD:
 
         setupDB.getRepo().createPost(postProps)
 
-        createdPost = setupDB.findPosts('content', [ postProps['content'] ])[0]
-
+        createdPost = setupDB.findPosts(createSearchFilter(
+            'content', 'eq', [ postProps['content'] ]
+        ))[0]
         assert setupDB.getCounter('postId') == nextPostId + 1
         assert createdPost['postId'] == str(nextPostId)
 
@@ -411,7 +415,9 @@ class TestPostCRUD:
         setupDB.getRepo().deletePost(searchFilter)
 
         assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) - 1
-        postsShouldHaveBeenDeleted = setupDB.findPosts('postId', [postIdToDelete])
+        postsShouldHaveBeenDeleted = setupDB.findPosts(createSearchFilter(
+            'postId', 'eq', [ postIdToDelete ]
+        ))
         assert len(postsShouldHaveBeenDeleted) == 0
 
     def test_deletePostShouldRemoveMultiplePostFromDB(self, setupDB):
@@ -423,7 +429,9 @@ class TestPostCRUD:
         setupDB.getRepo().deletePost(searchFilter)
 
         assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) - len(postIdsToDelete)
-        postsShouldHaveBeenDeleted = setupDB.findPosts('postId', postIdsToDelete)
+        postsShouldHaveBeenDeleted = setupDB.findPosts(createSearchFilter(
+            'postId', 'eq', postIdsToDelete
+        ))
         assert len(postsShouldHaveBeenDeleted) == 0
 
     def test_deletePostWithNonExistantIdShouldDoNothing(self, setupDB):
@@ -582,7 +590,9 @@ class TestPostCRUD:
 
         setupDB.getRepo().updatePost(searchFilter, update)
 
-        postsInDB = setupDB.findPosts('postId', postIdsToUpdate)
+        postsInDB = setupDB.findPosts(createSearchFilter(
+            'postId', 'eq', postIdsToUpdate
+        ))
         for post in postsInDB:
             for field in UpdatePost.getUpdatableFields():
                 assert post[field] == update[field]
@@ -648,7 +658,7 @@ class TestThreadCRUD:
         userId='123123',
         title='test_thread_update',
         subject='test_thread_update',
-        view='123123'
+        views=123123,
     )
 
     def createNewThreadProps(self, **kwargs):
@@ -833,9 +843,148 @@ class TestThreadCRUD:
         assert len(threads) == DataCreator.THREAD_COUNT
         assert result['returnCount'] == DataCreator.THREAD_COUNT
         assert result['matchedCount'] == DataCreator.THREAD_COUNT
-    # search
-    # update
-    # delete
+    
+    def test_updateThreadShouldUpdateMatchedThreadOnDB(self, setupDB):
+        threadIdsToUpdate = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()[:2]
+        ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
+        expectedProps = self.createUpdateThreadProps()
+
+        setupDB.getRepo().updateThread(searchFilter, expectedProps)
+
+        updatedThreads = setupDB.findThreads(searchFilter)
+        assert len(updatedThreads) == len(threadIdsToUpdate)
+        for thread in updatedThreads:
+            for field, expectedValue in expectedProps.items():
+                assert thread[field] == expectedValue
+
+    def test_updateThreadShouldBeCapableOfIncrementingFields(self, setupDB):
+        threadIdsToUpdate = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()[:2]
+        ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
+        incrementCount = 3
+        for i in range(incrementCount):
+            setupDB.getRepo().updateThread(searchFilter, dict(increment='views'))
+
+        updatedThreads = setupDB.findThreads(searchFilter)
+        assert len(updatedThreads) == len(threadIdsToUpdate)
+        for thread in updatedThreads:
+            assert thread['views'] == incrementCount
+
+    def test_updateThreadShouldReturnUpdateResult(self, setupDB):
+        mock = setupDB.getMockPassword()
+        mock.hashPassword.return_value = 'hashed'
+        threadIdsToUpdate = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()[:2]
+        ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
+        threadProps = self.createUpdateThreadProps()
+
+        result = setupDB.getRepo().updateThread(searchFilter, threadProps)
+
+        assert result['matchedCount'] == len(threadIdsToUpdate)
+        assert result['updatedCount'] == len(threadIdsToUpdate)
+
+    def test_updateThreadShouldUpdateMatchedThreadsWhenUsingAggregateFilters(self, setupDB):
+        mock = setupDB.getMockPassword()
+        mock.hashPassword.return_value = 'hashed'
+        threadIdsToUpdate = [ thread['threadId'] for thread in setupDB.getOriginalThreads()[:10] ]
+        threadTitleToUpdate = [ thread['title'] for thread in setupDB.getOriginalThreads()[:1] ]
+        searchFilter = AggregateFilter.createFilter('and', [
+            createSearchFilter('threadId', 'eq', threadIdsToUpdate),
+            createSearchFilter('title', 'eq', threadTitleToUpdate),
+        ])
+        threadProps = self.createUpdateThreadProps()
+
+        result = setupDB.getRepo().updateThread(searchFilter, threadProps)
+
+        assert result['matchedCount'] == 1
+        assert result['updatedCount'] == 1
+
+    def test_updateThreadByWrongUpdatePropertiesRaisesException(self, setupDB):
+        threadIdsToUpdate = [ thread['threadId'] for thread in setupDB.getOriginalThreads()[:10] ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
+        threadUpdateProperties = [
+            self.createUpdateThreadProps(threadId=1),
+            self.createUpdateThreadProps(displayName=1),
+            self.createUpdateThreadProps(password=1),
+        ]
+
+        for threadUpdate in threadUpdateProperties:
+            with pytest.raises(EntityValidationError):
+                setupDB.getRepo().updateThread(searchFilter, threadUpdate)
+
+    def test_updateThreadWithUnexpectedPropertiesRaisesException(self, setupDB):
+        threadIdsToUpdate = [ thread['threadId'] for thread in setupDB.getOriginalThreads()[:10] ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
+        threadUpdateProperties = [
+            self.createUpdateThreadProps(createdAt=30.11),
+            self.createUpdateThreadProps(threadName='Smithy'),
+            self.createUpdateThreadProps(someExtraProperty='SomeExtra'),
+        ]
+
+        for threadUpdate in threadUpdateProperties:
+            with pytest.raises(EntityValidationError):
+                setupDB.getRepo().updateThread(searchFilter, threadUpdate)
+
+    def test_deleteThreadShouldRemoveThreadFromDB(self, setupDB):
+        threadIdToDelete = setupDB.getOriginalThreads()[0]['threadId']
+        searchFilter = createSearchFilter('threadId', 'eq', [ threadIdToDelete ])
+
+        setupDB.getRepo().deleteThread(searchFilter)
+
+        assert setupDB.getThreadCount() == len(setupDB.getOriginalThreads()) - 1
+        threadsShouldHaveBeenDeleted = setupDB.findThreads(searchFilter)
+        assert len(threadsShouldHaveBeenDeleted) == 0
+
+    def test_deleteThreadShouldRemoveMultipleThreadFromDB(self, setupDB):
+        threadIdsToDelete = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()[:3]
+        ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToDelete)
+
+        setupDB.getRepo().deleteThread(searchFilter)
+
+        assert setupDB.getThreadCount() == len(setupDB.getOriginalThreads()) - len(threadIdsToDelete)
+        threadsShouldHaveBeenDeleted = setupDB.findThreads(searchFilter)
+        assert len(threadsShouldHaveBeenDeleted) == 0
+
+    def test_deleteThreadWithNonExistantIdShouldDoNothing(self, setupDB):
+        threadIdToDelete = 'non_existant'
+        searchFilter = createSearchFilter('threadId', 'eq', [ threadIdToDelete ])
+
+        setupDB.getRepo().deleteThread(searchFilter)
+
+        setupDB.validateCreatedThreads()
+
+    def test_deleteThreadWithDifferentCriteriasShouldDeleteAll(self, setupDB):
+        threadIdsToDelete = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()[:3]
+        ]
+        keywordToDelete = DataCreator.USERS[-1]
+        searchFilter = AggregateFilter.createFilter('or', [
+            createSearchFilter('threadId', 'eq', threadIdsToDelete),
+            createSearchFilter('title', 'fuzzy', [ keywordToDelete ]),
+        ])
+        expectedDeleteCount = len(threadIdsToDelete) + 1
+
+        setupDB.getRepo().deleteThread(searchFilter)
+
+        assert setupDB.getThreadCount() == len(setupDB.getOriginalThreads()) - expectedDeleteCount
+        assert len( setupDB.findThreads(searchFilter) ) == 0
+
+    def test_deleteThreadShouldReturnResultAsDict(self, setupDB):
+        threadIdsToDelete = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()[:3]
+        ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToDelete)
+
+        result = setupDB.getRepo().deleteThread(searchFilter)
+
+        assert 'deleteCount' in result
+        assert result['deleteCount'] == len(threadIdsToDelete)
 
 
 ### utility functions here

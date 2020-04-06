@@ -69,7 +69,7 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
-    def findUsers(self, fieldname, fieldvalues):
+    def findUsers(self, searchFilter):
         """
         returns all users that match the criteria
         """
@@ -95,7 +95,7 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
-    def findPosts(self, fieldname, fieldvalues):
+    def findPosts(self, searchFilter):
         """
         returns all posts that match the criteria
         """
@@ -206,10 +206,10 @@ class Setup_FileCrudManager(SetupCrudManager):
     def getOriginalUsers(self):
         return self._testdata['users']
 
-    def findUsers(self, fieldname, fieldvalues):
+    def findUsers(self, searchFilter):
         return [
             user for user in self.getAllUsers()
-            if user[fieldname] in fieldvalues
+            if searchFilter.matches(user)
         ]
 
     def getAllPosts(self):
@@ -218,10 +218,10 @@ class Setup_FileCrudManager(SetupCrudManager):
     def getPostCount(self):
         return len( self.getAllPosts() )
 
-    def findPosts(self, fieldname, fieldvalues):
+    def findPosts(self, searchFilter):
         return [
             post for post in self.getAllPosts()
-            if post[fieldname] in fieldvalues
+            if searchFilter.matches(post)
         ]
 
     def getOriginalPosts(self):
@@ -320,8 +320,8 @@ class Setup_MongoCrudManager(SetupCrudManager):
     def getOriginalUsers(self):
         return self._testdata['users']
 
-    def findUsers(self, fieldname, fieldvalues):
-        query = { fieldname: { '$in': fieldvalues } }
+    def findUsers(self, searchFilter):
+        query = searchFilter.getMongoFilter()
         return list( self._getDB()['users'].find(query) )
 
     def getAllPosts(self):
@@ -330,8 +330,8 @@ class Setup_MongoCrudManager(SetupCrudManager):
     def getPostCount(self):
         return self._getDB()['posts'].count_documents({})
 
-    def findPosts(self, fieldname, fieldvalues):
-        query = { fieldname: { '$in': fieldvalues } }
+    def findPosts(self, searchFilter):
+        query = searchFilter.getMongoFilter()
         return list( self._getDB()['posts'].find(query) )
 
     def getOriginalPosts(self):

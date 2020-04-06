@@ -49,7 +49,7 @@ class NewThread:
 
 class UpdateThread:
     """
-    This class defines thread entity in its update phase.
+    This class defines object to update thread entities.
     """
     _schema = {
         'userId': {
@@ -68,6 +68,11 @@ class UpdateThread:
             'type': 'integer',
             'required': False,
         },
+        'increment': {
+            'type': 'string',
+            'allowed': [ 'views' ],
+            'required': False,
+        },
     }
 
     _validator = Validator(_schema, allow_unknown=False)
@@ -80,7 +85,7 @@ class UpdateThread:
     def getUpdatableFields(cls):
         fields = [
             field for field in cls._schema.keys()
-            if cls._schema[field]['required'] is False
+            if cls._schema[field] != 'increment'
         ]
         
         return fields

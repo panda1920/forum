@@ -3,15 +3,15 @@
 This file houses class for file-based database system
 Used during the early phases of development
 """
-
 import json
 import time
+import logging
 
 from server.database.crudmanager import CrudManager
 from server.database.paging import Paging
 from server.entity.user import NewUser, UpdateUser
 from server.entity.post import NewPost, UpdatePost
-from server.entity.thread import NewThread
+from server.entity.thread import NewThread, UpdateThread
 from server.exceptions import EntityValidationError
 
 
@@ -74,6 +74,7 @@ class FileCrudManager(CrudManager):
 
     def createUser(self, user):
         if not NewUser.validate(user):
+            logging.error(f'failed to validate error: {user}')
             raise EntityValidationError('failed to validate new user object')
 
         user['createdAt'] = time.time()
@@ -96,8 +97,8 @@ class FileCrudManager(CrudManager):
                 user for user in users
                 if searchFilter.matches(user)
             ]
-
         returnUsers = paging.slice(matchedUsers)
+        
         return {
             'users': returnUsers,
             'returnCount': len(returnUsers),
@@ -109,12 +110,14 @@ class FileCrudManager(CrudManager):
 
     def updateUser(self, searchFilter, user):
         if not UpdateUser.validate(user):
+            logging.error(f'failed to validate error: {user}')
             raise EntityValidationError('Failed to validate user update object')
         
         return self._updateUserImpl(searchFilter, user)
         
     def createPost(self, post):
         if not NewPost.validate(post):
+            logging.error(f'failed to validate error: {post}')
             raise EntityValidationError('failed to validate new post object')
 
         post['createdAt'] = time.time()
@@ -149,12 +152,14 @@ class FileCrudManager(CrudManager):
 
     def updatePost(self, searchFilter, post):
         if not UpdatePost.validate(post):
+            logging.error(f'failed to validate error: {post}')
             raise EntityValidationError('failed to validate post update object')
 
         return self._updatePostImpl(searchFilter, post)
 
     def createThread(self, thread):
         if not NewThread.validate(thread):
+            logging.error(f'failed to validate error: {thread}')
             raise EntityValidationError('failed to validate new thread object')
         
         thread['createdAt'] = time.time()
@@ -167,7 +172,7 @@ class FileCrudManager(CrudManager):
 
     def searchThread(self, searchFilter, paging=None):
         if paging is None:
-            paging = Paging()    
+            paging = Paging()
 
         with self._threadsFile.open('r', encoding='utf-8') as f:
             threads = json.load(f)
@@ -188,10 +193,14 @@ class FileCrudManager(CrudManager):
         )
 
     def updateThread(self, searchFilter, thread):
-        raise NotImplementedError
+        if not UpdateThread.validate(thread):
+            logging.error(f'failed to validate error: {thread}')
+            raise EntityValidationError('Failed to validate thread update object')
+
+        return self._updateThreadImpl(searchFilter, thread)
 
     def deleteThread(self, searchFilter):
-        raise NotImplementedError
+        return self._deleteThreadImpl(searchFilter)
 
     @updateJSONFileContent('_usersFile')
     def _createUserImpl(self, user, currentUsers=None):
@@ -281,7 +290,46 @@ class FileCrudManager(CrudManager):
     @updateJSONFileContent('_threadsFile')
     def _createThreadImpl(self, thread, currentThreads=None):
         currentThreads.append(thread)
-        
+
+    @updateJSONFileContent('_threadsFile')
+    def _updateThreadImpl(self, searchFilter, update, currentThreads=None):
+        threadIdxToUpdate = [
+            idx for idx, t in enumerate(currentThreads)
+            if searchFilter.matches(t)
+        ]
+
+        fieldUpdate = update.copy()
+        incrementFieldToUpdate = update.pop('increment', None)
+
+        for idx in threadIdxToUpdate:
+            for field in fieldUpdate.keys():
+                currentThreads[idx][field] = fieldUpdate[field]
+            if incrementFieldToUpdate is not None:
+                currentThreads[idx][incrementFieldToUpdate] += 1
+
+        return dict(
+            matchedCount=len(threadIdxToUpdate),
+            updatedCount=len(threadIdxToUpdate),
+        )
+
+    @updateJSONFileContent('_threadsFile')
+    def _deleteThreadImpl(self, searchFilter, currentThreads=None):
+        deleteCount = 0
+
+        def matches(thread):
+            isMatched = searchFilter.matches(thread)
+            if isMatched:
+                nonlocal deleteCount
+                deleteCount += 1
+            return isMatched
+
+        currentThreads[:] = [
+            thread for thread in currentThreads
+            if not matches(thread)
+        ]
+
+        return dict(deleteCount=deleteCount)
+
     def _getCounter(self, fieldname):
         with self._countersFile.open('r', encoding='utf-8') as f:
             counters = json.load(f)

@@ -80,6 +80,7 @@ class DataCreator:
                 userId=user['userId'],
                 title=f'{user["displayName"]}\'s thread',
                 subject='Subject of this thread',
+                views=0,
                 createdAt=now,
             ))
 
