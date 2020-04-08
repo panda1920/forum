@@ -29,14 +29,8 @@ def createUsersObject(*users):
     }
 
 
-def createSearchResultObject(result):
-    return dict(
-        searchResult=result
-    )
-
-
-def createSearchResultResponse(result):
-    return createJSONResponse([ dict(searchResult=result) ], 200)
+def createResultResponse(result, status_code=200):
+    return createJSONResponse([ dict(result=result) ], status_code)
 
 
 def createJSONErrorResponse(error, datas=[], additionalHeaders={}):

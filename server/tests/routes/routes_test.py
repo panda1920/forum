@@ -10,14 +10,19 @@ import tests.mocks as mocks
 from server.config import Config
 import server.exceptions as exceptions
 
-DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES = 'some_value'
-DEFAULT_RETURN_CREATENEWPOST = None
-DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES = 'some_value'
-DEFAULT_RETURN_SIGNUP = None
+DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES = 'some_users'
+DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES = 'some_posts'
+DEFAULT_RETURN_SEARCHTHREADSBYKEYVALUES = 'some_threads'
+DEFAULT_RETURN_SIGNUP = dict(created='user')
+DEFAULT_RETURN_CREATENEWPOST = dict(created='post')
+DEFAULT_RETURN_CREATENEWTHREAD = dict(created='thread')
 DEFAULT_RETURN_UPDATEUSER = 'some_value_updateuser'
 DEFAULT_RETURN_UPDATEPOST = 'some_value_updatepost'
+DEFAULT_RETURN_UPDATETHREAD = 'some_value_updatethread'
 DEFAULT_RETURN_DELETEUSER = dict(deleteCount=1)
 DEFAULT_RETURN_DELETEPOST = dict(deleteCount=1)
+DEFAULT_RETURN_DELETETHREAD = dict(deleteCount=1)
+DEFAULT_RETURN_LOGOUT = dict(logout=True)
 DEFAULT_USER_RETURNED = dict(
     userId='1',
     displayName='Bobby',
@@ -35,6 +40,7 @@ def mockApp(app):
     mockCreate = mocks.createMockEntityCreationService()
     mockCreate.signup.return_value = DEFAULT_RETURN_SIGNUP
     mockCreate.createNewPost.return_value = DEFAULT_RETURN_CREATENEWPOST
+    mockCreate.createNewThread.return_value = DEFAULT_RETURN_CREATENEWTHREAD
     app.config['CREATION_SERVICE'] = mockCreate
     
     mockSearch = mocks.createMockSearchService()
@@ -54,6 +60,7 @@ def mockApp(app):
 
     mockUserAuth = mocks.createMockUserAuth()
     mockUserAuth.login.return_value = DEFAULT_USER_RETURNED
+    mockUserAuth.logout.return_value = DEFAULT_RETURN_LOGOUT
     app.config['AUTHENTICATION_SERVICE'] = mockUserAuth
 
     mockSessionUser = mocks.createMockSessionMiddleware()
@@ -93,7 +100,7 @@ class TestPostAPIs:
 
             assert response.status_code == 200
             jsonResponse = response.get_json()
-            assert jsonResponse['searchResult'] == DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES
+            assert jsonResponse['result'] == DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES
 
     def test_searchPostsReturnsErrorWhenExceptionWasRaised(self, mockApp):
         mockSearch = Config.getSearchService(mockApp)
@@ -148,7 +155,7 @@ class TestPostAPIs:
 
             assert response.status_code == 200
             jsonResponse = response.get_json()
-            assert jsonResponse['searchResult'] == DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES
+            assert jsonResponse['result'] == DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES
 
     def test_searchPostsByIdAPIReturnsErrorWhenServiceRaisesException(self, mockApp):
         mockSearch = Config.getSearchService(mockApp)
@@ -180,7 +187,7 @@ class TestPostAPIs:
 
             mockCreate.createNewPost.assert_called_with(newPostData)
 
-    def test_createPostAPIReturns201(self, mockApp):
+    def test_createPostAPIReturns201AndReturnValueFromService(self, mockApp):
         Config.getCreationService(mockApp)
         newPostData = dict(
             userId='0',
@@ -192,6 +199,7 @@ class TestPostAPIs:
             response = client.post(url, json=newPostData)
 
             assert response.status_code == 201
+            assert response.get_json()['result'] == DEFAULT_RETURN_CREATENEWPOST
 
     def test_createPostAPIReturnsErrorWhenServiceRaisesException(self, mockApp):
         mockCreate = Config.getCreationService(mockApp)
@@ -213,8 +221,22 @@ class TestPostAPIs:
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_updatePostShouldPassDataToServiceAndReturn200(self, client, mockApp):
+    def test_updatePostShouldPassDataToService(self, client, mockApp):
         mockUpdate = Config.getUpdateService(mockApp)
+        postIdToUpdate = '1'
+        url = f'{self.POSTSAPI_BASE_URL}/{postIdToUpdate}/update'
+        updateData = {
+            'content': 'Updated content!'
+        }
+
+        client.patch(url, json=updateData)
+
+        mockUpdate.updatePostByKeyValues.assert_called_with(dict(
+            **updateData,
+            postId=postIdToUpdate
+        ))
+
+    def test_updatePostShouldReturn200AndReturnValueFromService(self, client, mockApp):
         postIdToUpdate = '1'
         url = f'{self.POSTSAPI_BASE_URL}/{postIdToUpdate}/update'
         updateData = {
@@ -224,10 +246,7 @@ class TestPostAPIs:
         response = client.patch(url, json=updateData)
 
         assert response.status_code == 200
-        mockUpdate.updatePostByKeyValues.assert_called_with(dict(
-            **updateData,
-            postId=postIdToUpdate
-        ))
+        assert response.get_json()['result'] == DEFAULT_RETURN_UPDATEPOST
 
     def test_updatePostByPostedMimeTypeNotJsonReturnsError(self, client, mockApp):
         postIdToUpdate = '1'
@@ -259,20 +278,6 @@ class TestPostAPIs:
 
             assert response.status_code == e.getStatusCode()
 
-    # def test_deletePostReturns200(self, mockApp):
-    #     postIdToDelete = '1'
-    #     url = f'{self.POSTSAPI_BASE_URL}/{postIdToDelete}/delete'
-    #     mockDB = Config.getDB(mockApp)
-
-    #     with mockApp.test_client() as client:
-    #         response = client.delete(url)
-
-    #         assert response.status_code == 200
-
-    #         assert mockDB.deletePost.call_count == 1
-    #         argPassed = mockDB.deletePost.call_args[0][0]
-    #         assert argPassed == [postIdToDelete]
-
     def test_deletePostByIdShouldPassPostIdToService(self, mockApp):
         postIdToDelete = '1'
         url = f'{self.POSTSAPI_BASE_URL}/{postIdToDelete}/delete'
@@ -292,7 +297,7 @@ class TestPostAPIs:
 
             assert response.status_code == 200
             responseJson = response.get_json()
-            responseJson['deleteCount'] == DEFAULT_RETURN_DELETEPOST
+            responseJson['result'] == DEFAULT_RETURN_DELETEPOST
 
     def test_deletePostByIdShouldReturnsErrorWhenExceptionRaised(self, mockApp):
         postIdToDelete = '1'
@@ -336,7 +341,7 @@ class TestUserAPIs:
             jsonResponse = response.get_json()
 
             assert response.status_code == 200
-            assert jsonResponse['searchResult'] == DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
+            assert jsonResponse['result'] == DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
         
     def test_searchUsersReturnsErrorWhenServiceRaisesException(self, mockApp):
         mockSearch = Config.getSearchService(mockApp)
@@ -377,7 +382,7 @@ class TestUserAPIs:
 
             mockSearch.searchUsersByKeyValues.assert_called_with(dict(userId=userId))
 
-    def test_searchUserByExplicitIDReturns200AndSearchResultFromService(self, mockApp):
+    def test_searchUserByExplicitIDReturns200AndresultFromService(self, mockApp):
         userId = '11111111'
         url = f'{self.USERAPI_BASE_URL}/{userId}'
 
@@ -386,7 +391,7 @@ class TestUserAPIs:
             jsonResponse = response.get_json()
 
             assert response.status_code == 200
-            assert jsonResponse['searchResult'] == DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
+            assert jsonResponse['result'] == DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
 
     def test_searchUserByExplicitIDReturnsErrorWhenServiceRaisesException(self, mockApp):
         mockSearch = Config.getSearchService(mockApp)
@@ -419,7 +424,7 @@ class TestUserAPIs:
 
             mockCreate.signup.assert_called_with(userProperties)
 
-    def test_createUserReturns201WhenSuccess(self, mockApp):
+    def test_createUserReturns201AndResultFromServiceWhenSuccess(self, mockApp):
         userProperties = {
             'userName': 'joe@myforumwebapp.com',
             'displayName': 'joe',
@@ -431,6 +436,8 @@ class TestUserAPIs:
             response = client.post(url, json=userProperties)
 
             assert response.status_code == 201
+            response_json = response.get_json()
+            assert response_json['result'] == DEFAULT_RETURN_SIGNUP
 
     def test_createUserReturnsErrorWhenServiceRaisesException(self, mockApp):
         mockCreate = Config.getCreationService(mockApp)
@@ -464,10 +471,11 @@ class TestUserAPIs:
         response = client.patch(url, json=userProperties)
 
         assert response.status_code == 200
-        mockUpdate.updateUserByKeyValues(dict(
+        mockUpdate.updateUserByKeyValues.assert_called_with(dict(
             userId=userIdToUpdate,
             **userProperties
         ))
+        assert response.get_json()['result'] == DEFAULT_RETURN_UPDATEUSER
 
     def test_updateUserReturnsErrorWhenNonJsonPassed(self, client, mockApp):
         requestDataToTest = 'some_random_string'
@@ -520,7 +528,7 @@ class TestUserAPIs:
 
             assert response.status_code == 200
             responseJson = response.get_json()
-            responseJson['deleteCount'] == DEFAULT_RETURN_DELETEUSER['deleteCount']
+            responseJson['result'] == DEFAULT_RETURN_DELETEUSER
 
     def test_deleteUserReturnsErrorWhenDeleteUserRaisesException(self, mockApp):
         userIdToDelete = '1'
@@ -552,7 +560,7 @@ class TestUserAPIs:
         assert userauth.login.call_count == 1
         userauth.login.assert_called_with(userCredentials)
 
-    def test_loginShouldReturnUserInfoOnSuccess(self, mockApp, client):
+    def test_loginShouldReturn200AndResultFromServiceOnSuccess(self, mockApp, client):
         userCredentials = dict(
             userName='Bobby',
             password='password',
@@ -561,9 +569,9 @@ class TestUserAPIs:
 
         response = client.post(url, json=userCredentials)
 
+        assert response.status_code == 200
         data = response.get_json()
-        assert 'users' in data
-        assert data['users'][0] == DEFAULT_USER_RETURNED
+        assert data['result'] == DEFAULT_USER_RETURNED
 
     def test_loginShouldReturnErrorWhenLoginRaisesException(self, mockApp):
         userCredentials = dict(
@@ -589,10 +597,17 @@ class TestUserAPIs:
         url = f'{self.USERAPI_BASE_URL}/logout'
         userauth = Config.getAuthService(mockApp)
 
+        client.post(url)
+
+        userauth.logout.assert_called_once()
+
+    def test_logoutShouldReturn200AndResultFromService(self, mockApp, client):
+        url = f'{self.USERAPI_BASE_URL}/logout'
+
         response = client.post(url)
 
         assert response.status_code == 200
-        userauth.logout.assert_called_once()
+        assert response.get_json()['result'] == DEFAULT_RETURN_LOGOUT
 
     def test_logoutShouldReturnErrorWhenExceptionWasRaised(self, mockApp):
         url = f'{self.USERAPI_BASE_URL}/logout'
@@ -627,6 +642,16 @@ class TestUserAPIs:
             mockSessionUser.addCurrentUserToResponse.assert_called_once()
             assert response.get_json() == expectedData
 
+    def test_sessionShouldNotCallSearchService(self, mockApp):
+        search = Config.getSearchService(mockApp)
+
+        url = f'{self.USERAPI_BASE_URL}/session'
+        with mockApp.test_client() as client:
+            response = client.get(url).get_json()
+
+            assert search.searchUsersByKeyValues.call_count == 0
+            assert 'result' not in response
+
     def test_sessionShouldReturnErrorWhenExceptionWasRaised(self, mockApp):
         exceptionsToTest = [
             exceptions.FailedMongoOperation,
@@ -641,6 +666,50 @@ class TestUserAPIs:
                 response = client.get(url)
 
                 assert response.status_code == e.getStatusCode()
+
+
+class TestThreadAPIs:
+    THREAD_API_BASE = '/v1/thread'
+
+    def test_searchThreadShouldReturn200(self, client):
+        searchPostURL = f'{self.THREAD_API_BASE }'
+        
+        response = client.post(searchPostURL)
+
+        assert response.status_code == 200
+
+    def test_searchThreadByExplicitIdShouldReturn200(self, client):
+        threadId = '1'
+        searchPostURL = f'{self.THREAD_API_BASE }/{threadId}'
+        
+        response = client.post(searchPostURL)
+
+        assert response.status_code == 200
+
+    def test_createThreadShouldReturn201(self, client):
+        createThreadURL = f'{self.THREAD_API_BASE}/create'
+        data = dict()
+
+        response = client.post(createThreadURL, json=data)
+
+        assert response.status_code == 201
+
+    def test_updateThreadByIdShouldReturn200(self, client):
+        threadId = '1'
+        updateThreadURL = f'{self.THREAD_API_BASE}/update/{threadId}'
+        data = dict()
+
+        response = client.patch(updateThreadURL, json=data)
+
+        assert response.status_code == 200
+
+    def test_deleteThreadByIdShouldReturn200(self, client):
+        threadId = '1'
+        deleteThreadURL = f'{self.THREAD_API_BASE}/delete/{threadId}'
+
+        response = client.delete(deleteThreadURL)
+
+        assert response.status_code == 202
 
 
 class TestCORS:

@@ -29,7 +29,7 @@ repo = MongoCrudManager(
 )
 # repo = FileCrudManager(Path(DATA_LOCATION), AUTHENTICATION_SERVICE)
 flask_context = FlaskContext()
-creation_service = EntityCreationService(repo, PrimitiveFilter)
+creation_service = EntityCreationService(repo, PrimitiveFilter, flask_context)
 search_service = SearchService(repo, PrimitiveFilter, AggregateFilter, Paging)
 update_service = UpdateService(repo, PrimitiveFilter)
 delete_service = DeleteService(repo, flask_context)

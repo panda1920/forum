@@ -4,24 +4,30 @@ This file houses tests for entity_creation_service.py
 """
 
 import pytest
-from unittest.mock import ANY
 
 import tests.mocks as mocks
 import server.exceptions as exceptions
 from server.services.entity_creation_service import EntityCreationService
 
-
+OWNER_ID = '1'
+DEFAULT_SESSION_USER = dict(userId=OWNER_ID)
 CREATE_USER_RETURN = dict(createdCount=1)
 CREATE_POST_RETURN = dict(createdCount=1)
+CREATE_THREAD_RETURN = dict(createdCount=1)
 
 
 @pytest.fixture(scope='function')
 def service():
-    mockDB = mocks.createMockDB()
-    mockDB.createUser.return_value = CREATE_USER_RETURN
-    mockDB.createPost.return_value = CREATE_POST_RETURN
-    mockFilter = mocks.createMockFilter()
-    yield EntityCreationService(mockDB, mockFilter)
+    mock_repo = mocks.createMockDB()
+    mock_repo.createUser.return_value = CREATE_USER_RETURN
+    mock_repo.createPost.return_value = CREATE_POST_RETURN
+    mock_repo.createThread.return_value = CREATE_THREAD_RETURN
+    
+    mock_filter = mocks.createMockFilter()
+
+    mock_context = mocks.createMockFlaskContext()
+    
+    yield EntityCreationService(mock_repo, mock_filter, mock_context)
 
 
 class TestSignupUser:
@@ -42,26 +48,26 @@ class TestSignupUser:
         service._filter.createFilter.return_value = self.DEFAULT_CREATED_FILTER
 
     def test_signupCalls2CRUDMethods(self, service):
-        mockDB = service._repo
-        mockFilter = service._filter
+        mock_repo = service._repo
+        mock_filter = service._filter
 
         service.signup(self.DEFAULT_KEYVALUES)
 
-        mockFilter.createFilter.assert_called_with(dict(
+        mock_filter.createFilter.assert_called_with(dict(
             field='userName',
             operator='eq',
             value=[ self.DEFAULT_KEYVALUES['userName'] ],
         ))
-        mockDB.searchUser.assert_called_with(self.DEFAULT_CREATED_FILTER)
-        mockDB.createUser.assert_called_with(dict(
+        mock_repo.searchUser.assert_called_with(self.DEFAULT_CREATED_FILTER)
+        mock_repo.createUser.assert_called_with(dict(
             **self.DEFAULT_KEYVALUES,
             displayName='tommy',
             imageUrl=EntityCreationService.GENERIC_PORTRAIT_IMAGE_URL
         ))
 
     def test_sigupRaisesExceptionWhenSearchUserReturnsUsers(self, service):
-        mockDB = service._repo
-        mockDB.searchUser.return_value = dict(
+        mock_repo = service._repo
+        mock_repo.searchUser.return_value = dict(
             users=['some_user'],
             returnCount=1,
             matchedCount=1,
@@ -70,7 +76,7 @@ class TestSignupUser:
         with pytest.raises(exceptions.DuplicateUserError):
             service.signup(self.DEFAULT_KEYVALUES)
 
-        assert mockDB.createUser.call_count == 0
+        assert mock_repo.createUser.call_count == 0
 
     def test_signupPropagatesExceptionFromSearchUser(self, service):
         exception = exceptions.ServerMiscError
@@ -96,36 +102,69 @@ class TestSignupUser:
     def test_signupShouldReturnResultFromRepo(self, service):
         result = service.signup(self.DEFAULT_KEYVALUES)
         
-        assert result == { 'result': CREATE_USER_RETURN }
+        assert result == CREATE_USER_RETURN
 
 
 class TestCreateNewPost:
     DEFAULT_KEYVALUES = dict(
+        userId=OWNER_ID,
         content='This is test content',
         random_key1='key1',
         random_key2='key2',
     )
 
-    def test_createNewPostPassesDefaultContentAndUserIdToDB(self, service):
-        mockDB = service._repo
+    @pytest.fixture(scope='function', autouse=True)
+    def setup_defaultreturn(self, service):
+        service._context.read_session.return_value = DEFAULT_SESSION_USER
+
+    def test_createNewPostShouldPassDefaultKeyValuesToRepo(self, service):
+        mock_repo = service._repo
         
         service.createNewPost(self.DEFAULT_KEYVALUES)
 
-        mockDB.createPost.call_count == 1
-        mockDB.createPost.assert_called_with(dict(
-            content=self.DEFAULT_KEYVALUES['content'],
-            userId=ANY
-        ))
+        mock_repo.createPost.call_count == 1
+        mock_repo.createPost.assert_called_with(self.DEFAULT_KEYVALUES)
 
-    def test_createNewPostExecutesWithoutExceptionWhenNoContent(self, service):
-        keyValues = {}
-        mockDB = service._repo
+    def test_createPostShouldRaiseExceptionoWhenSessionUserNotMatchOwner(self, service):
+        session_user = dict(userId='2233444')
+        service._context.read_session.return_value = session_user
 
-        service.createNewPost(keyValues)
-
-        mockDB.createPost.call_count == 1
+        with pytest.raises(exceptions.UnauthorizedError):
+            service.createNewPost(self.DEFAULT_KEYVALUES)
 
     def test_createNewPostShouldReturnResultFromRepo(self, service):
         result = service.createNewPost(self.DEFAULT_KEYVALUES)
         
-        assert result == { 'result': CREATE_POST_RETURN }
+        assert result == CREATE_POST_RETURN
+
+
+class TestCreateNewThread:
+    DEFAULT_KEYVALUES = dict(
+        userId=OWNER_ID,
+        title='test_title',
+        subject='test_subject',
+    )
+
+    @pytest.fixture(scope='function', autouse=True)
+    def setup_defaultreturn(self, service):
+        service._context.read_session.return_value = DEFAULT_SESSION_USER
+
+    def test_createNewThreadShouldPassDefaultKeyValuesToDB(self, service):
+        mock_repo = service._repo
+        
+        service.createNewThread(self.DEFAULT_KEYVALUES)
+
+        mock_repo.createThread.call_count == 1
+        mock_repo.createThread.assert_called_with(self.DEFAULT_KEYVALUES)
+
+    def test_createThreadShouldRaiseExceptionoWhenSessionUserNotMatchOwner(self, service):
+        session_user = dict(userId='2233444')
+        service._context.read_session.return_value = session_user
+
+        with pytest.raises(exceptions.UnauthorizedError):
+            service.createNewThread(self.DEFAULT_KEYVALUES)
+
+    def test_createNewThreadShouldReturnResultFromRepo(self, service):
+        result = service.createNewThread(self.DEFAULT_KEYVALUES)
+        
+        assert result == CREATE_THREAD_RETURN

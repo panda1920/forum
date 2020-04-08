@@ -4,6 +4,7 @@ This file houses business logic for searches made by apis
 """
 import server.entity.user as user
 import server.entity.post as post
+import server.entity.thread as thread
 
 
 class SearchService:
@@ -17,6 +18,7 @@ class SearchService:
         userId='eq',
         postId='eq',
         threadId='eq',
+        boardId='eq',
         createdAt='eq',
     )
 
@@ -35,17 +37,14 @@ class SearchService:
         self._paging = pagingClass
 
     def searchUsersByKeyValues(self, keyValues):
-        searchFilters = self._createFiltersForDesignatedFields(
+        searchFilter = self._createFiltersForDesignatedFields(
             keyValues, 'userName', 'displayName'
         )
-        searchFilters.extend( self._createFiltersForPredeterminedFields(keyValues) )
-        if len(searchFilters) == 0:
+        if searchFilter is None:
             return dict(users=[], returnCount=0, matchedCount=0)
-            
-        aggregate = self._aggregate.createFilter('or', searchFilters)
         paging = self._paging(keyValues)
 
-        result = self._repo.searchUser(aggregate, paging)
+        result = self._repo.searchUser(searchFilter, paging)
 
         return dict(
             users=self._removeUserPrivateData( result['users'] ),
@@ -54,48 +53,80 @@ class SearchService:
         )
 
     def searchPostsByKeyValues(self, keyValues):
-        # create aggregate search filter
-        searchFilters = []
-        searchFilters.extend( self._createFiltersForDesignatedFields(
+        searchFilter = self._createFiltersForDesignatedFields(
             keyValues, 'content'
-        ) )
-        searchFilters.extend( self._createFiltersForPredeterminedFields(keyValues) )
-        if len(searchFilters) == 0:
+        )
+        if searchFilter is None:
             return dict(posts=[], returnCount=0, matchedCount=0)
-        
-        aggregate = self._aggregate.createFilter('and', searchFilters)
         paging = self._paging(keyValues)
         
-        postResult = self._repo.searchPost(aggregate, paging)
-        
-        posts = self._removePostPrivateData( postResult['posts'] )
-        userSearchFilter = self._createEqFiltersFromRelatedIds('userId', posts)
-        users = self._removeUserPrivateData( self._repo.searchUser(userSearchFilter)['users'] )
-        postsJoined = self._joinDocuments(posts, users, 'userId', 'user')
+        result = self._repo.searchPost(searchFilter, paging)
+        posts = self._removePostPrivateData( result['posts'] )
+        postsJoined = self._joinOwner(posts)
 
         return dict(
             posts=postsJoined,
-            returnCount=postResult['returnCount'],
-            matchedCount=postResult['matchedCount'],
+            returnCount=result['returnCount'],
+            matchedCount=result['matchedCount'],
+        )
+
+    def searchThreadsByKeyValues(self, keyValues):
+        """
+        Searches for threads based on criterias in keyValues
+        
+        Args:
+            keyValues(dict): critieras to search
+        Returns:
+            dict: result of search operation
+        """
+        searchFilter = self._createFiltersForDesignatedFields(
+            keyValues, 'subject', 'title'
+        )
+        if searchFilter is None:
+            return dict(threads=[], returnCount=0, matchedCount=0)
+        paging = self._paging(keyValues)
+
+        result = self._repo.searchThread(searchFilter, paging)
+        threads = self._removeThreadPrivateData( result['threads'] )
+        threadsJoined = self._joinOwner(threads)
+        
+        self._repo.updateThread(searchFilter, dict(increment='views'))
+
+        return dict(
+            threads=threadsJoined,
+            returnCount=result['returnCount'],
+            matchedCount=result['matchedCount'],
         )
 
     def _createFiltersForDesignatedFields(self, keyValues, *fieldnames):
-        searchFilters = [
-            self._createFuzzyFilterFromSearch(keyValues, fieldname)
-            for fieldname in fieldnames
-        ]
-        searchFilters = [ f for f in searchFilters if f is not None ]
+        searchFilters = self._createFuzzyFilterFromSearch(keyValues, fieldnames)
+        predetermined = self._createFiltersForPredeterminedFields(keyValues)
+
+        if len(searchFilters) == 0 and len(predetermined) == 0:
+            return None
+
+        # if there is no search,
+        # or-aggregate would always return false,
+        # which in turn makes and-aggregate evaluate to false automatically.
+        # To avoid this happpening, we must not add searches to and-aggregate for such case
+        if len(searchFilters) == 0:
+            filtersToAggregate = predetermined
+        else:
+            searches = self._aggregate.createFilter('or', searchFilters)
+            filtersToAggregate = [ *predetermined, searches ]
+        return self._aggregate.createFilter('and', filtersToAggregate)
+
+    def _createFuzzyFilterFromSearch(self, keyValues, fieldnames):
+        searchFilters = []
+        for fieldname in fieldnames:
+            search = keyValues.get('search', None)
+            if search is None:
+                continue
+        
+            searchTerm = search.split(' ')
+            searchFilters.append( self._createFilter(fieldname, 'fuzzy', searchTerm) )
 
         return searchFilters
-
-    def _createFuzzyFilterFromSearch(self, keyValues, fieldname):
-        search = keyValues.get('search', None)
-        if search is None:
-            return None
-        
-        searchTerm = search.split(' ')
-        searchFilter = self._createFilter(fieldname, 'fuzzy', searchTerm)
-        return searchFilter
 
     def _createFilter(self, fieldname, operator, values):
         return self._filter.createFilter(dict(
@@ -107,12 +138,21 @@ class SearchService:
     def _createFiltersForPredeterminedFields(self, keyValues):
         searchFilters = []
         for fieldname, opstring in self.SEARCHKEY_TO_FILTER_OPSTRING_MAPPING.items():
-            if fieldname in keyValues:
-                searchFilters.append(self._createFilter(
-                    fieldname, opstring, [ keyValues[fieldname] ]
-                ))
+            value = keyValues.get(fieldname, None)
+            if value is None:
+                continue
+
+            f = self._createFilter(fieldname, opstring, [ value ])
+            searchFilters.append(f)
 
         return searchFilters
+
+    def _joinOwner(self, entities):
+        userSearchFilter = self._createEqFiltersFromRelatedIds('userId', entities)
+        users = self._repo.searchUser(userSearchFilter)['users']
+        users = self._removeUserPrivateData(users)
+        
+        return self._joinDocuments(entities, users, 'userId', 'user')
 
     def _createEqFiltersFromRelatedIds(self, relationFieldname, entities):
         return self._createFilter(
@@ -154,3 +194,14 @@ class SearchService:
             list of posts that are filtered of private fields
         """
         return [ post.removePrivateInfo(u) for u in posts ]
+
+    def _removeThreadPrivateData(self, threads):
+        """
+        Remove private fields from threads
+        
+        Args:
+            threads(dict): list of threads
+        Returns:
+            list of threads that are filtered of private fields
+        """
+        return [ thread.removePrivateInfo(u) for u in threads ]

@@ -74,7 +74,7 @@ class InvalidUserCredentials(MyAppException):
 
 class InvalidSession(MyAppException):
     """
-    Raised when session information was unexpectedly missing information.
+    Raised when session information was unexpectedly missing.
     """
     @classmethod
     def getStatusCode(cls):

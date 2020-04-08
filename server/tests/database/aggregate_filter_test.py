@@ -69,12 +69,18 @@ class TestAndFilter:
             createMockFiltersWithReturnValuesForMatches(
                 True, True, True, True, True, True, True, True,
             ),
+            createMockFiltersWithReturnValuesForMatches(True),
+            createMockFiltersWithReturnValuesForMatches(False),
+            createMockFiltersWithReturnValuesForMatches(),
         ]
         expectedMatchResult = [
             True,
             False,
             False,
             False,
+            False,
+            True,
+            True,
             False,
             True,
         ]
@@ -175,6 +181,8 @@ class TestOrFilter:
             createMockFiltersWithReturnValuesForMatches(True, False, False, False),
             createMockFiltersWithReturnValuesForMatches(False, True, True, True),
             createMockFiltersWithReturnValuesForMatches(False, True, False, True),
+            createMockFiltersWithReturnValuesForMatches(True),
+            createMockFiltersWithReturnValuesForMatches(False),
             createMockFiltersWithReturnValuesForMatches(),
         ]
         expectedMatchResult = [
@@ -183,6 +191,8 @@ class TestOrFilter:
             True,
             True,
             True,
+            True,
+            False,
             False,
         ]
 

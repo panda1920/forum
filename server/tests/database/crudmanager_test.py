@@ -721,6 +721,18 @@ class TestThreadCRUD:
             with pytest.raises(EntityValidationError):
                 setupDB.getRepo().createThread(props)
 
+    def test_createThreadShouldRaiseExceptionWhenEmptyOrWhitespace(self, setupDB):
+        propsPatterns = [
+            self.createNewThreadProps(title=''),
+            self.createNewThreadProps(title='   '),
+            self.createNewThreadProps(subject=''),
+            self.createNewThreadProps(subject='    '),
+        ]
+
+        for props in propsPatterns:
+            with pytest.raises(EntityValidationError):
+                setupDB.getRepo().createThread(props)
+
     def test_createThreadShouldIncrementThreadIdCounter(self, setupDB):
         originalCounter = setupDB.getCounter('threadId')
         props = self.createNewThreadProps()
@@ -926,6 +938,20 @@ class TestThreadCRUD:
         ]
 
         for threadUpdate in threadUpdateProperties:
+            with pytest.raises(EntityValidationError):
+                setupDB.getRepo().updateThread(searchFilter, threadUpdate)
+
+    def test_updateThreadShouldRaiseExceptionWhenEmptyOrWhitespace(self, setupDB):
+        threadIdsToUpdate = [ thread['threadId'] for thread in setupDB.getOriginalThreads()[:10] ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
+        propsPatterns = [
+            self.createNewThreadProps(title=''),
+            self.createNewThreadProps(title='   '),
+            self.createNewThreadProps(subject=''),
+            self.createNewThreadProps(subject='    '),
+        ]
+
+        for threadUpdate in propsPatterns:
             with pytest.raises(EntityValidationError):
                 setupDB.getRepo().updateThread(searchFilter, threadUpdate)
 

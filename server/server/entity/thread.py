@@ -17,10 +17,12 @@ class NewThread:
         'title': {
             'type': 'string',
             'required': True,
+            'regex': r'\s*\S+\s*',
         },
         'subject': {
             'type': 'string',
             'required': True,
+            'regex': r'\s*\S+\s*',
         },
         'threadId': {
             'type': 'string',
@@ -59,10 +61,12 @@ class UpdateThread:
         'title': {
             'type': 'string',
             'required': False,
+            'regex': r'\s*\S+\s*',
         },
         'subject': {
             'type': 'string',
             'required': False,
+            'regex': r'\s*\S+\s*',
         },
         'views': {
             'type': 'integer',
