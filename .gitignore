@@ -2,6 +2,9 @@
 .vscode/
 *.code-workspace
 
+# some docker-compose for local testing
+db.yml
+
 # environment variables
 .env
 

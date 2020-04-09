@@ -81,10 +81,7 @@ const ModalLogin = () => {
   };
 
   const openSignup = () => {
-    setEmail('');
-    setPassword('');
-    resetErrors();
-    toggleLogin();
+    closeLogin();
     toggleSignup();
   };
 
