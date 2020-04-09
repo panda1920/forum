@@ -25,9 +25,9 @@ def service():
     
     mock_filter = mocks.createMockFilter()
 
-    mock_context = mocks.createMockFlaskContext()
+    mock_session = mocks.createMockSessionService()
     
-    yield EntityCreationService(mock_repo, mock_filter, mock_context)
+    yield EntityCreationService(mock_repo, mock_filter, mock_session)
 
 
 class TestSignupUser:
@@ -115,7 +115,7 @@ class TestCreateNewPost:
 
     @pytest.fixture(scope='function', autouse=True)
     def setup_defaultreturn(self, service):
-        service._context.read_session.return_value = DEFAULT_SESSION_USER
+        service._session.get_user.return_value = DEFAULT_SESSION_USER
 
     def test_createNewPostShouldPassDefaultKeyValuesToRepo(self, service):
         mock_repo = service._repo
@@ -127,7 +127,7 @@ class TestCreateNewPost:
 
     def test_createPostShouldRaiseExceptionoWhenSessionUserNotMatchOwner(self, service):
         session_user = dict(userId='2233444')
-        service._context.read_session.return_value = session_user
+        service._session.get_user.return_value = session_user
 
         with pytest.raises(exceptions.UnauthorizedError):
             service.createNewPost(self.DEFAULT_KEYVALUES)
@@ -147,7 +147,7 @@ class TestCreateNewThread:
 
     @pytest.fixture(scope='function', autouse=True)
     def setup_defaultreturn(self, service):
-        service._context.read_session.return_value = DEFAULT_SESSION_USER
+        service._session.get_user.return_value = DEFAULT_SESSION_USER
 
     def test_createNewThreadShouldPassDefaultKeyValuesToDB(self, service):
         mock_repo = service._repo
@@ -159,7 +159,7 @@ class TestCreateNewThread:
 
     def test_createThreadShouldRaiseExceptionoWhenSessionUserNotMatchOwner(self, service):
         session_user = dict(userId='2233444')
-        service._context.read_session.return_value = session_user
+        service._session.get_user.return_value = session_user
 
         with pytest.raises(exceptions.UnauthorizedError):
             service.createNewThread(self.DEFAULT_KEYVALUES)

@@ -29,11 +29,11 @@ repo = MongoCrudManager(
 )
 # repo = FileCrudManager(Path(DATA_LOCATION), AUTHENTICATION_SERVICE)
 flask_context = FlaskContext()
-creation_service = EntityCreationService(repo, PrimitiveFilter, flask_context)
-search_service = SearchService(repo, PrimitiveFilter, AggregateFilter, Paging)
-update_service = UpdateService(repo, PrimitiveFilter)
-delete_service = DeleteService(repo, flask_context)
 session_service = SessionService(repo, flask_context)
+creation_service = EntityCreationService(repo, PrimitiveFilter, session_service)
+search_service = SearchService(repo, PrimitiveFilter, AggregateFilter, Paging)
+update_service = UpdateService(repo, PrimitiveFilter, session_service)
+delete_service = DeleteService(repo, session_service)
 image_scaler = ImageScaler()
 authentication_service = UserAuthenticationService(repo, PrimitiveFilter, session_service)
 
@@ -54,11 +54,11 @@ class Config:
 
     # services
     FLASK_CONTEXT = flask_context
+    SESSION_SERVICE = session_service
     CREATION_SERVICE = creation_service
     SEARCH_SERVICE = search_service
     UPDATE_SERVICE = update_service
     DELETE_SERVICE = delete_service
-    SESSION_SERVICE = session_service
     IMAGE_SCALER = image_scaler
     AUTHENTICATION_SERVICE = authentication_service
 

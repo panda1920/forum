@@ -8,7 +8,7 @@ from server.database.filter import PrimitiveFilter
 
 class SessionService:
     """
-    Provides methods that change the state of current session user.
+    Provides methods that interacts with current session user.
     """
     SESSION_USER_KEY = 'sessionUser'
     ANONYMOUS_USER = dict(userId='0')
@@ -62,3 +62,14 @@ class SessionService:
         user_indb = self._repo.searchUser(searchFilter)['users'][0]
 
         self._context.write_global(self.SESSION_USER_KEY, removePrivateInfo(user_indb) )
+
+    def get_user(self):
+        """
+        Reads current session user from global context.
+        Intended to be used in situations where authorizations are required.
+        
+        Args:
+        Returns:
+            user dict
+        """
+        return self._context.read_global(self.SESSION_USER_KEY)

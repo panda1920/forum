@@ -148,10 +148,19 @@ class SearchService:
         return searchFilters
 
     def _joinOwner(self, entities):
+        """
+        add owner user information to each entity document
+        by searching for it in repo
+        
+        Args:
+            entities(list): documents of entities like posts
+        Returns:
+            return value
+        """
         userSearchFilter = self._createEqFiltersFromRelatedIds('userId', entities)
         users = self._repo.searchUser(userSearchFilter)['users']
         users = self._removeUserPrivateData(users)
-        
+
         return self._joinDocuments(entities, users, 'userId', 'user')
 
     def _createEqFiltersFromRelatedIds(self, relationFieldname, entities):
@@ -161,6 +170,17 @@ class SearchService:
         )
 
     def _joinDocuments(self, primaryDocs, secondaryDocs, joinByField, secondaryName):
+        """
+        Join two sets of documents by specified fieldname.
+        
+        Args:
+            primaryDocs(list): inject secondary document to this
+            secondaryDocs(list): documents to inject
+            joinByField(string): fieldname that relates primary to secondary
+            secondaryName(string): new fieldname created in primary to put secondary under
+        Returns:
+            list of documents
+        """
         joined = []
         for pdoc in primaryDocs:
             newdoc = pdoc.copy()

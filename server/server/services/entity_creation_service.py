@@ -5,16 +5,15 @@ This file houses business logic for entity creation made by apis
 import logging
 
 import server.exceptions as exceptions
-from server.services.session import SessionService
 
 
 class EntityCreationService:
     GENERIC_PORTRAIT_IMAGE_URL = 'https://www.seekpng.com/png/detail/365-3651600_default-portrait-image-generic-profile.png'
 
-    def __init__(self, repo, filterClass, context):
+    def __init__(self, repo, filterClass, session):
         self._repo = repo
         self._filter = filterClass
-        self._context = context
+        self._session = session
 
     def signup(self, keyValues):
         self._checkUserExists(keyValues)
@@ -51,7 +50,7 @@ class EntityCreationService:
 
     def _checkOwnerMatchesSession(self, keyValues):
         resource_owner = keyValues.get('userId', None)
-        session = self._context.read_session(SessionService.SESSION_USER_KEY)
+        session = self._session.get_user()
         session_user = session.get('userId', None)
 
         if resource_owner != session_user:

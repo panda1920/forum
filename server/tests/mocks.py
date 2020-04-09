@@ -54,18 +54,6 @@ def createMockG():
     return create_autospec(g, instance=True)
 
 
-def createMockSession(sessionInfo={}):
-    defaults = {
-        'new': False,
-        'modified': False,
-        'permanent': False,
-    }
-    mock = {}
-    mock.update(defaults)
-    mock.update(sessionInfo)
-    return mock
-
-
 def createMockSessionMiddleware():
     return create_autospec(SessionUserManager)
 
