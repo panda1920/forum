@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 This file houses logic to create test data for this application
-Currently creating 3 kinds of data:
+Currently creating the following data:
     - user
     - post
+    = threads
     - counter
 """
-
-
 import json
 from pathlib import Path
 from time import time
@@ -76,6 +75,7 @@ class DataCreator:
         now = time()
         for idx, user in enumerate(users):
             threads.append(dict(
+                boardId='0',
                 threadId=str(idx),
                 userId=user['userId'],
                 title=f'{user["displayName"]}\'s thread',

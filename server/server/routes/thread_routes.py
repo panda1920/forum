@@ -12,7 +12,7 @@ from server.exceptions import MyAppException
 routes = Blueprint('threadRoutes', __name__)
 
 
-@cors_wrapped_route(routes.route, '/v1/thread', methods=['POST'])
+@cors_wrapped_route(routes.route, '/v1/threads', methods=['POST'])
 def searchThreadsv1():
     try:
         search = Config.getSearchService(current_app)
@@ -23,7 +23,7 @@ def searchThreadsv1():
         return route_utils.createJSONErrorResponse(e)
 
 
-@cors_wrapped_route(routes.route, '/v1/thread/<threadId>', methods=['POST'])
+@cors_wrapped_route(routes.route, '/v1/threads/<threadId>', methods=['POST'])
 def searchThreadByIdv1(threadId):
     try:
         search = Config.getSearchService(current_app)
@@ -35,7 +35,7 @@ def searchThreadByIdv1(threadId):
         return route_utils.createJSONErrorResponse(e)
 
 
-@cors_wrapped_route(routes.route, '/v1/thread/create', methods=['POST'])
+@cors_wrapped_route(routes.route, '/v1/threads/create', methods=['POST'])
 def createThreadv1():
     try:
         create = Config.getCreationService(current_app)
@@ -46,7 +46,7 @@ def createThreadv1():
         return route_utils.createJSONErrorResponse(e)
 
 
-@cors_wrapped_route(routes.route, '/v1/thread/<threadId>/update', methods=['PATCH'])
+@cors_wrapped_route(routes.route, '/v1/threads/<threadId>/update', methods=['PATCH'])
 def updateThreadByIdv1(threadId):
     try:
         update = Config.getUpdateService(current_app)
@@ -58,7 +58,7 @@ def updateThreadByIdv1(threadId):
         return route_utils.createJSONErrorResponse(e)
 
 
-@cors_wrapped_route(routes.route, '/v1/thread/<threadId>/delete', methods=['DELETE'])
+@cors_wrapped_route(routes.route, '/v1/threads/<threadId>/delete', methods=['DELETE'])
 def deleteThreadByIdv1(threadId):
     try:
         delete = Config.getDeleteService(current_app)

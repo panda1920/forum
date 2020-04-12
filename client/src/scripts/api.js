@@ -34,6 +34,15 @@ export function getSessionUser() {
     );
 }
 
+export function searchThreads(criteria) {
+    return apiCall(
+        paths.threadApi,
+        'POST',
+        { 'Content-Type': 'application/json' },
+        JSON.stringify({ ...criteria }),
+    );
+}
+
 async function apiCall(url, method, headers, body) {
     try {
         let response = await fetch(url, { method, headers, body, credentials: 'same-origin' });

@@ -1,5 +1,7 @@
 import React, { useReducer, useEffect, useContext, useCallback } from 'react';
+import { Switch, Route } from 'react-router-dom';
 
+import BoardPage from '../board/board-page.component';
 import Header from  '../../components/header/header.component';
 import Footer from  '../../components/footer/footer.component';
 import ModalLogin from '../../components/modal-login/modal-login.component';
@@ -47,7 +49,14 @@ const BasePage = () => {
         <ModalSignup />
         <Header />
         <div className='main-content'>
-          
+          <Switch>
+            <Route path='/sample'>
+              <h1>SAMPLE</h1>
+            </Route>
+            <Route path='/'>
+              <BoardPage />
+            </Route>
+          </Switch>
         </div>
         <Footer />
       </ModalContextProvider>

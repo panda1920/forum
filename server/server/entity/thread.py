@@ -10,6 +10,10 @@ class NewThread:
     This class defines thread entity in its creation phase.
     """
     _schema = {
+        'boardId': {
+            'type': 'string',
+            'required': True,
+        },
         'userId': {
             'type': 'string',
             'required': True,

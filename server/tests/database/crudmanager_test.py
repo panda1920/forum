@@ -650,6 +650,7 @@ class TestPostCRUD:
 @pytest.mark.parametrize('createDB', [Setup_FileCrudManager, Setup_MongoCrudManager], indirect=True)
 class TestThreadCRUD:
     DEFAULT_NEW_THREAD = dict(
+        boardId='1',
         userId='1',
         title='test_thread_title',
         subject='test_thread_subject',

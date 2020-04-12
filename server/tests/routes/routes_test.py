@@ -80,7 +80,7 @@ class TestPostAPIs:
     POSTSAPI_BASE_URL = '/v1/posts'
 
     def test_searchPostsAPIPassesQueryStringToSearchService(self, mockApp):
-        mockSearch = Config.getCreationService(mockApp)
+        mockSearch = Config.getSearchService(mockApp)
         keyValues = dict(
             search='1 2 3 4',
         )
@@ -103,7 +103,7 @@ class TestPostAPIs:
             assert jsonResponse['result'] == DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES
 
     def test_searchPostsReturnsErrorWhenExceptionWasRaised(self, mockApp):
-        mockSearch = Config.getCreationService(mockApp)
+        mockSearch = Config.getSearchService(mockApp)
         exceptionsToTest = [
             exceptions.EntityValidationError,
             exceptions.FailedMongoOperation,
@@ -121,7 +121,7 @@ class TestPostAPIs:
                 assert response.status_code == e.getStatusCode()
 
     def test_searchPostsAPIByIdPassesIdToSearchService(self, mockApp):
-        mockSearch = Config.getCreationService(mockApp)
+        mockSearch = Config.getSearchService(mockApp)
         postId = '11223344'
         url = f'{self.POSTSAPI_BASE_URL}/{postId}'
 
@@ -132,8 +132,8 @@ class TestPostAPIs:
                 postId=postId
             ))
 
-    def searchPostsByIdAPIIgnoresQueryString(self, mockApp):
-        mockSearch = Config.getCreationService(mockApp)
+    def test_searchPostsByIdAPIIgnoresQueryString(self, mockApp):
+        mockSearch = Config.getSearchService(mockApp)
         postId = '11223344'
         url = f'{self.POSTSAPI_BASE_URL}/{postId}'
         keyValues = dict(offset=30, limit=100)
@@ -146,7 +146,6 @@ class TestPostAPIs:
             ))
 
     def test_searchPostsByIdAPIReturns200AndWhatsReturnedFromService(self, mockApp):
-        Config.getCreationService(mockApp)
         postId = '11223344'
         url = f'{self.POSTSAPI_BASE_URL}/{postId}'
 
@@ -158,7 +157,7 @@ class TestPostAPIs:
             assert jsonResponse['result'] == DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES
 
     def test_searchPostsByIdAPIReturnsErrorWhenServiceRaisesException(self, mockApp):
-        mockSearch = Config.getCreationService(mockApp)
+        mockSearch = Config.getSearchService(mockApp)
         exceptionsToTest = [
             exceptions.EntityValidationError,
             exceptions.FailedMongoOperation,
@@ -320,7 +319,7 @@ class TestUserAPIs:
     USERAPI_BASE_URL = '/v1/users'
 
     def test_searchUsersPassesQueryStringToService(self, mockApp):
-        mockSearch = Config.getCreationService(mockApp)
+        mockSearch = Config.getSearchService(mockApp)
         keyValues = dict(
             search='username'
         )
@@ -331,7 +330,7 @@ class TestUserAPIs:
             mockSearch.searchUsersByKeyValues.assert_called_with(keyValues)
 
     def test_searchUsersReturns200AearchResultFromService(self, mockApp):
-        Config.getCreationService(mockApp)
+        Config.getSearchService(mockApp)
         keyValues = dict(
             search='username'
         )
@@ -344,7 +343,7 @@ class TestUserAPIs:
             assert jsonResponse['result'] == DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
         
     def test_searchUsersReturnsErrorWhenServiceRaisesException(self, mockApp):
-        mockSearch = Config.getCreationService(mockApp)
+        mockSearch = Config.getSearchService(mockApp)
         keyValues = dict(
             search='username'
         )
@@ -362,7 +361,7 @@ class TestUserAPIs:
                 assert response.status_code == e.getStatusCode()
 
     def test_searchUserByExplicitIDPassesUserIdToService(self, mockApp):
-        mockSearch = Config.getCreationService(mockApp)
+        mockSearch = Config.getSearchService(mockApp)
         userId = '11111111'
         url = f'{self.USERAPI_BASE_URL}/{userId}'
 
@@ -372,7 +371,7 @@ class TestUserAPIs:
             mockSearch.searchUsersByKeyValues.assert_called_with(dict(userId=userId))
 
     def test_searchUserByExplicitIDIgnoresQueryString(self, mockApp):
-        mockSearch = Config.getCreationService(mockApp)
+        mockSearch = Config.getSearchService(mockApp)
         userId = '11111111'
         url = f'{self.USERAPI_BASE_URL}/{userId}'
         keyValues = dict(offset=30, limit=100)
@@ -394,7 +393,7 @@ class TestUserAPIs:
             assert jsonResponse['result'] == DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
 
     def test_searchUserByExplicitIDReturnsErrorWhenServiceRaisesException(self, mockApp):
-        mockSearch = Config.getCreationService(mockApp)
+        mockSearch = Config.getSearchService(mockApp)
         userId = '11111111'
         url = f'{self.USERAPI_BASE_URL}/{userId}'
         exceptionsToTest = [
@@ -643,7 +642,7 @@ class TestUserAPIs:
             assert response.get_json() == expectedData
 
     def test_sessionShouldNotCallSearchService(self, mockApp):
-        search = Config.getCreationService(mockApp)
+        search = Config.getSearchService(mockApp)
 
         url = f'{self.USERAPI_BASE_URL}/session'
         with mockApp.test_client() as client:
@@ -669,7 +668,7 @@ class TestUserAPIs:
 
 
 class TestThreadAPIs:
-    THREAD_API_BASE = '/v1/thread'
+    THREAD_API_BASE = '/v1/threads'
 
     @pytest.fixture(scope='function', autouse=True)
     def setup_mock(self, mockApp):
