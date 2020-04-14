@@ -22,7 +22,7 @@ const IDENTIFIERS = {
 };
 
 const TEST_DATA = {
-  BOARD_ID: '1',
+  BOARD_ID: '0',
   API_RETURN_SESSIONUSER: {
     userId: '1',
     userName: 'testuser@myforumwebapp.com',
@@ -105,14 +105,15 @@ describe('testing behavior of board-page', () => {
   test('upon rendering should search threads related to this board', async () => {
     const mockFetch = createFetchSuccess();
     window.fetch = mockFetch;
+    const expectedEndpoint = paths.threadApi;
+    const expectedQuerystring = `?boardId=${TEST_DATA.BOARD_ID}`;
     await createBoardPage();
 
     expect(mockFetch).toHaveBeenCalled();
     const [ url, options ] = mockFetch.mock.calls[0];
-    expect(url).toBe(paths.threadApi);
+    expect(url).toBe(`${expectedEndpoint}${expectedQuerystring}`);
     expect(options).toMatchObject({
-      method: 'POST',
-      body: JSON.stringify({ boardId: TEST_DATA.BOARD_ID }),
+      method: 'GET',
     });
   });
 
@@ -128,11 +129,11 @@ describe('testing behavior of board-page', () => {
     const { getAllByTitle } = await createBoardPage();
 
     const threadCards = getAllByTitle(IDENTIFIERS.TITLE_THREARD_CARD);
-    expect(threadCards).toHaveLength(2);
+    expect(threadCards).toHaveLength(TEST_DATA.API_RETURN_RESULT.threads.length);
     const propsPassed = ThreadCard.mock.calls.map(call => call[0]);
-    propsPassed.forEach((props, idx) => {
-      expect(props).toHaveProperty('threadInfo');
-      expect(props.threadInfo).toMatchObject(TEST_DATA.API_RETURN_RESULT.threads[idx]);
+    propsPassed.forEach((prop, idx) => {
+      expect(prop).toHaveProperty('thread');
+      expect(prop.thread).toMatchObject(TEST_DATA.API_RETURN_RESULT.threads[idx]);
     });
   });
 });

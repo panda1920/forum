@@ -16,16 +16,41 @@ class EntityCreationService:
         self._session = session
 
     def signup(self, keyValues):
+        """
+        Create new user entity
+        
+        Args:
+            keyValues(dict): contain information to construct user entity
+        Returns:
+            dictionary that reports result of operation
+        """
         self._checkUserExists(keyValues)
         result = self._createUser(keyValues)
         return result
 
     def createNewPost(self, keyValues):
+        """
+        Create new post entity
+        
+        Args:
+            keyValues(dict): contain information to construct post entity
+        Returns:
+            dictionary that reports result of operation
+        """
         self._checkOwnerMatchesSession(keyValues)
         result = self._repo.createPost(keyValues)
+        self._updateThreadForNewPost(keyValues, result['createdId'])
         return result
 
     def createNewThread(self, keyValues):
+        """
+        Create new thread entity
+        
+        Args:
+            keyValues(dict): contain information to construct thread entity
+        Returns:
+            dictionary that reports result of operation
+        """
         self._checkOwnerMatchesSession(keyValues)
         result = self._repo.createThread(keyValues)
         return result
@@ -68,13 +93,9 @@ class EntityCreationService:
             imageUrl=defaultImage
         ))
 
-    # def _generateNewPostProps(self, keyValues):
-    #     postProps = {}
-    #     # need to retrieve user from credentials
-    #     postProps['userId'] = '0'
-    #     postFields = NewPost.getFields()
-    #     for field in keyValues:
-    #         if field in postFields:
-    #             postProps[field] = keyValues[field]
-
-    #     return postProps
+    def _updateThreadForNewPost(self, keyValues, newId):
+        searchFilter = self._filter.createFilter(dict(
+            field='threadId', operator='eq', value=[ keyValues['threadId'] ]
+        ))
+        update = dict(increment='posts', lastPostId=newId)
+        self._repo.updateThread(searchFilter, update)

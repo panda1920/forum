@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { render, screen, cleanup, getByText, act, wait } from '@testing-library/react';
 
 import BasePage from '../pages/base/base-page.component';
+import BoardPage from '../pages/board/board-page.component';
 import { ModalLoginTitle } from '../components/modal-login/modal-login.component';
 import { ModalSignupTitle } from '../components/modal-signup/modal-signup.component';
 
@@ -14,6 +15,7 @@ import { createMockFetch, } from  '../scripts/test-utilities';
 jest.mock('../pages/board/board-page.component');
 
 const TEST_DATA = {
+  BOARD_ID: '0',
   SESSION_USER: {
     userId: '11223344',
     userName: 'testuser@myforumwebappcom',
@@ -64,8 +66,9 @@ beforeEach(() => {
   window.fetch = createFetchSuccess();
 });
 afterEach(() => {
-  window.fetch = originalFetch;
   cleanup();
+  window.fetch = originalFetch;
+  BoardPage.mockClear();
 });
 
 describe('Testing BasePage', () => {
@@ -80,6 +83,14 @@ describe('Testing BasePage', () => {
     const { getByTitle } = renderBasePage();
 
     getByTitle(ELEMENT_IDENTIFIER.BOARD_PAGE_TITLE);
+  });
+
+  test('Base page should pass test baordid to board page component', () => {
+    renderBasePage();
+
+    expect(BoardPage).toHaveBeenCalled();
+    const [ props, ..._ ] = BoardPage.mock.calls[0];
+    expect(props).toHaveProperty('boardId', TEST_DATA.BOARD_ID);
   });
 
   test('Clicking on login should blur the page', () => {

@@ -35,11 +35,10 @@ export function getSessionUser() {
 }
 
 export function searchThreads(criteria) {
+    const url = `${paths.threadApi}?${createQueryString(criteria)}`;
     return apiCall(
-        paths.threadApi,
-        'POST',
-        { 'Content-Type': 'application/json' },
-        JSON.stringify({ ...criteria }),
+        url,
+        'GET',
     );
 }
 
@@ -61,4 +60,10 @@ async function defaultResponseHandler(response) {
         return { ignore: true, ok: false };
     else
         return response;
+}
+
+function createQueryString(object) {
+    return Object.keys(object).map(key =>
+        encodeURIComponent(key) + '=' + encodeURIComponent(object[key])
+    ).join('&');
 }

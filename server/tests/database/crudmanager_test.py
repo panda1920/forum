@@ -83,6 +83,15 @@ class TestUserCRUD:
         assert setupDB.getCounter('userId') == nextUserId + 1
         assert createdUser['userId'] == str(nextUserId)
 
+    def test_createUserShouldReturnCreatedCountAndCreatedId(self, setupDB):
+        userProps = self.createNewUserProps()
+        nextUserId = str(setupDB.getCounter('userId'))
+
+        result = setupDB.getRepo().createUser(userProps)
+
+        assert result['createdCount'] == 1
+        assert result['createdId'] == nextUserId
+
     def test_createUserWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
         userProps = [
             self.createNewUserProps(userName=None),
@@ -386,6 +395,15 @@ class TestPostCRUD:
         ))[0]
         assert setupDB.getCounter('postId') == nextPostId + 1
         assert createdPost['postId'] == str(nextPostId)
+    
+    def test_createPostShouldReturnCreatedCountAndCreatedId(self, setupDB):
+        postProps = self.createNewPostProps()
+        nextPostId = str( setupDB.getCounter('postId') )
+
+        result = setupDB.getRepo().createPost(postProps)
+
+        assert result['createdCount'] == 1
+        assert result['createdId'] == nextPostId
 
     def test_createPostWithoutRequiredPropertiesShouldRaiseException(self, setupDB):
         postsToCreate = [
@@ -741,13 +759,15 @@ class TestThreadCRUD:
         setupDB.getRepo().createThread(props)
 
         assert setupDB.getCounter('threadId') == originalCounter + 1
-
-    def test_createThreadShouldReturnResult(self, setupDB):
+    
+    def test_createThreadShouldReturnCreatedCountAndCreatedId(self, setupDB):
         props = self.createNewThreadProps()
+        nextThreadId = str( setupDB.getCounter('threadId') )
 
         result = setupDB.getRepo().createThread(props)
 
-        assert result == dict(createdCount=1)
+        assert result['createdCount'] == 1
+        assert result['createdId'] == nextThreadId
 
     def test_searchThreadByThreadIdsShouldReturnThreadFromDB(self, setupDB):
         threadIdsToSearch = [

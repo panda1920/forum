@@ -275,7 +275,7 @@ class TestSearchPostsByKeyValues:
                 dict(
                     postId='2222',
                     userId='11111111',
-                    user=dict(userId='11111111', name='Alan'),
+                    owner=dict(userId='11111111', name='Alan'),
                 )
             ],
             returnCount=1,
@@ -293,7 +293,196 @@ class TestSearchThreadByKeyValues:
         search='test_search',
     )
     MOCKDB_DEFAULT_RETURN = dict(
-        threads=[ dict(threadId='2222', userId='11111111', _id='some_random_id') ],
+        threads=[ dict(threadId='2222', userId='11111111', _id='some_random_id', lastPostId='1234') ],
+        returnCount=1,
+        matchedCount=1,
+    )
+    MOCKDB_USER_DEFAULT_RETURN = dict(
+        users=[
+            dict(userId='11111111', name='Alan', _id='some_random_id'),
+            dict(userId='33333333', name='Bobby', _id='some_random_id'),
+        ],
+        returnCount=1,
+        matchedCount=1,
+    )
+    MOCKDB_POST_DEFAULT_RETURN = dict(
+        posts=[ dict(postId='1234', userId='33333333') ],
+        returnCount=1,
+        matchedCount=1,
+    )
+    MOCKFILTER_DEFAULT_RETURN = 'default_filter'
+    MOCKPAGING_DEFAULT_RETURN = 'default_paging'
+
+    @pytest.fixture(scope='function', autouse=True)
+    def setDefaultReturnValues(self, service):
+        service._repo.searchThread.return_value = self.MOCKDB_DEFAULT_RETURN
+        service._repo.searchUser.return_value = self.MOCKDB_USER_DEFAULT_RETURN
+        service._repo.searchPost.return_value = self.MOCKDB_POST_DEFAULT_RETURN
+        service._filter.createFilter.return_value = self.MOCKFILTER_DEFAULT_RETURN
+        service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
+
+    def test_searchThreadsByKeyValuesShouldCreateFuzzyFilterForFields(self, service):
+        mockFilter = service._filter
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        mockFilter.createFilter.assert_any_call(dict(
+            field='subject',
+            operator='fuzzy',
+            value=[ self.DEFAULT_KEYVALUES['search'] ],
+        ))
+        mockFilter.createFilter.assert_any_call(dict(
+            field='title',
+            operator='fuzzy',
+            value=[ self.DEFAULT_KEYVALUES['search'] ],
+        ))
+    
+    def test_searchThreadsByKeyValuesShouldCreateEqFilterForId(self, service):
+        mockFilter = service._filter
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        mockFilter.createFilter.assert_any_call(dict(
+            field='userId',
+            operator='eq',
+            value=[ self.DEFAULT_KEYVALUES['userId'] ],
+        ))
+
+    def test_searchThreadsByKeyValuesShouldGenerateAggregate(self, service):
+        mockAggregate = service._aggregate
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        mockAggregate.createFilter.assert_any_call(
+            'or',
+            [ self.MOCKFILTER_DEFAULT_RETURN, self.MOCKFILTER_DEFAULT_RETURN ]
+        )
+        mockAggregate.createFilter.assert_any_call(
+            'and',
+            [ self.MOCKFILTER_DEFAULT_RETURN, MOCKAGGREGATE_RETURN_OR ]
+        )
+
+    def test_searchThreadsByKeyValuesShouldPassKeyValuesToPaging(self, service):
+        mockPaging = service._paging
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        mockPaging.assert_called_with(self.DEFAULT_KEYVALUES)
+
+    def test_searchThreadsByKeyValuesShouldCallRepoWithAndFilter(self, service):
+        mockRepo = service._repo
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        mockRepo.searchThread.assert_called_with(
+            MOCKAGGREGATE_RETURN_AND,
+            self.MOCKPAGING_DEFAULT_RETURN
+        )
+
+    def test_searchThreadsByKeyValuesShouldNotUpdateThreadViewCount(self, service):
+        mockRepo = service._repo
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        # _, update = mockRepo.updateThread.call_args[0]
+        assert mockRepo.updateThread.call_count == 0
+
+    def test_searchThreadsByKeyValuesShouldNotCallRepoWhenNothingToSearchFor(self, service):
+        mockRepo = service._repo
+        keyValues = dict(offset=30, limit=100)
+
+        service.searchThreadsByKeyValues(keyValues)
+
+        assert mockRepo.searchThread.call_count == 0
+        assert mockRepo.updateThread.call_count == 0
+
+    def test_searchThreadsByKeyValuesShouldGenerateSearchForOwnerUser(self, service):
+        mockFilter = service._filter
+        mockRepo = service._repo
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        mockFilter.createFilter.assert_any_call(dict(
+            field='userId',
+            operator='eq',
+            value=[ self.DEFAULT_KEYVALUES['userId'] ],
+        ))
+        mockFilter.createFilter.assert_any_call(dict(
+            field='userId',
+            operator='eq',
+            value=[ self.MOCKDB_POST_DEFAULT_RETURN['posts'][0]['userId'] ],
+        ))
+        mockRepo.searchUser.assert_any_call(
+            self.MOCKFILTER_DEFAULT_RETURN
+        )
+
+    def test_searchThreadsByKeyValuesShouldGenerateSearchForLastPost(self, service):
+        mockFilter = service._filter
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        mockFilter.createFilter.assert_any_call(dict(
+            field='postId',
+            operator='eq',
+            value=[ self.MOCKDB_DEFAULT_RETURN['threads'][0]['lastPostId'] ],
+        ))
+
+    def test_searchThreadsByKeyValuesShouldReturnSearchResult(self, service):
+        result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        assert result['returnCount'] == self.MOCKDB_DEFAULT_RETURN['returnCount']
+        assert result['matchedCount'] == self.MOCKDB_DEFAULT_RETURN['matchedCount']
+        threads = result['threads']
+        assert len(threads) == len(self.MOCKDB_DEFAULT_RETURN['threads'])
+        assert threads[0]['threadId'] == self.MOCKDB_DEFAULT_RETURN['threads'][0]['threadId']
+
+    def test_searchThreadsByKeyValuesShouldReturnNoMatchWhenNothingToSearchFor(self, service):
+        keyValues = dict(offset=30, limit=100)
+
+        result = service.searchThreadsByKeyValues(keyValues)
+
+        assert len(result['threads']) == 0
+        assert result['returnCount'] == 0
+        assert result['matchedCount'] == 0
+
+    def test_searchThreadsByKeyValuesShouldContainOwnerInfo(self, service):
+        result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        threads = result['threads']
+        for thread in threads:
+            assert 'owner' in thread
+
+    def test_searchThreadsByKeyValuesShouldContainLastPostInfo(self, service):
+        result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        threads = result['threads']
+        for thread in threads:
+            assert 'lastPost' in thread
+            assert 'owner' in thread['lastPost']
+
+    def test_searchThreadsByKeyValuesShouldFilterFieldsFromResult(self, service):
+        result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        threads = result['threads']
+        owners = [
+            thread['owner'] for thread in threads
+        ]
+        lastPosts = [
+            thread['lastPost'] for thread in threads
+        ]
+        for thread in threads:
+            assert '_id' not in thread
+        for owner in owners:
+            assert '_id' not in owner
+        for lastPost in lastPosts:
+            assert '_id' not in lastPost
+            assert '_id' not in lastPost['owner']
+
+
+class TestSaerchThreadByExplicitId:
+    DEFAULT_THREAD_ID = 'test_id'
+    MOCKDB_DEFAULT_RETURN = dict(
+        threads=[ dict(threadId='test_id', userId='11111111', _id='some_random_id') ],
         returnCount=1,
         matchedCount=1,
     )
@@ -312,101 +501,64 @@ class TestSearchThreadByKeyValues:
         service._filter.createFilter.return_value = self.MOCKFILTER_DEFAULT_RETURN
         service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
 
-    def test_searchThreadByKeyValuesShouldCreateFuzzyFilterForFields(self, service):
+    def test_searchThreadByExplicitIdShouldCreateEqFilterForId(self, service):
         mockFilter = service._filter
 
-        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+        service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
         mockFilter.createFilter.assert_any_call(dict(
-            field='subject',
-            operator='fuzzy',
-            value=[ self.DEFAULT_KEYVALUES['search'] ],
-        ))
-        mockFilter.createFilter.assert_any_call(dict(
-            field='title',
-            operator='fuzzy',
-            value=[ self.DEFAULT_KEYVALUES['search'] ],
-        ))
-    
-    def test_searchThreadByKeyValuesShouldCreateEqFilterForId(self, service):
-        mockFilter = service._filter
-
-        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mockFilter.createFilter.assert_any_call(dict(
-            field='userId',
+            field='threadId',
             operator='eq',
-            value=[ self.DEFAULT_KEYVALUES['userId'] ],
+            value=[ self.DEFAULT_THREAD_ID ],
         ))
 
-    def test_searchThreadByKeyValuesShouldGenerateAggregate(self, service):
+    def test_searchThreadByExplicitIdShouldGenerateAggregate(self, service):
         mockAggregate = service._aggregate
 
-        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+        service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
-        mockAggregate.createFilter.assert_any_call(
-            'or',
-            [ self.MOCKFILTER_DEFAULT_RETURN, self.MOCKFILTER_DEFAULT_RETURN ]
-        )
         mockAggregate.createFilter.assert_any_call(
             'and',
-            [ self.MOCKFILTER_DEFAULT_RETURN, MOCKAGGREGATE_RETURN_OR ]
+            [ self.MOCKFILTER_DEFAULT_RETURN ]
         )
 
-    def test_searchThreadByKeyValuesShouldPassKeyValuesToPaging(self, service):
-        mockPaging = service._paging
-
-        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mockPaging.assert_called_with(self.DEFAULT_KEYVALUES)
-
-    def test_searchThreadByKeyValuesShouldCallRepoWithAndFilter(self, service):
+    def test_searchThreadByExplicitIdShouldCallRepoWithAndFilter(self, service):
         mockRepo = service._repo
 
-        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+        service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
         mockRepo.searchThread.assert_called_with(
             MOCKAGGREGATE_RETURN_AND,
             self.MOCKPAGING_DEFAULT_RETURN
         )
 
-    def test_searchThreadByKeyValuesShouldUpdateThreadViewCount(self, service):
+    def test_searchThreadByExplicitIdShouldUpdateThreadViewCount(self, service):
         mockRepo = service._repo
         expectedUpdate = dict(increment='views')
 
-        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+        service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
-        mockRepo.updateThread.assert_called_with(
-            MOCKAGGREGATE_RETURN_AND,
-            expectedUpdate
-        )
+        assert mockRepo.updateThread.call_count == 1
+        _, update = mockRepo.updateThread.call_args[0]
+        assert update == expectedUpdate
 
-    def test_searchThreadByKeyValuesShouldNotCallRepoWhenNothingToSearchFor(self, service):
-        mockRepo = service._repo
-        keyValues = dict(offset=30, limit=100)
-
-        service.searchThreadsByKeyValues(keyValues)
-
-        assert mockRepo.searchThread.call_count == 0
-        assert mockRepo.updateThread.call_count == 0
-
-    def test_searchThreadByKeyValuesShouldGenerateSearchForOwnerUser(self, service):
+    def test_searchThreadByExplicitIdShouldGenerateSearchForOwnerUser(self, service):
         mockFilter = service._filter
         mockRepo = service._repo
 
-        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+        service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
         mockFilter.createFilter.assert_any_call(dict(
             field='userId',
             operator='eq',
-            value=[ self.DEFAULT_KEYVALUES['userId'] ],
+            value=[ self.MOCKDB_DEFAULT_RETURN['threads'][0]['userId'] ],
         ))
         mockRepo.searchUser.assert_any_call(
             self.MOCKFILTER_DEFAULT_RETURN
         )
 
-    def test_searchThreadByKeyValuesShouldReturnSearchResult(self, service):
-        result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+    def test_searchThreadByExplicitIdShouldReturnSearchResult(self, service):
+        result = service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
         assert result['returnCount'] == self.MOCKDB_DEFAULT_RETURN['returnCount']
         assert result['matchedCount'] == self.MOCKDB_DEFAULT_RETURN['matchedCount']
@@ -414,28 +566,19 @@ class TestSearchThreadByKeyValues:
         assert len(threads) == len(self.MOCKDB_DEFAULT_RETURN['threads'])
         assert threads[0]['threadId'] == self.MOCKDB_DEFAULT_RETURN['threads'][0]['threadId']
 
-    def test_searchThreadByKeyValuesShouldReturnNoMatchWhenNothingToSearchFor(self, service):
-        keyValues = dict(offset=30, limit=100)
-
-        result = service.searchThreadsByKeyValues(keyValues)
-
-        assert len(result['threads']) == 0
-        assert result['returnCount'] == 0
-        assert result['matchedCount'] == 0
-
-    def test_searchThreadByKeyValuesShouldContainOwnerInfo(self, service):
-        result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+    def test_searchThreadByExplicitIdShouldContainOwnerInfo(self, service):
+        result = service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
         threads = result['threads']
         for thread in threads:
-            assert 'user' in thread
+            assert 'owner' in thread
 
-    def test_searchThreadByKeyValuesShouldFilterFieldsFromResult(self, service):
-        result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+    def test_searchThreadByExplicitIdShouldFilterFieldsFromResult(self, service):
+        result = service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
         threads = result['threads']
         owners = [
-            thread['user'] for thread in threads
+            thread['owner'] for thread in threads
         ]
         for thread in threads:
             assert '_id' not in thread

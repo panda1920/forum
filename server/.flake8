@@ -17,5 +17,5 @@ ignore =
     E266,
 
 per-file-ignores =
-    # ignores max-line constraint in testfiles
-    *_test.py:E501
+    # ignores max-line constraint in test related files
+    ./server/tests/*:E501

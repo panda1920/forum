@@ -81,6 +81,7 @@ class DataCreator:
                 title=f'{user["displayName"]}\'s thread',
                 subject='Subject of this thread',
                 views=0,
+                posts=self.POSTCOUNT_PER_THREAD,
                 createdAt=now,
             ))
 
@@ -113,11 +114,12 @@ class DataCreator:
                     postCreatedCount += 1
                     postNum += 1
 
+                thread['lastPostId'] = posts[-1]['postId']
         return posts
 
     def _createEnglishPost(self, user, thread, postNum, postId, createdAt):
         return {
-            'postId': postId,
+            'postId': str(postId),
             'userId': user['userId'],
             'threadId': thread['threadId'],
             'content': f'{user["displayName"]}\'s post {postNum}',
@@ -126,7 +128,7 @@ class DataCreator:
 
     def _createJapanesePost(self, user, thread, postNum, postId, createdAt):
         return {
-            'postId': postId,
+            'postId': str(postId),
             'userId': user['userId'],
             'threadId': thread['threadId'],
             'content': f'ユーザ名：{user["displayName"]}による{postNum}番目の投稿です',

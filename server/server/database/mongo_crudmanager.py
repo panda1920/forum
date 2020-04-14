@@ -37,9 +37,14 @@ class MongoCrudManager(CrudManager):
         user['password'] = self._userauth.hashPassword( user['password'] )
 
         with self._mongoOperationHandling('Failed to create user'):
-            nextUserId = self._getCounterAndIncrement('userId')
-            user['userId'] = str(nextUserId)
+            nextUserId = str( self._getCounterAndIncrement('userId') )
+            user['userId'] = nextUserId
             self._db['users'].insert_one(user)
+
+        return dict(
+            createdCount=1,
+            createdId=nextUserId
+        )
 
     def searchUser(self, searchFilter, paging=None):
         if paging is None:
@@ -82,9 +87,14 @@ class MongoCrudManager(CrudManager):
         self._validateEntity(NewPost, post)
         
         with self._mongoOperationHandling('Failed to create post'):
-            nextPostId = self._getCounterAndIncrement('postId')
-            post['postId'] = str(nextPostId)
+            nextPostId = str( self._getCounterAndIncrement('postId') )
+            post['postId'] = nextPostId
             self._db['posts'].insert_one(post)
+
+        return dict(
+            createdCount=1,
+            createdId=nextPostId,
+        )
     
     def searchPost(self, searchFilter, paging=None):
         if paging is None:
@@ -126,12 +136,15 @@ class MongoCrudManager(CrudManager):
         self._validateEntity(NewThread, thread)
 
         with self._mongoOperationHandling('Failed to create new thread'):
-            nextThreadId = self._getCounterAndIncrement('threadId')
-            thread['threadId'] = str(nextThreadId)
+            nextThreadId = str( self._getCounterAndIncrement('threadId') )
+            thread['threadId'] = nextThreadId
             thread['createdAt'] = time.time()
             self._db['threads'].insert_one(thread)
 
-        return dict(createdCount=1)
+        return dict(
+            createdCount=1,
+            createdId=nextThreadId,
+        )
 
     def searchThread(self, searchFilter, paging=None):
         if paging is None:

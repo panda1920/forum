@@ -12,24 +12,22 @@ from server.exceptions import MyAppException
 routes = Blueprint('threadRoutes', __name__)
 
 
-@cors_wrapped_route(routes.route, '/v1/threads', methods=['POST'])
+@cors_wrapped_route(routes.route, '/v1/threads', methods=['GET'])
 def searchThreadsv1():
     try:
         search = Config.getSearchService(current_app)
-        keyValues = route_utils.getJsonFromRequest(request)
+        keyValues = request.args.to_dict(flat=True)
         result = search.searchThreadsByKeyValues(keyValues)
         return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
 
 
-@cors_wrapped_route(routes.route, '/v1/threads/<threadId>', methods=['POST'])
+@cors_wrapped_route(routes.route, '/v1/threads/<threadId>', methods=['GET'])
 def searchThreadByIdv1(threadId):
     try:
         search = Config.getSearchService(current_app)
-        keyValues = route_utils.getJsonFromRequest(request)
-        keyValues.update({ 'threadId': threadId })
-        result = search.searchThreadsByKeyValues(keyValues)
+        result = search.searchThreadByExplicitId(threadId)
         return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)

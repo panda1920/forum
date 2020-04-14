@@ -36,7 +36,7 @@ const BoardPage = ({ boardId }) => {
       <div title='pagination bar'>|&lt;  &lt;  &gt;  &gt;|</div>
       <div title='threads list'>
         {
-          threads.map(thread => <ThreadCard key={thread.threadId} threadInfo={thread} />)
+          threads.map(thread => <ThreadCard key={thread.threadId} thread={thread} />)
         }
       </div>
       <div title='pagination bar'>|&lt;  &lt;  &gt;  &gt;|</div>

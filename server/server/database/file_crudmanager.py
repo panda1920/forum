@@ -84,6 +84,11 @@ class FileCrudManager(CrudManager):
         self._createUserImpl(user)
         self._incrementCounter('userId')
 
+        return dict(
+            createdCount=1,
+            createdId=user['userId']
+        )
+
     def searchUser(self, searchFilter, paging=None):
         if paging is None:
             paging = Paging()
@@ -126,6 +131,11 @@ class FileCrudManager(CrudManager):
         self._createPostImpl(post)
         self._incrementCounter('postId')
 
+        return dict(
+            createdCount=1,
+            createdId=post['postId'],
+        )
+
     def searchPost(self, searchFilter, paging=None):
         if paging is None:
             paging = Paging()
@@ -163,12 +173,15 @@ class FileCrudManager(CrudManager):
             raise EntityValidationError('failed to validate new thread object')
         
         thread['createdAt'] = time.time()
-        thread['threadId'] = self._getCounter('threadId')
+        thread['threadId'] = str( self._getCounter('threadId') )
 
         self._createThreadImpl(thread)
         self._incrementCounter('threadId')
 
-        return dict(createdCount=1)
+        return dict(
+            createdCount=1,
+            createdId=thread['threadId'],
+        )
 
     def searchThread(self, searchFilter, paging=None):
         if paging is None:

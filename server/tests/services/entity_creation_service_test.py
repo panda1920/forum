@@ -4,6 +4,7 @@ This file houses tests for entity_creation_service.py
 """
 
 import pytest
+from unittest.mock import ANY
 
 import tests.mocks as mocks
 import server.exceptions as exceptions
@@ -11,9 +12,9 @@ from server.services.entity_creation_service import EntityCreationService
 
 OWNER_ID = '1'
 DEFAULT_SESSION_USER = dict(userId=OWNER_ID)
-CREATE_USER_RETURN = dict(createdCount=1)
-CREATE_POST_RETURN = dict(createdCount=1)
-CREATE_THREAD_RETURN = dict(createdCount=1)
+CREATE_USER_RETURN = dict(createdCount=1, createdId='test_inserted_user')
+CREATE_POST_RETURN = dict(createdCount=1, createdId='test_inserted_post')
+CREATE_THREAD_RETURN = dict(createdCount=1, createdId='test_inserted_thread')
 
 
 @pytest.fixture(scope='function')
@@ -108,6 +109,7 @@ class TestSignupUser:
 class TestCreateNewPost:
     DEFAULT_KEYVALUES = dict(
         userId=OWNER_ID,
+        threadId='owner_thread_id',
         content='This is test content',
         random_key1='key1',
         random_key2='key2',
@@ -136,6 +138,27 @@ class TestCreateNewPost:
         result = service.createNewPost(self.DEFAULT_KEYVALUES)
         
         assert result == CREATE_POST_RETURN
+
+    def test_createNewPostShouldUpdateOwnerThread(self, service):
+        mock_repo = service._repo
+        mock_filter = service._filter
+        expectedFilter = 'test_filter_threadId'
+        mock_filter.createFilter.return_value = expectedFilter
+
+        service.createNewPost(self.DEFAULT_KEYVALUES)
+
+        mock_filter.createFilter.assert_any_call(dict(
+            field='threadId', operator='eq', value=[ self.DEFAULT_KEYVALUES['threadId'] ]
+        ))
+        mock_repo.updateThread.assert_called_with(expectedFilter, ANY)
+
+    def test_createNewPostShouldUpdatePostCountAndLastPostOnOwnerThread(self, service):
+        mock_repo = service._repo
+
+        result = service.createNewPost(self.DEFAULT_KEYVALUES)
+
+        expectedUpdate = dict(increment='posts', lastPostId=result['createdId'])
+        mock_repo.updateThread.assert_called_with(ANY, expectedUpdate)
 
 
 class TestCreateNewThread:

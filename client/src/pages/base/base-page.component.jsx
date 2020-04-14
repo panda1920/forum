@@ -54,7 +54,7 @@ const BasePage = () => {
               <h1>SAMPLE</h1>
             </Route>
             <Route path='/'>
-              <BoardPage />
+              <BoardPage boardId='0' />
             </Route>
           </Switch>
         </div>

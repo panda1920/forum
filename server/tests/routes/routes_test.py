@@ -13,6 +13,7 @@ import server.exceptions as exceptions
 DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES = 'some_users'
 DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES = 'some_posts'
 DEFAULT_RETURN_SEARCHTHREADSBYKEYVALUES = 'some_threads'
+DEFAULT_RETURN_SEARCHTHREADSBYEXPLICITID = 'some_threads_id'
 DEFAULT_RETURN_SIGNUP = dict(created='user')
 DEFAULT_RETURN_CREATENEWPOST = dict(created='post')
 DEFAULT_RETURN_CREATENEWTHREAD = dict(created='thread')
@@ -674,6 +675,7 @@ class TestThreadAPIs:
     def setup_mock(self, mockApp):
         search = Config.getSearchService(mockApp)
         search.searchThreadsByKeyValues.return_value = DEFAULT_RETURN_SEARCHTHREADSBYKEYVALUES
+        search.searchThreadByExplicitId.return_value = DEFAULT_RETURN_SEARCHTHREADSBYEXPLICITID
         create = Config.getCreationService(mockApp)
         create.createNewThread.return_value = DEFAULT_RETURN_CREATENEWTHREAD
         update = Config.getUpdateService(mockApp)
@@ -686,7 +688,7 @@ class TestThreadAPIs:
         search_service = Config.getSearchService(mockApp)
         data = dict(search='some title')
 
-        client.post(url, json=data)
+        client.get(url, query_string=data)
 
         search_service.searchThreadsByKeyValues.assert_called_with(data)
 
@@ -694,7 +696,7 @@ class TestThreadAPIs:
         url = f'{self.THREAD_API_BASE}'
         data = dict(search='some title')
         
-        response = client.post(url, json=data)
+        response = client.get(url, query_string=data)
 
         assert response.status_code == 200
         assert response.get_json()['result'] == DEFAULT_RETURN_SEARCHTHREADSBYKEYVALUES
@@ -712,7 +714,7 @@ class TestThreadAPIs:
         for e in exceptionsToTest:
             search_service.searchThreadsByKeyValues.side_effect = e('some-error')
             with mockApp.test_client() as client:
-                response = client.post(url, json=data)
+                response = client.get(url, query_string=data)
 
                 assert response.status_code == e.getStatusCode()
 
@@ -720,28 +722,23 @@ class TestThreadAPIs:
         search_service = Config.getSearchService(mockApp)
         threadId = '1'
         url = f'{self.THREAD_API_BASE }/{threadId}'
-        data = dict(search='some title')
 
-        client.post(url, json=data)
+        client.get(url)
 
-        expectedArg = data.copy()
-        expectedArg.update( dict(threadId=threadId) )
-        search_service.searchThreadsByKeyValues.assert_called_with(expectedArg)
+        search_service.searchThreadByExplicitId.assert_called_with(threadId)
 
     def test_searchThreadByExplicitIdShouldReturn200AndResultFromService(self, client):
         threadId = '1'
         url = f'{self.THREAD_API_BASE }/{threadId}'
-        data = dict(search='some title')
         
-        response = client.post(url, json=data)
+        response = client.get(url)
 
         assert response.status_code == 200
-        assert response.get_json()['result'] == DEFAULT_RETURN_SEARCHTHREADSBYKEYVALUES
+        assert response.get_json()['result'] == DEFAULT_RETURN_SEARCHTHREADSBYEXPLICITID
 
     def test_searchThreadByExplicitIdShouldReturnErrorWhenServiceRaiseException(self, mockApp):
         threadId = '1'
         url = f'{self.THREAD_API_BASE }/{threadId}'
-        data = dict(search='some title')
         search_service = Config.getSearchService(mockApp)
         exceptionsToTest = [
             exceptions.ServerMiscError,
@@ -750,9 +747,9 @@ class TestThreadAPIs:
         ]
         
         for e in exceptionsToTest:
-            search_service.searchThreadsByKeyValues.side_effect = e('some-error')
+            search_service.searchThreadByExplicitId.side_effect = e('some-error')
             with mockApp.test_client() as client:
-                response = client.post(url, json=data)
+                response = client.get(url)
 
                 assert response.status_code == e.getStatusCode()
 
