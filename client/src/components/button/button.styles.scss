@@ -5,3 +5,10 @@
         cursor: pointer;
     }
 }
+
+.button-disabled {
+    pointer-events: none;
+    &:hover {
+        cursor: default;
+    }
+}

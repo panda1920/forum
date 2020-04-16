@@ -16,6 +16,8 @@ class Button extends React.Component {
   onClickHandler() {
     const { clickedRecently } = this.state;
     const { onClick } = this.props;
+    if (!onClick)
+      return;
     
     if (clickedRecently)
       return;

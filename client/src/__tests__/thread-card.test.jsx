@@ -26,12 +26,12 @@ const TEST_DATA = {
       createdAt: 1577836830.1,
     }
   },
-  TIME: '1 1 2020, 00:00PM',
+  THREAD_CREATED_TIME: '01/01/2020, 00:00:00',
+  LASTPOST_CREATED_TIME: '01/01/2020, 00:00:30',
 };
 
 const IDENTIFIERS = {
-  ALTTEXT_THREAD_PORTRAIT: 'owner portrait',
-  ALTTEXT_LASTPOST_PORTRAIT: 'last post portrait',
+  TITLE_LASTPOST_PORTRAIT: 'last post portrait',
 };
 
 function createThreadCard() {
@@ -49,16 +49,15 @@ afterEach(() => {
 
 describe('Testing behavior of ThreadCard component', () => {
   test('Should render thread information passed as props', () => {
-    const { getByText, getByAltText } = createThreadCard();
+    const { getByText, getByTitle } = createThreadCard();
 
     getByText(TEST_DATA.THREAD_DATA.title);
     getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.posts.toString()}.*`) );
     getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.views.toString()}.*`) );
-    getByAltText(IDENTIFIERS.ALTTEXT_THREAD_PORTRAIT);
-    getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.user.displayName}.*`) );
-    getByText(/.*1 Jan 2020, 00:00PM.*/);
-    getByAltText(IDENTIFIERS.ALTTEXT_LASTPOST_PORTRAIT);
-    getByText(/.*1 Jan 2020, 00:30PM.*/);
-    getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.lastPost.user.displayName}.*`) );
+    getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.owner.displayName}.*`) );
+    getByText( new RegExp(`.*${TEST_DATA.THREAD_CREATED_TIME}.*`) );
+    getByText( new RegExp(`.*${TEST_DATA.LASTPOST_CREATED_TIME}.*`) );
+    getByTitle(IDENTIFIERS.TITLE_LASTPOST_PORTRAIT);
+    getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.lastPost.owner.displayName}.*`) );
   });
 });
