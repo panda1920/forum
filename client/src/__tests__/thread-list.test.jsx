@@ -13,10 +13,10 @@ import ThreadList from '../components/thread-list/thread-list.component';
 jest.mock('../components/thread-card/thread-card.component');
 
 const IDENTIFIERS = {
-  TITLE_PAGINATION: 'pagination',
   TITLE_THREAD_CARD: 'thread card',
   TITLE_THREADS: 'threads',
   TITLE_THREADS_HEADER: 'threads header',
+  TITLE_PAGINATION_BAR: 'pagination bar',
   TITLE_BUTTON_FIRST: 'pagination button first',
   TITLE_BUTTON_BACK: 'pagination button back',
   TITLE_BUTTON_NEXT: 'pagination button next',
@@ -97,7 +97,7 @@ describe('testing behavior of ThreadList component', () => {
   test('subcomponents should be rendered', async () => {
     const { getAllByTitle } = await createThreadList();
     
-    const paginations = getAllByTitle(IDENTIFIERS.TITLE_PAGINATION);
+    const paginations = getAllByTitle(IDENTIFIERS.TITLE_PAGINATION_BAR);
     expect(paginations).toHaveLength(2);
     getAllByTitle(IDENTIFIERS.TITLE_THREAD_CARD);
     getAllByTitle(IDENTIFIERS.TITLE_THREADS);
@@ -151,15 +151,6 @@ describe('testing behavior of pagination bar', () => {
     const total = TEST_DATA.API_RETURN_RESULT.matchedCount;
     const displayText = getAllByText( new RegExp(`.*Displaying 1-${displayCount} of ${total}.*`) );
     expect(displayText).toHaveLength(2);
-  });
-
-  test('should render buttons', async () => {
-    const { getAllByTitle } = await createThreadList();
-
-    expect( getAllByTitle(IDENTIFIERS.TITLE_BUTTON_FIRST) ).toHaveLength(2);
-    expect( getAllByTitle(IDENTIFIERS.TITLE_BUTTON_BACK) ).toHaveLength(2);
-    expect( getAllByTitle(IDENTIFIERS.TITLE_BUTTON_NEXT) ).toHaveLength(2);
-    expect( getAllByTitle(IDENTIFIERS.TITLE_BUTTON_LAST) ).toHaveLength(2);
   });
 
   test('upon render first and back buttons should be disabled', async () => {
