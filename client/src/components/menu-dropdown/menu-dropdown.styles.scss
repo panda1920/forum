@@ -9,6 +9,7 @@ $dropdown-border-left: 5px solid map-get($colors, '00');
     line-height: none;
     background-color: map-get($colors, '00');
     padding: $dropdown-padding;
+    z-index: 1;
 
     ul {
         margin: 0;

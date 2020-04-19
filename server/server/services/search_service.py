@@ -44,7 +44,7 @@ class SearchService:
             return dict(users=[], returnCount=0, matchedCount=0)
         paging = self._paging(keyValues)
 
-        result = self._repo.searchUser(searchFilter, paging)
+        result = self._repo.searchUser(searchFilter, paging=paging)
 
         return dict(
             users=self._removeUserPrivateData( result['users'] ),
@@ -60,7 +60,7 @@ class SearchService:
             return dict(posts=[], returnCount=0, matchedCount=0)
         paging = self._paging(keyValues)
         
-        result = self._repo.searchPost(searchFilter, paging)
+        result = self._repo.searchPost(searchFilter, paging=paging)
         posts = self._removePostPrivateData( result['posts'] )
         postsJoined = self._joinOwner(posts)
 
@@ -86,7 +86,7 @@ class SearchService:
             return dict(threads=[], returnCount=0, matchedCount=0)
         paging = self._paging(keyValues)
 
-        result = self._repo.searchThread(searchFilter, paging)
+        result = self._repo.searchThread(searchFilter, paging=paging)
         threads = self._removeThreadPrivateData( result['threads'] )
         threads = self._joinOwner(threads)
         threadsJoined = self._joinLastPost(threads)
@@ -111,7 +111,7 @@ class SearchService:
             return dict(threads=[], returnCount=0, matchedCount=0)
         paging = self._paging()
 
-        result = self._repo.searchThread(searchFilter, paging)
+        result = self._repo.searchThread(searchFilter, paging=paging)
         threads = self._removeThreadPrivateData( result['threads'] )
         threadsJoined = self._joinOwner(threads)
 

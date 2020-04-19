@@ -46,7 +46,8 @@ class MongoCrudManager(CrudManager):
             createdId=nextUserId
         )
 
-    def searchUser(self, searchFilter, paging=None):
+    def searchUser(self, searchFilter, **options):
+        paging = options.get('paging', None)
         if paging is None:
             paging = Paging()
         query = {} if searchFilter is None else searchFilter.getMongoFilter()
@@ -96,7 +97,8 @@ class MongoCrudManager(CrudManager):
             createdId=nextPostId,
         )
     
-    def searchPost(self, searchFilter, paging=None):
+    def searchPost(self, searchFilter, **options):
+        paging = options.get('paging', None)
         if paging is None:
             paging = Paging()
         query = {} if searchFilter is None else searchFilter.getMongoFilter()
@@ -146,7 +148,8 @@ class MongoCrudManager(CrudManager):
             createdId=nextThreadId,
         )
 
-    def searchThread(self, searchFilter, paging=None):
+    def searchThread(self, searchFilter, **options):
+        paging = options.get('paging', None)
         if paging is None:
             paging = Paging()
         query = {} if searchFilter is None else searchFilter.getMongoFilter()

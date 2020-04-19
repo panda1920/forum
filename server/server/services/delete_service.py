@@ -94,7 +94,7 @@ class DeleteService:
         Returns:
             None
         """
-        posts = self._repo.searchPost(searchFilter, PagingNoLimit())['posts']
+        posts = self._repo.searchPost(searchFilter, paging=PagingNoLimit())['posts']
         
         for post in posts:
             self._authorizeDelete( post['userId'] )
@@ -108,7 +108,7 @@ class DeleteService:
         Returns:
             None
         """
-        threads = self._repo.searchThread(searchFilter, PagingNoLimit())['threads']
+        threads = self._repo.searchThread(searchFilter, paging=PagingNoLimit())['threads']
         
         for thread in threads:
             self._authorizeDelete( thread['userId'] )

@@ -89,7 +89,8 @@ class FileCrudManager(CrudManager):
             createdId=user['userId']
         )
 
-    def searchUser(self, searchFilter, paging=None):
+    def searchUser(self, searchFilter, **options):
+        paging = options.get('paging', None)
         if paging is None:
             paging = Paging()
         with self._usersFile.open('r', encoding='utf-8') as f:
@@ -136,7 +137,8 @@ class FileCrudManager(CrudManager):
             createdId=post['postId'],
         )
 
-    def searchPost(self, searchFilter, paging=None):
+    def searchPost(self, searchFilter, **options):
+        paging = options.get('paging', None)
         if paging is None:
             paging = Paging()
         with self._postsFile.open('r', encoding='utf-8') as f:
@@ -183,7 +185,8 @@ class FileCrudManager(CrudManager):
             createdId=thread['threadId'],
         )
 
-    def searchThread(self, searchFilter, paging=None):
+    def searchThread(self, searchFilter, **options):
+        paging = options.get('paging', None)
         if paging is None:
             paging = Paging()
 

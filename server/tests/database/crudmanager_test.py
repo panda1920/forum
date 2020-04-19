@@ -257,7 +257,7 @@ class TestUserCRUD:
         paging = Paging({ 'limit': 5 })
         searchFilter = createSearchFilter('userId', 'eq', userIdsToSearch)
 
-        result = setupDB.getRepo().searchUser(searchFilter, paging)
+        result = setupDB.getRepo().searchUser(searchFilter, paging=paging)
 
         users = result['users']
         assert len(users) == 5
@@ -271,7 +271,7 @@ class TestUserCRUD:
         paging = Paging({ 'limit': 5, 'offset': 8 })
         searchFilter = createSearchFilter('userId', 'eq', userIdsToSearch)
 
-        result = setupDB.getRepo().searchUser(searchFilter, paging)
+        result = setupDB.getRepo().searchUser(searchFilter, paging=paging)
 
         users = result['users']
         assert len(users) == 2
@@ -548,7 +548,7 @@ class TestPostCRUD:
             limit=DataCreator.POSTCOUNT_PER_USER
         ))
 
-        result = setupDB.getRepo().searchPost(searchFilter, paging)
+        result = setupDB.getRepo().searchPost(searchFilter, paging=paging)
 
         posts = result['posts']
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER - 1
@@ -566,7 +566,7 @@ class TestPostCRUD:
         ])
         paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })
 
-        result = setupDB.getRepo().searchPost(searchFilter, paging)
+        result = setupDB.getRepo().searchPost(searchFilter, paging=paging)
 
         posts = result['posts']
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER
@@ -584,7 +584,7 @@ class TestPostCRUD:
         ])
         paging = Paging({ 'limit': DataCreator.POSTCOUNT_PER_USER * 3 })
 
-        result = setupDB.getRepo().searchPost(searchFilter, paging)
+        result = setupDB.getRepo().searchPost(searchFilter, paging=paging)
 
         posts = result['posts']
         assert len(posts) == DataCreator.POSTCOUNT_PER_USER * 3
@@ -818,7 +818,7 @@ class TestThreadCRUD:
             limit=DataCreator.THREAD_COUNT
         ))
 
-        result = setupDB.getRepo().searchThread(searchFilter, paging)
+        result = setupDB.getRepo().searchThread(searchFilter, paging=paging)
 
         threads = result['threads']
         assert len(threads) == DataCreator.THREAD_COUNT - 8

@@ -12,7 +12,7 @@ class CrudManager:
     def createUser(self, user):
         raise NotImplementedError
 
-    def searchUser(self, searchFilter, paging=None):
+    def searchUser(self, searchFilter, **options):
         raise NotImplementedError
 
     def deleteUser(self, userIds):
@@ -24,7 +24,7 @@ class CrudManager:
     def createPost(self, post):
         raise NotImplementedError
     
-    def searchPost(self, searchFilter, paging=None):
+    def searchPost(self, searchFilter, **options):
         raise NotImplementedError
 
     def deletePost(self, searchFilter):
@@ -36,7 +36,7 @@ class CrudManager:
     def createThread(self, thread):
         raise NotImplementedError
 
-    def searchThread(self, searchFilter, paging=None):
+    def searchThread(self, searchFilter, **options):
         raise NotImplementedError
 
     def updateThread(self, searchFilter, thread):

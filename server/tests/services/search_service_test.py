@@ -108,7 +108,7 @@ class TestSearchUsersByKeyValues:
 
         mockDB.searchUser.assert_called_with(
             MOCKAGGREGATE_RETURN_AND,
-            self.MOCKPAGING_DEFAULT_RETURN
+            paging=self.MOCKPAGING_DEFAULT_RETURN
         )
 
     def test_searchUsersByKeyValuesReturnsNoUsersWhenNoSearchTermInKeyValues(self, service):
@@ -229,7 +229,7 @@ class TestSearchPostsByKeyValues:
 
         mockDB.searchPost.assert_any_call(
             MOCKAGGREGATE_RETURN_AND,
-            self.MOCKPAGING_DEFAULT_RETURN
+            paging=self.MOCKPAGING_DEFAULT_RETURN
         )
 
     def test_searchPostsByKeyValuesCreatesEQFilterFromUserId(self, service):
@@ -376,7 +376,7 @@ class TestSearchThreadByKeyValues:
 
         mockRepo.searchThread.assert_called_with(
             MOCKAGGREGATE_RETURN_AND,
-            self.MOCKPAGING_DEFAULT_RETURN
+            paging=self.MOCKPAGING_DEFAULT_RETURN
         )
 
     def test_searchThreadsByKeyValuesShouldNotUpdateThreadViewCount(self, service):
@@ -529,7 +529,7 @@ class TestSaerchThreadByExplicitId:
 
         mockRepo.searchThread.assert_called_with(
             MOCKAGGREGATE_RETURN_AND,
-            self.MOCKPAGING_DEFAULT_RETURN
+            paging=self.MOCKPAGING_DEFAULT_RETURN
         )
 
     def test_searchThreadByExplicitIdShouldUpdateThreadViewCount(self, service):

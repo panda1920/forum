@@ -42,7 +42,7 @@ class Button extends React.Component {
   }
 
   render() {
-    const { className, onClick, children, ...otherProps } = this.props;
+    const { className, children, ...otherProps } = this.props;
     const testid = this.props['data-testid'];
     const classes = convertClassNamePropToString(className);
     const onClickHandlerCallback = () => { this.onClickHandler(); };
