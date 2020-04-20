@@ -5,6 +5,7 @@ This file houses tests for file_crudmanager.py and mongo_crudmanager.py
 
 import pytest
 
+from server.database.sorter import DescendingSorter
 from tests.database.setup_crudmanager import Setup_FileCrudManager, Setup_MongoCrudManager
 from tests.database.datacreator import DataCreator
 from server.database.filter import PrimitiveFilter
@@ -277,6 +278,22 @@ class TestUserCRUD:
         assert len(users) == 2
         assert result['matchedCount'] == 10
         assert result['returnCount'] == 2
+
+    def test_searchUserByPassingSorterShouldSortSearchResult(self, setupDB):
+        userIdsToSearch = [
+            user['userId'] for user in setupDB.getOriginalUsers()[1:3]
+        ]
+        searchFilter = createSearchFilter('userId', 'eq', userIdsToSearch)
+        sorter = DescendingSorter('displayName')
+        expectedUsers = sorted(
+            setupDB.getOriginalUsers()[1:3],
+            key=lambda entity: entity['displayName'],
+            reverse=True
+        )
+
+        result = setupDB.getRepo().searchUser(searchFilter, sorter=sorter)
+
+        assert result['users'] == expectedUsers
 
     def test_updateUserShouldUpdateMatchedUserOnDB(self, setupDB):
         mock = setupDB.getMockPassword()
@@ -601,6 +618,22 @@ class TestPostCRUD:
         assert result['returnCount'] == Paging.DEFAULT_LIMIT
         assert result['matchedCount'] == len(setupDB.getOriginalPosts())
 
+    def test_searchPostByPassingSorterShouldSortSearchResult(self, setupDB):
+        postIdsToSearch = [
+            post['postId'] for post in setupDB.getOriginalPosts()[:2]
+        ]
+        searchFilter = createSearchFilter('postId', 'eq', postIdsToSearch)
+        sorter = DescendingSorter('content')
+        expectedPosts = sorted(
+            setupDB.getOriginalPosts()[:2],
+            key=lambda entity: entity['content'],
+            reverse=True
+        )
+
+        result = setupDB.getRepo().searchPost(searchFilter, sorter=sorter)
+
+        assert result['posts'] == expectedPosts
+
     def test_updatePostShouldUpdatePostOnDB(self, setupDB):
         postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]
         searchFilter = createSearchFilter('postId', 'eq', postIdsToUpdate)
@@ -876,6 +909,22 @@ class TestThreadCRUD:
         assert len(threads) == DataCreator.THREAD_COUNT
         assert result['returnCount'] == DataCreator.THREAD_COUNT
         assert result['matchedCount'] == DataCreator.THREAD_COUNT
+
+    def test_searchThreadByPassingSorterShouldSortSearchResult(self, setupDB):
+        threadIdsToSearch = [
+            thread['threadId'] for thread in setupDB.getOriginalThreads()[1:3]
+        ]
+        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToSearch)
+        sorter = DescendingSorter('title')
+        expectedThreads = sorted(
+            setupDB.getOriginalThreads()[1:3],
+            key=lambda entity: entity['title'],
+            reverse=True
+        )
+
+        result = setupDB.getRepo().searchThread(searchFilter, sorter=sorter)
+
+        assert result['threads'] == expectedThreads
     
     def test_updateThreadShouldUpdateMatchedThreadOnDB(self, setupDB):
         threadIdsToUpdate = [

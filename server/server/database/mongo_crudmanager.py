@@ -11,6 +11,7 @@ from collections import defaultdict
 from pymongo import MongoClient
 from contextlib import contextmanager
 
+from server.database.sorter import NullSorter
 from server.database.crudmanager import CrudManager
 from server.database.paging import Paging
 from server.entity.user import NewUser, UpdateUser
@@ -47,13 +48,13 @@ class MongoCrudManager(CrudManager):
         )
 
     def searchUser(self, searchFilter, **options):
-        paging = options.get('paging', None)
-        if paging is None:
-            paging = Paging()
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
         query = {} if searchFilter is None else searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to search user'):
-            users = list(paging.slice( self._db['users'].find(query) ))
+            users = list( paging.slice( sorter.sortMongoCursor( self._db['users'].find(query) ) ) )
             matchedCount = self._db['users'].count_documents(query)
             
         return {
@@ -98,13 +99,13 @@ class MongoCrudManager(CrudManager):
         )
     
     def searchPost(self, searchFilter, **options):
-        paging = options.get('paging', None)
-        if paging is None:
-            paging = Paging()
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
         query = {} if searchFilter is None else searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to search post'):
-            posts = list(paging.slice( self._db['posts'].find(query) ))
+            posts = list( paging.slice( sorter.sortMongoCursor( self._db['posts'].find(query) ) ) )
             matchedCount = self._db['posts'].count_documents(query)
 
         return {
@@ -149,13 +150,13 @@ class MongoCrudManager(CrudManager):
         )
 
     def searchThread(self, searchFilter, **options):
-        paging = options.get('paging', None)
-        if paging is None:
-            paging = Paging()
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
         query = {} if searchFilter is None else searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to search for threads'):
-            threads = list( paging.slice(self._db['threads'].find(query)) )
+            threads = list( paging.slice( sorter.sortMongoCursor( self._db['threads'].find(query) ) ) )
             matchedCount = self._db['threads'].count_documents(query)
 
         return dict(
@@ -222,3 +223,9 @@ class MongoCrudManager(CrudManager):
         except Exception as e:
             logging.error(e)
             raise exceptions.FailedMongoOperation(errormsg)
+
+    def _setDefaultSearchOptions(self, options):
+        if 'paging' not in options:
+            options['paging'] = Paging()
+        if 'sorter' not in options:
+            options['sorter'] = NullSorter()

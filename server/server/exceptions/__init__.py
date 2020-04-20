@@ -161,3 +161,12 @@ class ValueNotFoundOnContext(MyAppException):
     @classmethod
     def getStatusCode(cls):
         return 500
+
+
+class FieldNotFoundInEntityError(MyAppException):
+    """
+    Failed to find field in entity
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 500

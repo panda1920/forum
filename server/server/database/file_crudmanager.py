@@ -7,6 +7,7 @@ import json
 import time
 import logging
 
+from server.database.sorter import NullSorter
 from server.database.crudmanager import CrudManager
 from server.database.paging import Paging
 from server.entity.user import NewUser, UpdateUser
@@ -22,7 +23,7 @@ def updateJSONFileContent(filenameAttr):
     2. edit the content
     3. write the updated content back to the file
     1 and 3 is essentially the same every time.
-    So the motivation was to isolate 2 from the rest of recurring code.
+    So the motivation was to isolate step 2 from the rest of recurring code.
     This decorator helps achieve this.
 
     usage:
@@ -55,13 +56,13 @@ class FileCrudManager(CrudManager):
     THREADS_FILENAME = 'threads.json'
     COUNTERS_FILENAME = 'counters.json'
 
-    def __init__(self, filePath, userauth):
+    def __init__(self, filePath, passwordService):
         self._saveLocation = filePath
         self._usersFile = self.createIfNotExist(self._saveLocation / self.USERS_FILENAME)
         self._postsFile = self.createIfNotExist(self._saveLocation / self.POSTS_FILENAME)
         self._threadsFile = self.createIfNotExist(self._saveLocation / self.THREADS_FILENAME)
         self._countersFile = self.createIfNotExist(self._saveLocation / self.COUNTERS_FILENAME)
-        self._userauth = userauth
+        self._passwordService = passwordService
 
     def createIfNotExist(self, filePath):
         if not filePath.exists():
@@ -78,7 +79,7 @@ class FileCrudManager(CrudManager):
             raise EntityValidationError('failed to validate new user object')
 
         user['createdAt'] = time.time()
-        user['password'] = self._userauth.hashPassword( user['password'] )
+        user['password'] = self._passwordService.hashPassword( user['password'] )
         user['userId'] = str( self._getCounter('userId') )
         
         self._createUserImpl(user)
@@ -90,9 +91,10 @@ class FileCrudManager(CrudManager):
         )
 
     def searchUser(self, searchFilter, **options):
-        paging = options.get('paging', None)
-        if paging is None:
-            paging = Paging()
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
+
         with self._usersFile.open('r', encoding='utf-8') as f:
             users = json.load(f)
 
@@ -103,7 +105,8 @@ class FileCrudManager(CrudManager):
                 user for user in users
                 if searchFilter.matches(user)
             ]
-        returnUsers = paging.slice(matchedUsers)
+        sortedUsers = sorter.sort(matchedUsers)
+        returnUsers = paging.slice(sortedUsers)
         
         return {
             'users': returnUsers,
@@ -138,9 +141,10 @@ class FileCrudManager(CrudManager):
         )
 
     def searchPost(self, searchFilter, **options):
-        paging = options.get('paging', None)
-        if paging is None:
-            paging = Paging()
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
+
         with self._postsFile.open('r', encoding='utf-8') as f:
             posts = json.load(f)
 
@@ -151,7 +155,8 @@ class FileCrudManager(CrudManager):
                 post for post in posts
                 if searchFilter.matches(post)
             ]
-        returnPosts = paging.slice(matchedPosts)
+        sortedPosts = sorter.sort(matchedPosts)
+        returnPosts = paging.slice(sortedPosts)
 
         return {
             'posts': returnPosts,
@@ -186,9 +191,9 @@ class FileCrudManager(CrudManager):
         )
 
     def searchThread(self, searchFilter, **options):
-        paging = options.get('paging', None)
-        if paging is None:
-            paging = Paging()
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
 
         with self._threadsFile.open('r', encoding='utf-8') as f:
             threads = json.load(f)
@@ -200,12 +205,13 @@ class FileCrudManager(CrudManager):
                 thread for thread in threads
                 if searchFilter.matches(thread)
             ]
-        returnPosts = paging.slice(matchedThreads)
+        sortedThreads = sorter.sort(matchedThreads)
+        returnThreads = paging.slice(sortedThreads)
 
         return dict(
-            threads=returnPosts,
+            threads=returnThreads,
             matchedCount=len(matchedThreads),
-            returnCount=len(returnPosts),
+            returnCount=len(returnThreads),
         )
 
     def updateThread(self, searchFilter, thread):
@@ -254,7 +260,7 @@ class FileCrudManager(CrudManager):
                 if field not in user:
                     continue
                 if field == 'password':
-                    hashed = self._userauth.hashPassword( user[field] )
+                    hashed = self._passwordService.hashPassword( user[field] )
                     currentUsers[idx][field] = hashed
                 else:
                     currentUsers[idx][field] = user[field]
@@ -358,3 +364,9 @@ class FileCrudManager(CrudManager):
         for counter in currentCounters:
             if counter['fieldname'] == fieldname:
                 counter['value'] += 1
+
+    def _setDefaultSearchOptions(self, options):
+        if 'paging' not in options:
+            options['paging'] = Paging()
+        if 'sorter' not in options:
+            options['sorter'] = NullSorter()
