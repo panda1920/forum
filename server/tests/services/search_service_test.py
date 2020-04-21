@@ -3,7 +3,9 @@
 This file houses test code for search_service.py
 """
 import pytest
+from unittest.mock import ANY
 
+from server.database.sorter import AscendingSorter, DescendingSorter, NullSorter
 from server.services.search_service import SearchService
 
 import tests.mocks as mocks
@@ -108,7 +110,32 @@ class TestSearchUsersByKeyValues:
 
         mockDB.searchUser.assert_called_with(
             MOCKAGGREGATE_RETURN_AND,
-            paging=self.MOCKPAGING_DEFAULT_RETURN
+            paging=self.MOCKPAGING_DEFAULT_RETURN, sorter=NullSorter()
+        )
+
+    def test_searchUserByKeyValuesShouldPassAscSorterToRepoWhenSpecifiedSortBy(self, service):
+        mockDB = service._repo
+        keyValues = self.DEFAULT_KEYVALUES.copy()
+        keyValues['sortBy'] = 'some_field'
+        expectedSorter = AscendingSorter('some_field')
+
+        service.searchUsersByKeyValues(keyValues)
+
+        mockDB.searchUser.assert_called_with(
+            ANY, paging=ANY, sorter=expectedSorter
+        )
+
+    def test_searchUserByKeyValuesShouldPassDescSorterToRepoWhenSpecifiedSortByAndDescOrder(self, service):
+        mockDB = service._repo
+        keyValues = self.DEFAULT_KEYVALUES.copy()
+        keyValues['sortBy'] = 'some_field'
+        keyValues['order'] = 'desc'
+        expectedSorter = DescendingSorter('some_field')
+
+        service.searchUsersByKeyValues(keyValues)
+
+        mockDB.searchUser.assert_called_with(
+            ANY, paging=ANY, sorter=expectedSorter
         )
 
     def test_searchUsersByKeyValuesReturnsNoUsersWhenNoSearchTermInKeyValues(self, service):
@@ -152,7 +179,7 @@ class TestSearchPostsByKeyValues:
     )
     MOCKFILTER_DEFAULT_RETURN = 'default_filter'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
-    DEFAULT_KEYVALUE = dict(search='some_content')
+    DEFAULT_KEYVALUES = dict(search='some_content')
 
     @pytest.fixture(scope='function', autouse=True)
     def setDefaultReturnValues(self, service):
@@ -164,12 +191,12 @@ class TestSearchPostsByKeyValues:
     def test_searchPostsByKeyValuesConvertsSearchTermToFuzzyFilter(self, service):
         mockFilter = service._filter
 
-        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
+        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
         mockFilter.createFilter.assert_any_call(dict(
             field='content',
             operator='fuzzy',
-            value=[ self.DEFAULT_KEYVALUE['search'] ]
+            value=[ self.DEFAULT_KEYVALUES['search'] ]
         ))
 
     def test_searchPostByKeyValuesConvertsCertainKeysToEqFilter(self, service):
@@ -199,16 +226,16 @@ class TestSearchPostsByKeyValues:
     def test_searchPostsByKeyValuesPassesFiltersToAggregate(self, service):
         mockAggregate = service._aggregate
 
-        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
+        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
         mockAggregate.createFilter.assert_any_call('or', [ self.MOCKFILTER_DEFAULT_RETURN ])
 
     def test_searchPostsByKeyValuesPassesKeyValueToPaging(self, service):
         mockPaging = service._paging
 
-        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
+        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockPaging.assert_called_with(self.DEFAULT_KEYVALUE)
+        mockPaging.assert_called_with(self.DEFAULT_KEYVALUES)
 
     def test_searchPostsByKeyValuesWithNoSearchTermReturnsNoMatch(self, service):
         keyValues = dict(
@@ -222,20 +249,61 @@ class TestSearchPostsByKeyValues:
             matchedCount=0,
         )
 
-    def test_searchPostsByKeyValuesPassesCreatedFilterAndPagingToQuery(self, service):
+    def test_searchPostsByKeyValuesPassesCreatedFilterToQuery(self, service):
         mockDB = service._repo
 
-        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
+        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
         mockDB.searchPost.assert_any_call(
             MOCKAGGREGATE_RETURN_AND,
-            paging=self.MOCKPAGING_DEFAULT_RETURN
+            paging=ANY,
+            sorter=NullSorter()
+        )
+
+    def test_searchPostByKeyValuesPassesDefaultPagingToQuery(self, service):
+        mockDB = service._repo
+
+        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        mockDB.searchPost.assert_any_call(
+            ANY,
+            paging=self.MOCKPAGING_DEFAULT_RETURN,
+            sorter=NullSorter()
+        )
+
+    def test_searchPostByKeyValuesPassesAscSorterToQueryWhenSortInKeyValues(self, service):
+        mockDB = service._repo
+        keyValues = self.DEFAULT_KEYVALUES.copy()
+        keyValues['sortBy'] = 'createdAt'
+        expectedSorter = AscendingSorter('createdAt')
+
+        service.searchPostsByKeyValues(keyValues)
+
+        mockDB.searchPost.assert_any_call(
+            ANY,
+            paging=ANY,
+            sorter=expectedSorter,
+        )
+
+    def test_searchPostByKeyValuessDescSorterToQueryWhenDescOrderWasSpecified(self, service):
+        mockDB = service._repo
+        keyValues = self.DEFAULT_KEYVALUES.copy()
+        keyValues['sortBy'] = 'createdAt'
+        keyValues['order'] = 'desc'
+        expectedSorter = DescendingSorter('createdAt')
+
+        service.searchPostsByKeyValues(keyValues)
+
+        mockDB.searchPost.assert_any_call(
+            ANY,
+            paging=ANY,
+            sorter=expectedSorter
         )
 
     def test_searchPostsByKeyValuesCreatesEQFilterFromUserId(self, service):
         mockFilter = service._filter
 
-        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
+        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
         mockFilter.createFilter.assert_any_call(dict(
             field='userId',
@@ -252,7 +320,7 @@ class TestSearchPostsByKeyValues:
         )
         mockFilter = service._filter
 
-        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
+        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
         mockFilter.createFilter.assert_any_call(dict(
             field='userId',
@@ -263,7 +331,7 @@ class TestSearchPostsByKeyValues:
     def test_searchPostsByKeyValuesQueriesUserByCreatedFilter(self, service):
         mockDB = service._repo
 
-        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
+        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
         mockDB.searchUser.assert_called_with(
             self.MOCKFILTER_DEFAULT_RETURN
@@ -282,7 +350,7 @@ class TestSearchPostsByKeyValues:
             matchedCount=1,
         )
 
-        searchResult = service.searchPostsByKeyValues(self.DEFAULT_KEYVALUE)
+        searchResult = service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
         assert searchResult == expectedResult
 
@@ -376,7 +444,37 @@ class TestSearchThreadByKeyValues:
 
         mockRepo.searchThread.assert_called_with(
             MOCKAGGREGATE_RETURN_AND,
-            paging=self.MOCKPAGING_DEFAULT_RETURN
+            paging=self.MOCKPAGING_DEFAULT_RETURN,
+            sorter=NullSorter()
+        )
+
+    def test_searchThreadByKeyValuesPassesAscSorterToQueryWhenSortInKeyValues(self, service):
+        mockDB = service._repo
+        keyValues = self.DEFAULT_KEYVALUES.copy()
+        keyValues['sortBy'] = 'createdAt'
+        expectedSorter = AscendingSorter('createdAt')
+
+        service.searchThreadsByKeyValues(keyValues)
+
+        mockDB.searchThread.assert_any_call(
+            ANY,
+            paging=ANY,
+            sorter=expectedSorter,
+        )
+
+    def test_searchThreadByKeyValuessDescSorterToQueryWhenDescOrderWasSpecified(self, service):
+        mockDB = service._repo
+        keyValues = self.DEFAULT_KEYVALUES.copy()
+        keyValues['sortBy'] = 'createdAt'
+        keyValues['order'] = 'desc'
+        expectedSorter = DescendingSorter('createdAt')
+
+        service.searchThreadsByKeyValues(keyValues)
+
+        mockDB.searchThread.assert_any_call(
+            ANY,
+            paging=ANY,
+            sorter=expectedSorter
         )
 
     def test_searchThreadsByKeyValuesShouldNotUpdateThreadViewCount(self, service):

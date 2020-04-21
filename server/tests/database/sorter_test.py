@@ -243,3 +243,17 @@ class TestNullSorter:
 
         assert cursor == mockCursor
         assert mockCursor.sort.call_count == 0
+
+    def test_shouldCompareTrueWhenOtherIsNullSorter(self):
+        sorter1 = NullSorter()
+        sorter2 = NullSorter()
+
+        assert sorter1 == sorter2
+
+    def test_shouldCompareFalseWhenOtherIsAscOrDescSorter(self):
+        sorter1 = NullSorter()
+        sorter2 = AscendingSorter('some_field')
+        sorter3 = DescendingSorter('some_field')
+
+        assert not sorter1 == sorter2
+        assert not sorter1 == sorter3

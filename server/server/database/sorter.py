@@ -33,12 +33,6 @@ class Sorter:
         """
         raise NotImplementedError
 
-    def __eq__(self, other):
-        return all([
-            self._order == other._order,
-            self._field == other._field,
-        ])
-
 
 class AscendingSorter(Sorter):
     """
@@ -59,6 +53,14 @@ class AscendingSorter(Sorter):
     def sortMongoCursor(self, cursor):
         cursor.sort([ (self._field, self._order) ])
         return cursor
+    
+    def __eq__(self, other):
+        if isinstance(other, AscendingSorter):
+            return all([
+                self._order == other._order,
+                self._field == other._field,
+            ])
+        return NotImplemented
 
 
 class DescendingSorter(Sorter):
@@ -81,6 +83,14 @@ class DescendingSorter(Sorter):
         cursor.sort([ (self._field, self._order) ])
         return cursor
 
+    def __eq__(self, other):
+        if isinstance(other, DescendingSorter):
+            return all([
+                self._order == other._order,
+                self._field == other._field,
+            ])
+        return NotImplemented
+
 
 class NullSorter(Sorter):
     """
@@ -92,3 +102,8 @@ class NullSorter(Sorter):
     
     def sortMongoCursor(self, cursor):
         return cursor
+
+    def __eq__(self, other):
+        if isinstance(other, NullSorter):
+            return True
+        return NotImplemented

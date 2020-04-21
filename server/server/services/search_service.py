@@ -2,6 +2,7 @@
 """
 This file houses business logic for searches made by apis
 """
+from server.database.sorter import AscendingSorter, DescendingSorter, NullSorter
 import server.entity.user as user
 import server.entity.post as post
 import server.entity.thread as thread
@@ -43,8 +44,9 @@ class SearchService:
         if searchFilter is None:
             return dict(users=[], returnCount=0, matchedCount=0)
         paging = self._paging(keyValues)
-
-        result = self._repo.searchUser(searchFilter, paging=paging)
+        sorter = self._createSorterFromKeyValues(keyValues)
+        
+        result = self._repo.searchUser(searchFilter, paging=paging, sorter=sorter)
 
         return dict(
             users=self._removeUserPrivateData( result['users'] ),
@@ -59,8 +61,9 @@ class SearchService:
         if searchFilter is None:
             return dict(posts=[], returnCount=0, matchedCount=0)
         paging = self._paging(keyValues)
+        sorter = self._createSorterFromKeyValues(keyValues)
         
-        result = self._repo.searchPost(searchFilter, paging=paging)
+        result = self._repo.searchPost(searchFilter, paging=paging, sorter=sorter)
         posts = self._removePostPrivateData( result['posts'] )
         postsJoined = self._joinOwner(posts)
 
@@ -85,8 +88,9 @@ class SearchService:
         if searchFilter is None:
             return dict(threads=[], returnCount=0, matchedCount=0)
         paging = self._paging(keyValues)
+        sorter = self._createSorterFromKeyValues(keyValues)
 
-        result = self._repo.searchThread(searchFilter, paging=paging)
+        result = self._repo.searchThread(searchFilter, paging=paging, sorter=sorter)
         threads = self._removeThreadPrivateData( result['threads'] )
         threads = self._joinOwner(threads)
         threadsJoined = self._joinLastPost(threads)
@@ -271,3 +275,23 @@ class SearchService:
             list of threads that are filtered of private fields
         """
         return [ thread.removePrivateInfo(u) for u in threads ]
+
+    def _createSorterFromKeyValues(self, keyValues):
+        """
+        Constructs appropriate Sorter class from keyValues
+        Produces NullSorter if no 'sortBy' field was found'
+
+        Args:
+            keyValues(dict)
+        Returns:
+            Sorter class
+        """
+        sortField = keyValues.get('sortBy', None)
+        if sortField is None:
+            return NullSorter()
+
+        order = keyValues.get('order', None)
+        if order == 'desc':
+            return DescendingSorter(sortField)
+        else:
+            return AscendingSorter(sortField)
