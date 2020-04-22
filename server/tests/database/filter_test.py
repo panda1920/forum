@@ -12,6 +12,7 @@ from server.database.filter import GTFilter
 from server.database.filter import GTEFilter
 from server.database.filter import LTFilter
 from server.database.filter import LTEFilter
+from server.database.filter import NullFilter
 from server.exceptions import FilterParseError, InvalidFilterOperatorError
 
 
@@ -75,6 +76,11 @@ class TestFilterCreation:
         f = PrimitiveFilter.createFilter(querystringObj)
 
         assert isinstance(f, EQFilter)
+
+    def test_createNull(self):
+        f = PrimitiveFilter.createNullFilter()
+
+        assert isinstance(f, NullFilter)
 
     def test_createFilterShouldThrowExceptionWhenMissingAttributes(self):
         querystringObjs = [
@@ -228,6 +234,20 @@ class TestFilterMatching:
             assert f.matches(obj)
         for obj in objsShouldNotMatch:
             assert not f.matches(obj)
+
+    def test_NullFilter(self):
+        objsShouldMatch = [
+            { self.FIELD_TO_COMPARE: self.FIELD_VALUE },
+            { 'some_field1': 'some_value' },
+            { 'field2': 'some_other_value' },
+            { 'bobby': 3 },
+            { 'test': True },
+        ]
+
+        f = PrimitiveFilter.createNullFilter()
+
+        for obj in objsShouldMatch:
+            assert f.matches(obj)
     
     def createFilter(self, *args):
         op = args[0]
@@ -292,3 +312,17 @@ class TestFilterComparison:
         assert fuzzyfilter1 != fuzzyfilter3
         assert fuzzyfilter2 != fuzzyfilter3
         assert fuzzyfilter1 != eqfilter1
+
+    def testNullFilterEquality(self):
+        null1 = PrimitiveFilter.createNullFilter()
+        null2 = PrimitiveFilter.createNullFilter()
+
+        assert null1 == null2
+
+    def testNullFilterNonEquality(self):
+        null = PrimitiveFilter.createNullFilter()
+        eqfilter = self.createFilter('eq')
+        fuzzyfilter = self.createFilter('fuzzy')
+
+        assert null != eqfilter
+        assert null != fuzzyfilter

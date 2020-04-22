@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This file houses aggregate search filters like 
+This file houses aggregate search filters like
 AND, OR, NOT
 """
 

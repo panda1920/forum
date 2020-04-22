@@ -30,6 +30,16 @@ class Filter:
         """
         raise NotImplementedError
 
+    @staticmethod
+    def createNullFilter():
+        """
+        Creates a null filter
+        
+        Returns:
+            NullFilter object
+        """
+        return NullFilter()
+
 
 class PrimitiveFilter(Filter):
     """
@@ -95,7 +105,7 @@ class PrimitiveFilter(Filter):
         self._values = keyValues['value']
 
     def __eq__(self, other):
-        if not isinstance(other, Filter):
+        if not isinstance(other, PrimitiveFilter):
             return NotImplemented
 
         return all([
@@ -223,3 +233,27 @@ class RegexFilter(PrimitiveFilter):
     """
     Regular expression filter
     """
+
+
+class NullFilter(Filter):
+    """
+    A filter that does not filter anything.
+    Null object pattern
+    """
+    def __init__(self):
+        pass
+
+    def getOpString(self):
+        return 'null'
+
+    def getMongoFilter(self):
+        return {}
+    
+    def matches(self, record):
+        return True
+
+    def __eq__(self, other):
+        if isinstance(other, NullFilter):
+            return True
+        else:
+            return NotImplemented

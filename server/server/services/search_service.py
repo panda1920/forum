@@ -24,12 +24,9 @@ class SearchService:
     )
 
     # TODO
-    # user authorization
     # select fields to retrieve based on each use case
     # sanitization of args
     # possibly change return value to contain more info for the upper layer
-    
-    # post search can be made based on threadId, userId, createdAt...
 
     def __init__(self, repo, filterClass, aggregateFilterClass, pagingClass):
         self._repo = repo
@@ -41,8 +38,6 @@ class SearchService:
         searchFilter = self._createFiltersForDesignatedFields(
             keyValues, 'userName', 'displayName'
         )
-        if searchFilter is None:
-            return dict(users=[], returnCount=0, matchedCount=0)
         paging = self._paging(keyValues)
         sorter = self._createSorterFromKeyValues(keyValues)
         
@@ -58,8 +53,6 @@ class SearchService:
         searchFilter = self._createFiltersForDesignatedFields(
             keyValues, 'content'
         )
-        if searchFilter is None:
-            return dict(posts=[], returnCount=0, matchedCount=0)
         paging = self._paging(keyValues)
         sorter = self._createSorterFromKeyValues(keyValues)
         
@@ -85,8 +78,6 @@ class SearchService:
         searchFilter = self._createFiltersForDesignatedFields(
             keyValues, 'subject', 'title'
         )
-        if searchFilter is None:
-            return dict(threads=[], returnCount=0, matchedCount=0)
         paging = self._paging(keyValues)
         sorter = self._createSorterFromKeyValues(keyValues)
 
@@ -111,8 +102,6 @@ class SearchService:
             dict: result of search operation
         """
         searchFilter = self._createFiltersForDesignatedFields(dict(threadId=threadId))
-        if searchFilter is None:
-            return dict(threads=[], returnCount=0, matchedCount=0)
         paging = self._paging()
 
         result = self._repo.searchThread(searchFilter, paging=paging)
@@ -131,13 +120,15 @@ class SearchService:
         searchFilters = self._createFuzzyFilterFromSearch(keyValues, fieldnames)
         predetermined = self._createFiltersForPredeterminedFields(keyValues)
 
+        # if no applicable search filter, just return a null filter that retrieves all entity
         if len(searchFilters) == 0 and len(predetermined) == 0:
-            return None
+            return self._filter.createNullFilter()
 
         # if there is no search,
         # or-aggregate would always return false,
-        # which in turn makes and-aggregate evaluate to false automatically.
-        # To avoid this happpening, we must not add searches to and-aggregate for such case
+        # which in turn makes and-aggregate evaluate to false automatically,
+        # unable to return any search result
+        # To avoid this happpening, we must not add searches to and-aggregate
         if len(searchFilters) == 0:
             filtersToAggregate = predetermined
         else:

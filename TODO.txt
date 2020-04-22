@@ -1,41 +1,25 @@
 FORUM
     [DB]
-        - Add sorting
-        - Figure out how to make transactional operation
-            Seems like I need to configure replicas for the mongoDB
-            Figure out how to do this, especially with docker.
-            https://stackoverflow.com/questions/58301553/creating-a-mongo-replicaset-in-a-circleci-job
         - Figure out how to make SSL connection from backend to DB
             Password authentication necessary?
             
     [Flask]
-        - Implement user authentication system
         - Implement user authentication system to operations that need it
         - Impement user authorizaiton
             Operations yields differing result depending on the current logged in user
             Some operation may require additional login despite already logged in, e.g. password reset.
         - Implement sanitization mechanism for incoming data
-        - stop returning the saerch results directly; carefully select which information to disclose and which not to
         - Consider using Flask-Session for server-side session management
-        - Session invalidation
-            Invalidation by server and user-driven invaliation (logout)
-        - consider how to apply search filters for search services
-            determine which field goes together as AND or OR
+        - Fix issue where searches return nothing when no search criteria is given
     
     [Frontend]
         - Figure out routing of SPA that utilizes HTML5 history
             https://github.com/ReactTraining/react-router/blob/master/FAQ.md#how-do-i-access-the-history-object-outside-of-components
             https://codeburst.io/full-stack-single-page-application-with-vue-js-and-flask-b1e036315532
-        - Session invalidation
-            To invalidate login state when session invalidation was detected
-        - Create menu dropdown
         - Create user profile page
+        - Create thread page
 
     [Deployment]
         - Deploy on amazon
             Figure out how to import secrets in the app.
-            Figure out howto upload docker images on dockerhub
             Consider using ECR, ECS
-
-    [TESTING]
-        - figure out how to test session with flask
