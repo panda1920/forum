@@ -118,7 +118,7 @@ class TestConversionMethods:
             'createdAt': 123123.12,
             'updatedAt': 123123.12,
         }
-        args = {**DEFAULT_ARGS, **ignored_args }
+        args = { **DEFAULT_ARGS, **ignored_args }
         user = User(args)
 
         update_dict = user.to_update()

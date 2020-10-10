@@ -10,7 +10,7 @@ from server.exceptions import EntityValidationError
 
 class Entity:
     """
-    Entity class that defines operations common to all entities in this app
+    Base class that defines operations common to all entities in this app
     """
 
     def __init__(self, object=None, **kwargs):
@@ -54,6 +54,11 @@ class Entity:
         return self._prepare_attributes('to_update')
 
     def _sanitize_attributes(self, object, **kwargs):
+        """
+        Add constructor arguments as self's attribute.
+        Additionally perform typecheck and removal of unexpected attributes.
+        """
+
         to_add = {}
         if object:
             to_add.update(object)
@@ -70,14 +75,25 @@ class Entity:
         self.__dict__.update(normalized)
 
     def _prepare_attributes(self, operation):
+        """
+        Creates a dictionary suited for the specified operation.
+        Removes what needes to be hidden,
+        validates that attributes meets requirements of the operation.
+        
+        Args:
+            operatin(string): 'to_json'|'to_create'|'to_update'
+        Returns:
+            dictionary of attributes
+        """
         attrs = self.__dict__.copy()
+        print(self._attribute_description)
         required_attrs = [
             attr for attr in self._attribute_description.keys()
-            if self._attribute_description[attr][operation]['required']
+            if self._attribute_description[attr]['conversion_rules'][operation]['required']
         ]
         hidden_attrs = [
             attr for attr in self._attribute_description.keys()
-            if self._attribute_description[attr][operation]['hide']
+            if self._attribute_description[attr]['conversion_rules'][operation]['hide']
         ]
 
         for attr in required_attrs:
@@ -95,22 +111,13 @@ def extract_schema(attribute_description):
     Helper function to extract a valid cerberus schema
     
     Args:
-        attribute_description(dict): predefined description of allowed attributes defined in entity
+        attribute_description(dict): description of allowed attributes predefined in concrete entity class
     Returns:
         a valid cerberus schema
     """
-    non_rules = [
-        'to_json',
-        'to_create',
-        'to_update',
-    ]
     schema = {}
 
     for attr_name, attr in attribute_description.items():
-        schema[attr_name] = {}
-
-        for rule_name, rule in attr.items():
-            if rule_name not in non_rules:
-                schema[attr_name][rule_name] = rule
+        schema[attr_name] = attr['validation_rules']
 
     return schema
