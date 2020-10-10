@@ -3,8 +3,11 @@
 This file houses class that defines contextual user state
 """
 
+import logging
 
 from cerberus import Validator
+
+from server.entity import Entity, extract_schema
 
 
 class NewUser:
@@ -95,3 +98,136 @@ def removePrivateInfo(user):
     filtered_user.pop('address', None)
 
     return filtered_user
+
+
+class User(Entity):
+    """
+    A class that defines User entity in the app
+    """
+
+    _attribute_description = {
+        '_id': {
+            'type': 'string',
+            'to_json': {
+                'required': False,
+                'hide': True,
+            },
+            'to_create': {
+                'required': False,
+                'hide': True,
+            },
+            'to_update': {
+                'required': False,
+                'hide': True,
+            },
+        },
+        'userId': {
+            'type': 'string',
+            'to_json': {
+                'required': False,
+                'hide': False,
+            },
+            'to_create': {
+                'required': True,
+                'hide': False,
+            },
+            'to_update': {
+                'required': False,
+                'hide': True,
+            },
+        },
+        'userName': {
+            'type': 'string',
+            'regex': r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$',
+            'to_json': {
+                'required': False,
+                'hide': True,
+            },
+            'to_create': {
+                'required': True,
+                'hide': False,
+            },
+            'to_update': {
+                'required': False,
+                'hide': True,
+            },
+        },
+        'displayName': {
+            'type': 'string',
+            'to_json': {
+                'required': False,
+                'hide': False,
+            },
+            'to_create': {
+                'required': True,
+                'hide': False,
+            },
+            'to_update': {
+                'required': False,
+                'hide': False,
+            },
+        },
+        'password': {
+            'type': 'string',
+            'to_json': {
+                'required': False,
+                'hide': True,
+            },
+            'to_create': {
+                'required': True,
+                'hide': False,
+            },
+            'to_update': {
+                'required': False,
+                'hide': False,
+            },
+        },
+        'updatedAt': {
+            'type': 'float',
+            'to_json': {
+                'required': False,
+                'hide': False,
+            },
+            'to_create': {
+                'required': False,
+                'hide': True,
+            },
+            'to_update': {
+                'required': False,
+                'hide': True,
+            },
+        },
+        'createdAt': {
+            'type': 'float',
+            'to_json': {
+                'required': False,
+                'hide': False,
+            },
+            'to_create': {
+                'required': False,
+                'hide': True,
+            },
+            'to_update': {
+                'required': False,
+                'hide': True,
+            },
+        },
+        'imageUrl': {
+            'type': 'string',
+            'to_json': {
+                'required': False,
+                'hide': False,
+            },
+            'to_create': {
+                'required': False,
+                'hide': False,
+            },
+            'to_update': {
+                'required': False,
+                'hide': False,
+            },
+        },
+    }
+    _schema = extract_schema(_attribute_description)
+    _validator = Validator(_schema, purge_unknown=True)
+    _logger = logging.getLogger(__name__)

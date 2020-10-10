@@ -42,7 +42,8 @@ class Button extends React.Component {
   }
 
   render() {
-    const { className, children, ...otherProps } = this.props;
+    const { className, children, onClick, ...otherProps } = this.props;
+    // onClick here is needed to prevent it being forwarded to div element below
     const testid = this.props['data-testid'];
     const classes = convertClassNamePropToString(className);
     const onClickHandlerCallback = () => { this.onClickHandler(); };

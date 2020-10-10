@@ -17,40 +17,14 @@ class Entity:
         self._sanitize_attributes(object, **kwargs)
 
     def to_json(self):
-        """
-        Creates a JSON representation of this entity
-        
-        Args:
-            None
-        Returns:
-            JSON string
-        """
         attrs = self._prepare_attributes('to_json')
 
         return json.dumps(attrs)
 
     def to_create(self):
-        """
-        Creates a dictionary of attributes that represents this entity.
-        Intended to be used in creation operation to persistent storage.
-        
-        Args:
-            None
-        Returns:
-            Dict of attributes
-        """
         return self._prepare_attributes('to_create')
 
     def to_update(self):
-        """
-        Creates a dictionary of attributes that represents this entity.
-        Intended to be used in update operation to persistent storage.
-        
-        Args:
-            None
-        Returns:
-            Dict of attributes
-        """
         return self._prepare_attributes('to_update')
 
     def _sanitize_attributes(self, object, **kwargs):

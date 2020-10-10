@@ -15,6 +15,7 @@ node_modules/
 # some temporary data
 server/server/data/
 server/**/temp/
+server/**/__pycache__/
 
 # some experimental code
 server/server/playground/

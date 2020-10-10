@@ -33,7 +33,7 @@ describe('testing behavior of Button component', () => {
     expect( mockFunction.mock.calls.length ).toBe(1);
   });
 
-  test('onClick should not trigger twice when two consecutive clicks',  () => {
+  test('onClick should not trigger twice when two consecutive clicks', () => {
     const mockFunction = createMockOnClick();
     setupButton(null, mockFunction);
 
