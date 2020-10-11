@@ -2,7 +2,11 @@
 """
 This file defines entity thread
 """
-from cerberus import Validator
+import logging
+
+from cerberus import Validator, TypeDefinition
+
+from server.entity import Entity, extract_schema
 
 
 class NewThread:
@@ -113,3 +117,209 @@ def removePrivateInfo(thread):
     filtered_thread.pop('_id', None)
 
     return filtered_thread
+
+
+class Thread(Entity):
+    _attribute_description = {
+        '_id': {
+            'validation_rules': {
+                'type': 'string',
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': False,
+                    'hide': True,
+                },
+                'to_create': {
+                    'required': False,
+                    'hide': True,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': True,
+                },
+            },
+        },
+        'threadId': {
+            'validation_rules': {
+                'type': 'string',
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': False,
+                    'hide': True,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': True,
+                },
+            },
+        },
+        'userId': {
+            'validation_rules': {
+                'type': 'string',
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': True,
+                },
+            },
+        },
+        'boardId': {
+            'validation_rules': {
+                'type': 'string',
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': True,
+                },
+            },
+        },
+        'title': {
+            'validation_rules': {
+                'type': 'string',
+                'regex': r'\s*\S+\s*',
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': False,
+                },
+            },
+        },
+        'subject': {
+            'validation_rules': {
+                'type': 'string',
+                'regex': r'\s*\S+\s*',
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': False,
+                },
+            },
+        },
+        'views': {
+            'validation_rules': {
+                'type': 'integer',
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': False,
+                    'hide': True,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': False,
+                },
+            },
+        },
+        'increment': {
+            'validation_rules': {
+                'type': 'string',
+                'allowed': ['views']
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': False,
+                    'hide': True,
+                },
+                'to_create': {
+                    'required': False,
+                    'hide': True,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': False,
+                },
+            },
+        },
+        'createdAt': {
+            'validation_rules': {
+                'type': 'float',
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': False,
+                    'hide': True,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': True,
+                },
+            },
+        },
+        'updatedAt': {
+            'validation_rules': {
+                'type': 'float',
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': False,
+                    'hide': True,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': True,
+                },
+            },
+        },
+    }
+    _schema = extract_schema(_attribute_description)
+    _validator = Validator(_schema, purge_unknown=True)
+    _logger = logging.getLogger(__name__)
+
+
+# adds custom type checking for validator
+thread_type = TypeDefinition('Thread', (Thread,), ())
+Validator.types_mapping['Thread'] = thread_type

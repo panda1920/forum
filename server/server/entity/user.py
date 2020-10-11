@@ -5,7 +5,7 @@ This file houses class that defines contextual user state
 
 import logging
 
-from cerberus import Validator
+from cerberus import Validator, TypeDefinition
 
 from server.entity import Entity, extract_schema
 
@@ -131,12 +131,12 @@ class User(Entity):
             },
             'conversion_rules': {
                 'to_json': {
-                    'required': False,
+                    'required': True,
                     'hide': False,
                 },
                 'to_create': {
-                    'required': True,
-                    'hide': False,
+                    'required': False,
+                    'hide': True,
                 },
                 'to_update': {
                     'required': False,
@@ -151,8 +151,8 @@ class User(Entity):
             },
             'conversion_rules': {
                 'to_json': {
-                    'required': False,
-                    'hide': True,
+                    'required': True,
+                    'hide': False,
                 },
                 'to_create': {
                     'required': True,
@@ -170,7 +170,7 @@ class User(Entity):
             },
             'conversion_rules': {
                 'to_json': {
-                    'required': False,
+                    'required': True,
                     'hide': False,
                 },
                 'to_create': {
@@ -208,7 +208,7 @@ class User(Entity):
             },
             'conversion_rules': {
                 'to_json': {
-                    'required': False,
+                    'required': True,
                     'hide': False,
                 },
                 'to_create': {
@@ -227,7 +227,7 @@ class User(Entity):
             },
             'conversion_rules': {
                 'to_json': {
-                    'required': False,
+                    'required': True,
                     'hide': False,
                 },
                 'to_create': {
@@ -246,7 +246,7 @@ class User(Entity):
             },
             'conversion_rules': {
                 'to_json': {
-                    'required': False,
+                    'required': True,
                     'hide': False,
                 },
                 'to_create': {
@@ -263,3 +263,8 @@ class User(Entity):
     _schema = extract_schema(_attribute_description)
     _validator = Validator(_schema, purge_unknown=True)
     _logger = logging.getLogger(__name__)
+
+
+# adds custom type checking for validator
+user_type = TypeDefinition('User', (User,), ())
+Validator.types_mapping['User'] = user_type
