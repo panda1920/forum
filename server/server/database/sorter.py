@@ -6,6 +6,8 @@ import logging
 
 from server.exceptions import FieldNotFoundInEntityError
 
+logger = logging.getLogger(__name__)
+
 
 class Sorter:
     """
@@ -45,9 +47,12 @@ class AscendingSorter(Sorter):
 
     def sort(self, entities):
         try:
-            return sorted(entities, key=lambda entity: entity[self._field])
-        except KeyError:
-            logging.error(f'Unable to find field {self._field} in entity; failed to sort')
+            return sorted(
+                entities,
+                key=lambda entity: getattr(entity, self._field),
+            )
+        except AttributeError:
+            logger.error(f'Unable to find field {self._field} in entity; failed to sort')
             raise FieldNotFoundInEntityError('Failed to sort entity')
 
     def sortMongoCursor(self, cursor):
@@ -74,9 +79,13 @@ class DescendingSorter(Sorter):
 
     def sort(self, entities):
         try:
-            return sorted(entities, key=lambda entity: entity[self._field], reverse=True)
-        except KeyError:
-            logging.error(f'Unable to find field {self._field} in entity; failed to sort')
+            return sorted(
+                entities,
+                key=lambda entity: getattr(entity, self._field),
+                reverse=True
+            )
+        except AttributeError:
+            logger.error(f'Unable to find field {self._field} in entity; failed to sort')
             raise FieldNotFoundInEntityError('Failed to sort entity')
 
     def sortMongoCursor(self, cursor):

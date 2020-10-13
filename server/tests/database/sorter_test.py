@@ -8,100 +8,50 @@ import pytest
 
 from server.exceptions import FieldNotFoundInEntityError
 from server.database.sorter import AscendingSorter, DescendingSorter, NullSorter
+from tests.mocks import createMockEntity
 
 
-TEST_DATA = {
-    'ENTITIES': [
-        dict(
-            username='bobby',
-            age=23,
-        ),
-        dict(
-            username='zack',
-            age=24,
-        ),
-        dict(
-            username='charlie',
-            age=30,
-        ),
-        dict(
-            username='anderson',
-            age=25,
-        ),
-    ],
-    'ASC_SORTED_BY_USERNAME': [
-        dict(
-            username='anderson',
-            age=25,
-        ),
-        dict(
-            username='bobby',
-            age=23,
-        ),
-        dict(
-            username='charlie',
-            age=30,
-        ),
-        dict(
-            username='zack',
-            age=24,
-        ),
-    ],
-    'ASC_SORTED_BY_AGE': [
-        dict(
-            username='bobby',
-            age=23,
-        ),
-        dict(
-            username='zack',
-            age=24,
-        ),
-        dict(
-            username='anderson',
-            age=25,
-        ),
-        dict(
-            username='charlie',
-            age=30,
-        ),
-    ],
-    'DESC_SORTED_BY_USERNAME': [
-        dict(
-            username='zack',
-            age=24,
-        ),
-        dict(
-            username='charlie',
-            age=30,
-        ),
-        dict(
-            username='bobby',
-            age=23,
-        ),
-        dict(
-            username='anderson',
-            age=25,
-        ),
-    ],
-    'DESC_SORTED_BY_AGE': [
-        dict(
-            username='charlie',
-            age=30,
-        ),
-        dict(
-            username='anderson',
-            age=25,
-        ),
-        dict(
-            username='zack',
-            age=24,
-        ),
-        dict(
-            username='bobby',
-            age=23,
-        ),
-    ],
-}
+def create_testdata():
+    testdata = {}
+    entitydata = [
+        dict(username='bobby', age=23, ),
+        dict(username='zack', age=24, ),
+        dict(username='charlie', age=30, ),
+        dict(username='anderson', age=25, ),
+    ]
+
+    testdata['ENTITIES'] = [
+        create_entity_from_dict(d) for d in entitydata
+    ]
+    testdata['ASC_SORTED_BY_USERNAME'] = [
+        testdata['ENTITIES'][3],
+        testdata['ENTITIES'][0],
+        testdata['ENTITIES'][2],
+        testdata['ENTITIES'][1],
+    ]
+    testdata['ASC_SORTED_BY_AGE'] = [
+        testdata['ENTITIES'][0],
+        testdata['ENTITIES'][1],
+        testdata['ENTITIES'][3],
+        testdata['ENTITIES'][2],
+    ]
+    testdata['DESC_SORTED_BY_USERNAME'] = testdata['ASC_SORTED_BY_USERNAME'].copy()
+    testdata['DESC_SORTED_BY_USERNAME'].reverse()
+    testdata['DESC_SORTED_BY_AGE'] = testdata['ASC_SORTED_BY_AGE'].copy()
+    testdata['DESC_SORTED_BY_AGE'].reverse()
+
+    return testdata
+
+
+def create_entity_from_dict(d):
+    entity = createMockEntity()
+    for k, v in d.items():
+        setattr(entity, k, v)
+
+    return entity
+
+
+TEST_DATA = create_testdata()
 
 
 class TestAscendingSorter:
@@ -112,6 +62,8 @@ class TestAscendingSorter:
         sorted_entity = sorter.sort(entities)
 
         assert sorted_entity == TEST_DATA['ASC_SORTED_BY_USERNAME']
+        for s, t in zip(sorted_entity, TEST_DATA['ASC_SORTED_BY_USERNAME']):
+            assert s.username == t.username
 
     def test_sortEntityShouldSortEntityBySpecifiedNumberFieldInAscendingOrder(self):
         entities = TEST_DATA['ENTITIES'].copy()
