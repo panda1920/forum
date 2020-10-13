@@ -7,11 +7,12 @@ import pytest
 from unittest.mock import create_autospec
 
 from server.database.filter import Filter
+from tests.mocks import createMockEntity
 import server.database.aggregate_filter as aggregates
 
 
 class TestAndFilter:
-    DEFAULT_OBJECT_PASSEDTO_MATCHES = { 'postId': 1 }
+    DEFAULT_OBJECT_PASSEDTO_MATCHES = createMockEntity()
 
     @pytest.fixture(scope='function')
     def agg(self):

@@ -14,6 +14,7 @@ from server.database.filter import LTFilter
 from server.database.filter import LTEFilter
 from server.database.filter import NullFilter
 from server.exceptions import FilterParseError, InvalidFilterOperatorError
+from tests.mocks import createMockEntity
 
 
 class TestFilterCreation:
@@ -109,7 +110,7 @@ class TestFilterMatching:
     FIELD_VALUE = 100
 
     def test_fuzzyStringMatching(self):
-        objsShouldMatch = [
+        should_matches = [
             {self.FIELD_TO_COMPARE: 'is'},
             {self.FIELD_TO_COMPARE: 'his'},
             {self.FIELD_TO_COMPARE: 'history'},
@@ -118,7 +119,7 @@ class TestFilterMatching:
             {self.FIELD_TO_COMPARE: 'I made a mistake'},
             {self.FIELD_TO_COMPARE: 'I made a mistake', 'id': '11223344'},
         ]
-        objsShouldNotMatch = [
+        shouldnot_matches = [
             {self.FIELD_TO_COMPARE: 'aa'},
             {self.FIELD_TO_COMPARE: 'i s'},
             {self.FIELD_TO_COMPARE: '  i s '},
@@ -131,17 +132,24 @@ class TestFilterMatching:
 
         # fuzzy search for 'is' OR 'as'
         f = self.createFilter('fuzzy', ['is', 'as'])
-        for obj in objsShouldMatch:
-            assert f.matches(obj)
-        for obj in objsShouldNotMatch:
-            assert not f.matches(obj)
+        for should_match in should_matches:
+            mock_entity = createMockEntity()
+            for k, v in should_match.items():
+                setattr(mock_entity, k, v)
+            assert f.matches(mock_entity)
+
+        for shouldnot_match in shouldnot_matches:
+            mock_entity = createMockEntity()
+            for k, v in shouldnot_match.items():
+                setattr(mock_entity, k, v)
+            assert not f.matches(mock_entity)
 
     def test_GTFilter(self):
-        objsShouldMatch = [
+        should_matches = [
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 1},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 10000},
         ]
-        objsShouldNotMatch = [
+        shouldnot_matches = [
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 1},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 10000},
@@ -150,18 +158,25 @@ class TestFilterMatching:
         ]
 
         f = self.createFilter('gt')
-        for obj in objsShouldMatch:
-            assert f.matches(obj)
-        for obj in objsShouldNotMatch:
-            assert not f.matches(obj)
+        for should_match in should_matches:
+            mock_entity = createMockEntity()
+            for k, v in should_match.items():
+                setattr(mock_entity, k, v)
+            assert f.matches(mock_entity)
+
+        for shouldnot_match in shouldnot_matches:
+            mock_entity = createMockEntity()
+            for k, v in shouldnot_match.items():
+                setattr(mock_entity, k, v)
+            assert not f.matches(mock_entity)
 
     def test_GTEFilter(self):
-        objsShouldMatch = [
+        should_matches = [
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 1},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 10000},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE},
         ]
-        objsShouldNotMatch = [
+        shouldnot_matches = [
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 1},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 10000},
             {'id': '112233'},
@@ -169,17 +184,24 @@ class TestFilterMatching:
         ]
 
         f = self.createFilter('gte')
-        for obj in objsShouldMatch:
-            assert f.matches(obj)
-        for obj in objsShouldNotMatch:
-            assert not f.matches(obj)
+        for should_match in should_matches:
+            mock_entity = createMockEntity()
+            for k, v in should_match.items():
+                setattr(mock_entity, k, v)
+            assert f.matches(mock_entity)
+
+        for shouldnot_match in shouldnot_matches:
+            mock_entity = createMockEntity()
+            for k, v in shouldnot_match.items():
+                setattr(mock_entity, k, v)
+            assert not f.matches(mock_entity)
             
     def test_LTFilter(self):
-        objsShouldMatch = [
+        should_matches = [
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 1},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 10000},
         ]
-        objsShouldNotMatch = [
+        shouldnot_matches = [
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 1},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 10000},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE},
@@ -188,18 +210,25 @@ class TestFilterMatching:
         ]
 
         f = self.createFilter('lt')
-        for obj in objsShouldMatch:
-            assert f.matches(obj)
-        for obj in objsShouldNotMatch:
-            assert not f.matches(obj)
+        for should_match in should_matches:
+            mock_entity = createMockEntity()
+            for k, v in should_match.items():
+                setattr(mock_entity, k, v)
+            assert f.matches(mock_entity)
+
+        for shouldnot_match in shouldnot_matches:
+            mock_entity = createMockEntity()
+            for k, v in shouldnot_match.items():
+                setattr(mock_entity, k, v)
+            assert not f.matches(mock_entity)
 
     def test_LTEFilter(self):
-        objsShouldMatch = [
+        should_matches = [
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 1},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 10000},
         ]
-        objsShouldNotMatch = [
+        shouldnot_matches = [
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 1},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 10000},
             {'id': '112233'},
@@ -207,17 +236,24 @@ class TestFilterMatching:
         ]
 
         f = self.createFilter('lte')
-        for obj in objsShouldMatch:
-            assert f.matches(obj)
-        for obj in objsShouldNotMatch:
-            assert not f.matches(obj)
+        for should_match in should_matches:
+            mock_entity = createMockEntity()
+            for k, v in should_match.items():
+                setattr(mock_entity, k, v)
+            assert f.matches(mock_entity)
+
+        for shouldnot_match in shouldnot_matches:
+            mock_entity = createMockEntity()
+            for k, v in shouldnot_match.items():
+                setattr(mock_entity, k, v)
+            assert not f.matches(mock_entity)
 
     def test_EQFilter(self):
-        objsShouldMatch = [
+        should_matches = [
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE},
             {self.FIELD_TO_COMPARE: 500},
         ]
-        objsShouldNotMatch = [
+        shouldnot_matches = [
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 1},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE - 10000},
             {self.FIELD_TO_COMPARE: self.FIELD_VALUE + 1},
@@ -230,13 +266,20 @@ class TestFilterMatching:
 
         # search for either of the 2 by exact matches
         f = self.createFilter('eq', [self.FIELD_VALUE, 500])
-        for obj in objsShouldMatch:
-            assert f.matches(obj)
-        for obj in objsShouldNotMatch:
-            assert not f.matches(obj)
+        for should_match in should_matches:
+            mock_entity = createMockEntity()
+            for k, v in should_match.items():
+                setattr(mock_entity, k, v)
+            assert f.matches(mock_entity)
+
+        for shouldnot_match in shouldnot_matches:
+            mock_entity = createMockEntity()
+            for k, v in shouldnot_match.items():
+                setattr(mock_entity, k, v)
+            assert not f.matches(mock_entity)
 
     def test_NullFilter(self):
-        objsShouldMatch = [
+        should_matches = [
             { self.FIELD_TO_COMPARE: self.FIELD_VALUE },
             { 'some_field1': 'some_value' },
             { 'field2': 'some_other_value' },
@@ -246,9 +289,12 @@ class TestFilterMatching:
 
         f = PrimitiveFilter.createNullFilter()
 
-        for obj in objsShouldMatch:
-            assert f.matches(obj)
-    
+        for should_match in should_matches:
+            mock_entity = createMockEntity()
+            for k, v in should_match.items():
+                setattr(mock_entity, k, v)
+            assert f.matches(mock_entity)
+
     def createFilter(self, *args):
         op = args[0]
         fieldValue = args[1] if len(args) > 1 else [self.FIELD_VALUE]

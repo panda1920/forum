@@ -19,6 +19,7 @@ from server.services.delete_service import DeleteService
 from server.services.session import SessionService
 from server.services.flask_context import FlaskContext
 from server.services.image_scaler import ImageScalerBase
+from server.entity import Entity
 from server.middleware.session_user import SessionUserManager
 
 
@@ -84,3 +85,7 @@ def createMockSessionService():
 
 def createMockImageScaler():
     return create_autospec(ImageScalerBase)
+
+
+def createMockEntity():
+    return create_autospec(Entity)

@@ -54,12 +54,12 @@ class AggregateFilter(Filter):
         """
         raise NotImplementedError
 
-    def matches(self, record):
+    def matches(self, entity):
         """
-        Determines if target record matches the filter
+        Determines if target entity matches the filter
         
         Args:
-            record: record of some entity
+            entity: entity of some entity
         Returns:
             Boolean
         """
@@ -102,9 +102,9 @@ class AndFilter(AggregateFilter):
     def appendFilter(self, filter):
         self._filters.append(filter)
 
-    def matches(self, record):
+    def matches(self, entity):
         return all([
-            f.matches(record) for f in self._filters
+            f.matches(entity) for f in self._filters
         ])
 
     def getMongoFilter(self):
@@ -135,9 +135,9 @@ class OrFilter(AggregateFilter):
     def appendFilter(self, filter):
         self._filters.append(filter)
 
-    def matches(self, record):
+    def matches(self, entity):
         return any([
-            f.matches(record) for f in self._filters
+            f.matches(entity) for f in self._filters
         ])
 
     def getMongoFilter(self):
