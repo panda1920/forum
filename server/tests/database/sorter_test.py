@@ -8,20 +8,15 @@ import pytest
 
 from server.exceptions import FieldNotFoundInEntityError
 from server.database.sorter import AscendingSorter, DescendingSorter, NullSorter
-from tests.mocks import createMockEntity
 
 
 def create_testdata():
     testdata = {}
-    entitydata = [
+    testdata['ENTITIES'] = [
         dict(username='bobby', age=23, ),
         dict(username='zack', age=24, ),
         dict(username='charlie', age=30, ),
         dict(username='anderson', age=25, ),
-    ]
-
-    testdata['ENTITIES'] = [
-        create_entity_from_dict(d) for d in entitydata
     ]
     testdata['ASC_SORTED_BY_USERNAME'] = [
         testdata['ENTITIES'][3],
@@ -43,14 +38,6 @@ def create_testdata():
     return testdata
 
 
-def create_entity_from_dict(d):
-    entity = createMockEntity()
-    for k, v in d.items():
-        setattr(entity, k, v)
-
-    return entity
-
-
 TEST_DATA = create_testdata()
 
 
@@ -62,8 +49,6 @@ class TestAscendingSorter:
         sorted_entity = sorter.sort(entities)
 
         assert sorted_entity == TEST_DATA['ASC_SORTED_BY_USERNAME']
-        for s, t in zip(sorted_entity, TEST_DATA['ASC_SORTED_BY_USERNAME']):
-            assert s.username == t.username
 
     def test_sortEntityShouldSortEntityBySpecifiedNumberFieldInAscendingOrder(self):
         entities = TEST_DATA['ENTITIES'].copy()

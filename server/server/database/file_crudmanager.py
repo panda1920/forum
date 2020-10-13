@@ -74,20 +74,18 @@ class FileCrudManager(CrudManager):
         return filePath
 
     def createUser(self, user):
-        if not NewUser.validate(user):
-            logging.error(f'failed to validate error: {user}')
-            raise EntityValidationError('failed to validate new user object')
+        attrs = user.to_create()
 
-        user['createdAt'] = time.time()
-        user['password'] = self._passwordService.hashPassword( user['password'] )
-        user['userId'] = str( self._getCounter('userId') )
+        attrs['createdAt'] = time.time()
+        attrs['password'] = self._passwordService.hashPassword( attrs['password'] )
+        attrs['userId'] = str( self._getCounter('userId') )
         
-        self._createUserImpl(user)
+        self._createUserImpl(attrs)
         self._incrementCounter('userId')
 
         return dict(
             createdCount=1,
-            createdId=user['userId']
+            createdId=attrs['userId']
         )
 
     def searchUser(self, searchFilter, **options):

@@ -115,7 +115,7 @@ class PrimitiveFilter(Filter):
         ])
 
     def isFieldInEntity(self, entity):
-        return hasattr(entity, self._field)
+        return self._field in entity
 
 
 class FuzzyStringFilter(PrimitiveFilter):
@@ -136,7 +136,7 @@ class FuzzyStringFilter(PrimitiveFilter):
             return False
         
         for fieldValue in self._values:
-            if getattr(entity, self._field).find(fieldValue) != -1:
+            if entity[self._field].find(fieldValue) != -1:
                 return True
 
         return False
@@ -158,7 +158,7 @@ class GTFilter(PrimitiveFilter):
         # greater than comparison filters
         # same goes with gte, lt, lte
         fieldValue = self._values[0]
-        return getattr(entity, self._field) > fieldValue
+        return entity[self._field] > fieldValue
 
 
 class GTEFilter(PrimitiveFilter):
@@ -173,7 +173,7 @@ class GTEFilter(PrimitiveFilter):
             return False
         
         fieldValue = self._values[0]
-        return getattr(entity, self._field) >= fieldValue
+        return entity[self._field] >= fieldValue
 
 
 class LTFilter(PrimitiveFilter):
@@ -188,7 +188,7 @@ class LTFilter(PrimitiveFilter):
             return False
         
         fieldValue = self._values[0]
-        return getattr(entity, self._field) < fieldValue
+        return entity[self._field] < fieldValue
 
 
 class LTEFilter(PrimitiveFilter):
@@ -203,7 +203,7 @@ class LTEFilter(PrimitiveFilter):
             return False
         
         fieldValue = self._values[0]
-        return getattr(entity, self._field) <= fieldValue
+        return entity[self._field] <= fieldValue
     
 
 class EQFilter(PrimitiveFilter):
@@ -223,7 +223,7 @@ class EQFilter(PrimitiveFilter):
             return False
 
         for fieldValue in self._values:
-            if getattr(entity, self._field) == fieldValue:
+            if entity[self._field] == fieldValue:
                 return True
 
         return False

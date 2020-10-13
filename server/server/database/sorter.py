@@ -49,9 +49,9 @@ class AscendingSorter(Sorter):
         try:
             return sorted(
                 entities,
-                key=lambda entity: getattr(entity, self._field),
+                key=lambda entity: entity[self._field],
             )
-        except AttributeError:
+        except KeyError:
             logger.error(f'Unable to find field {self._field} in entity; failed to sort')
             raise FieldNotFoundInEntityError('Failed to sort entity')
 
@@ -81,10 +81,10 @@ class DescendingSorter(Sorter):
         try:
             return sorted(
                 entities,
-                key=lambda entity: getattr(entity, self._field),
+                key=lambda entity: entity[self._field],
                 reverse=True
             )
-        except AttributeError:
+        except KeyError:
             logger.error(f'Unable to find field {self._field} in entity; failed to sort')
             raise FieldNotFoundInEntityError('Failed to sort entity')
 

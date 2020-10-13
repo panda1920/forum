@@ -14,7 +14,6 @@ from server.database.filter import LTFilter
 from server.database.filter import LTEFilter
 from server.database.filter import NullFilter
 from server.exceptions import FilterParseError, InvalidFilterOperatorError
-from tests.mocks import createMockEntity
 
 
 class TestFilterCreation:
@@ -133,16 +132,10 @@ class TestFilterMatching:
         # fuzzy search for 'is' OR 'as'
         f = self.createFilter('fuzzy', ['is', 'as'])
         for should_match in should_matches:
-            mock_entity = createMockEntity()
-            for k, v in should_match.items():
-                setattr(mock_entity, k, v)
-            assert f.matches(mock_entity)
+            assert f.matches(should_match)
 
         for shouldnot_match in shouldnot_matches:
-            mock_entity = createMockEntity()
-            for k, v in shouldnot_match.items():
-                setattr(mock_entity, k, v)
-            assert not f.matches(mock_entity)
+            assert not f.matches(shouldnot_match)
 
     def test_GTFilter(self):
         should_matches = [
@@ -159,16 +152,10 @@ class TestFilterMatching:
 
         f = self.createFilter('gt')
         for should_match in should_matches:
-            mock_entity = createMockEntity()
-            for k, v in should_match.items():
-                setattr(mock_entity, k, v)
-            assert f.matches(mock_entity)
+            assert f.matches(should_match)
 
         for shouldnot_match in shouldnot_matches:
-            mock_entity = createMockEntity()
-            for k, v in shouldnot_match.items():
-                setattr(mock_entity, k, v)
-            assert not f.matches(mock_entity)
+            assert not f.matches(shouldnot_match)
 
     def test_GTEFilter(self):
         should_matches = [
@@ -185,16 +172,10 @@ class TestFilterMatching:
 
         f = self.createFilter('gte')
         for should_match in should_matches:
-            mock_entity = createMockEntity()
-            for k, v in should_match.items():
-                setattr(mock_entity, k, v)
-            assert f.matches(mock_entity)
+            assert f.matches(should_match)
 
         for shouldnot_match in shouldnot_matches:
-            mock_entity = createMockEntity()
-            for k, v in shouldnot_match.items():
-                setattr(mock_entity, k, v)
-            assert not f.matches(mock_entity)
+            assert not f.matches(shouldnot_match)
             
     def test_LTFilter(self):
         should_matches = [
@@ -211,16 +192,10 @@ class TestFilterMatching:
 
         f = self.createFilter('lt')
         for should_match in should_matches:
-            mock_entity = createMockEntity()
-            for k, v in should_match.items():
-                setattr(mock_entity, k, v)
-            assert f.matches(mock_entity)
+            assert f.matches(should_match)
 
         for shouldnot_match in shouldnot_matches:
-            mock_entity = createMockEntity()
-            for k, v in shouldnot_match.items():
-                setattr(mock_entity, k, v)
-            assert not f.matches(mock_entity)
+            assert not f.matches(shouldnot_match)
 
     def test_LTEFilter(self):
         should_matches = [
@@ -237,16 +212,10 @@ class TestFilterMatching:
 
         f = self.createFilter('lte')
         for should_match in should_matches:
-            mock_entity = createMockEntity()
-            for k, v in should_match.items():
-                setattr(mock_entity, k, v)
-            assert f.matches(mock_entity)
+            assert f.matches(should_match)
 
         for shouldnot_match in shouldnot_matches:
-            mock_entity = createMockEntity()
-            for k, v in shouldnot_match.items():
-                setattr(mock_entity, k, v)
-            assert not f.matches(mock_entity)
+            assert not f.matches(shouldnot_match)
 
     def test_EQFilter(self):
         should_matches = [
@@ -267,16 +236,10 @@ class TestFilterMatching:
         # search for either of the 2 by exact matches
         f = self.createFilter('eq', [self.FIELD_VALUE, 500])
         for should_match in should_matches:
-            mock_entity = createMockEntity()
-            for k, v in should_match.items():
-                setattr(mock_entity, k, v)
-            assert f.matches(mock_entity)
+            assert f.matches(should_match)
 
         for shouldnot_match in shouldnot_matches:
-            mock_entity = createMockEntity()
-            for k, v in shouldnot_match.items():
-                setattr(mock_entity, k, v)
-            assert not f.matches(mock_entity)
+            assert not f.matches(shouldnot_match)
 
     def test_NullFilter(self):
         should_matches = [
@@ -290,10 +253,7 @@ class TestFilterMatching:
         f = PrimitiveFilter.createNullFilter()
 
         for should_match in should_matches:
-            mock_entity = createMockEntity()
-            for k, v in should_match.items():
-                setattr(mock_entity, k, v)
-            assert f.matches(mock_entity)
+            assert f.matches(should_match)
 
     def createFilter(self, *args):
         op = args[0]
