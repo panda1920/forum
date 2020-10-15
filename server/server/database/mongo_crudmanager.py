@@ -14,10 +14,11 @@ from contextlib import contextmanager
 from server.database.sorter import NullSorter
 from server.database.crudmanager import CrudManager
 from server.database.paging import Paging
-from server.entity.user import NewUser, UpdateUser
-from server.entity.post import NewPost, UpdatePost
-from server.entity.thread import NewThread, UpdateThread
 import server.exceptions as exceptions
+from server.entity import User, Post, Thread
+
+
+logger = logging.getLogger(__name__)
 
 
 class MongoCrudManager(CrudManager):
@@ -34,13 +35,13 @@ class MongoCrudManager(CrudManager):
         self._userauth = userauth
 
     def createUser(self, user):
-        self._validateEntity(NewUser, user)
-        user['password'] = self._userauth.hashPassword( user['password'] )
+        attrs = user.to_create()
+        attrs['password'] = self._userauth.hashPassword( attrs['password'] )
 
-        with self._mongoOperationHandling('Failed to create user'):
+        with self._mongoOperationHandling('Failed to create attrs'):
             nextUserId = str( self._getCounterAndIncrement('userId') )
-            user['userId'] = nextUserId
-            self._db['users'].insert_one(user)
+            attrs['userId'] = nextUserId
+            self._db['users'].insert_one(attrs)
 
         return dict(
             createdCount=1,
@@ -57,6 +58,10 @@ class MongoCrudManager(CrudManager):
             users = list( paging.slice( sorter.sortMongoCursor( self._db['users'].find(query) ) ) )
             matchedCount = self._db['users'].count_documents(query)
             
+        # convert dictionary to User object
+        self._convertInnerIdToStr(users)
+        users = [ User(user) for user in users ]
+
         return {
             'users': users,
             'returnCount': len(users),
@@ -72,12 +77,12 @@ class MongoCrudManager(CrudManager):
         return dict(deleteCount=result.deleted_count)
 
     def updateUser(self, searchFilter, user):
-        self._validateEntity(UpdateUser, user)
-        user['password'] = self._userauth.hashPassword( user['password'] )
+        attrs = user.to_update()
+        attrs['password'] = self._userauth.hashPassword( attrs['password'] )
         query = searchFilter.getMongoFilter()
-        update = self._createMongoUpdate(UpdateUser, user)
+        update = self._createMongoUpdate(attrs)
         
-        with self._mongoOperationHandling('Failed to update user'):
+        with self._mongoOperationHandling('Failed to update attrs'):
             result = self._db['users'].update_many(query, update)
 
         return dict(
@@ -86,12 +91,12 @@ class MongoCrudManager(CrudManager):
         )
     
     def createPost(self, post):
-        self._validateEntity(NewPost, post)
+        attrs = post.to_create()
         
         with self._mongoOperationHandling('Failed to create post'):
             nextPostId = str( self._getCounterAndIncrement('postId') )
-            post['postId'] = nextPostId
-            self._db['posts'].insert_one(post)
+            attrs['postId'] = nextPostId
+            self._db['posts'].insert_one(attrs)
 
         return dict(
             createdCount=1,
@@ -108,6 +113,9 @@ class MongoCrudManager(CrudManager):
             posts = list( paging.slice( sorter.sortMongoCursor( self._db['posts'].find(query) ) ) )
             matchedCount = self._db['posts'].count_documents(query)
 
+        self._convertInnerIdToStr(posts)
+        posts = [ Post(post) for post in posts ]
+
         return {
             'posts': posts,
             'returnCount': len(posts),
@@ -123,9 +131,9 @@ class MongoCrudManager(CrudManager):
         return dict(deleteCount=result.deleted_count)
 
     def updatePost(self, searchFilter, post):
-        self._validateEntity(UpdatePost, post)
+        attrs = post.to_update()
         query = searchFilter.getMongoFilter()
-        update = self._createMongoUpdate(UpdatePost, post)
+        update = self._createMongoUpdate(attrs)
 
         with self._mongoOperationHandling('Failed to update post'):
             result = self._db['posts'].update_many(query, update)
@@ -136,13 +144,13 @@ class MongoCrudManager(CrudManager):
         )
 
     def createThread(self, thread):
-        self._validateEntity(NewThread, thread)
+        attrs = thread.to_create()
 
         with self._mongoOperationHandling('Failed to create new thread'):
             nextThreadId = str( self._getCounterAndIncrement('threadId') )
-            thread['threadId'] = nextThreadId
-            thread['createdAt'] = time.time()
-            self._db['threads'].insert_one(thread)
+            attrs['threadId'] = nextThreadId
+            attrs['createdAt'] = time.time()
+            self._db['threads'].insert_one(attrs)
 
         return dict(
             createdCount=1,
@@ -159,6 +167,9 @@ class MongoCrudManager(CrudManager):
             threads = list( paging.slice( sorter.sortMongoCursor( self._db['threads'].find(query) ) ) )
             matchedCount = self._db['threads'].count_documents(query)
 
+        self._convertInnerIdToStr(threads)
+        threads = [ Thread(thread) for thread in threads ]
+
         return dict(
             threads=threads,
             matchedCount=matchedCount,
@@ -166,10 +177,10 @@ class MongoCrudManager(CrudManager):
         )
 
     def updateThread(self, searchFilter, thread):
-        self._validateEntity(UpdateThread, thread)
+        attrs = thread.to_update()
 
         fil = searchFilter.getMongoFilter()
-        update = self._createMongoUpdate(UpdateThread, thread)
+        update = self._createMongoUpdate(attrs)
         with self._mongoOperationHandling('Failed to update thread'):
             result = self._db['threads'].update_many(fil, update)
 
@@ -187,7 +198,7 @@ class MongoCrudManager(CrudManager):
             deleteCount=result.deleted_count,
         )
 
-    def _createMongoUpdate(self, entitySchema, updateProps):
+    def _createMongoUpdate(self, updateProps):
         update = defaultdict(lambda: defaultdict(int))
         fieldUpdates = updateProps.copy()
         incrementField = fieldUpdates.pop('increment', None)
@@ -198,11 +209,6 @@ class MongoCrudManager(CrudManager):
             update['$inc'][incrementField] = 1
         
         return update
-
-    def _validateEntity(self, entitySchema, entity):
-        if not entitySchema.validate(entity):
-            logging.error(f'Failed to validate object: {entity}')
-            raise exceptions.EntityValidationError(f'failed to validate {entitySchema.__name__}')
 
     def _createCounterQuery(self, fieldname):
         return dict(
@@ -221,7 +227,7 @@ class MongoCrudManager(CrudManager):
         try:
             yield
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
             raise exceptions.FailedMongoOperation(errormsg)
 
     def _setDefaultSearchOptions(self, options):
@@ -229,3 +235,7 @@ class MongoCrudManager(CrudManager):
             options['paging'] = Paging()
         if 'sorter' not in options:
             options['sorter'] = NullSorter()
+
+    def _convertInnerIdToStr(self, entities):
+        for entity in entities:
+            entity['_id'] = str(entity['_id'])

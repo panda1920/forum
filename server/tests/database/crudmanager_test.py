@@ -14,6 +14,7 @@ from server.database.paging import Paging
 from server.entity.post import UpdatePost
 from server.exceptions import EntityValidationError
 from server.services.entity_creation_service import EntityCreationService
+from server.entity import User, Post, Thread
 
 
 @pytest.mark.slow
@@ -53,11 +54,12 @@ class TestUserCRUD:
         mockuserauth = setupDB.getMockPassword()
         mockuserauth.hashPassword.return_value = 'hashed'
         userProps = self.createNewUserProps()
+        user = User(userProps)
         searchFilter = createSearchFilter('userName', 'eq', [ userProps['userName'] ])
 
         assert len( setupDB.findUsers(searchFilter) ) == 0
         
-        setupDB.getRepo().createUser(userProps)
+        setupDB.getRepo().createUser(user)
 
         assert setupDB.getUserCount() == len( setupDB.getOriginalUsers() ) + 1
         createdUsers = setupDB.findUsers(searchFilter)
@@ -74,10 +76,11 @@ class TestUserCRUD:
         mockuserauth = setupDB.getMockPassword()
         mockuserauth.hashPassword.return_value = 'hashed'
         userProps = self.createNewUserProps()
+        user = User(userProps)
         searchFilter = createSearchFilter('userName', 'eq', [ userProps['userName'] ])
         nextUserId = setupDB.getCounter('userId')
 
-        setupDB.getRepo().createUser(userProps)
+        setupDB.getRepo().createUser(user)
 
         createdUser = setupDB.findUsers(searchFilter)[0]
 
@@ -86,9 +89,10 @@ class TestUserCRUD:
 
     def test_createUserShouldReturnCreatedCountAndCreatedId(self, setupDB):
         userProps = self.createNewUserProps()
+        user = User(userProps)
         nextUserId = str(setupDB.getCounter('userId'))
 
-        result = setupDB.getRepo().createUser(userProps)
+        result = setupDB.getRepo().createUser(user)
 
         assert result['createdCount'] == 1
         assert result['createdId'] == nextUserId
@@ -99,12 +103,12 @@ class TestUserCRUD:
             self.createNewUserProps(displayName=None),
             self.createNewUserProps(password=None),
             self.createNewUserProps(userName=None, displayName=None, password=None),
-            self.createNewUserProps(address='5th street')
         ]
 
         for userProp in userProps:
             with pytest.raises(EntityValidationError):
-                setupDB.getRepo().createUser(userProp)
+                user = User(userProp)
+                setupDB.getRepo().createUser(user)
 
     def test_createUserByWrongPropertyTypeShouldRaiseException(self, setupDB):
         userProps = [
@@ -116,7 +120,8 @@ class TestUserCRUD:
 
         for userProp in userProps:
             with pytest.raises(EntityValidationError):
-                setupDB.getRepo().createUser(userProp)
+                user = User(userProp)
+                setupDB.getRepo().createUser(user)
 
     def test_deleteUserShouldRemoveUserFromDB(self, setupDB):
         userIdToDelete = setupDB.getOriginalUsers()[0]['userId']
@@ -185,7 +190,7 @@ class TestUserCRUD:
         users = result['users']
 
         assert len(users) == 1
-        assert users[0]['userId'] == userIdsToSearch[0]
+        assert users[0].userId == userIdsToSearch[0]
         assert result['matchedCount'] == 1
         assert result['returnCount'] == 1
 
@@ -211,7 +216,7 @@ class TestUserCRUD:
 
         assert len(users) == 2
         for user in users:
-            assert user['userId'] in userIdsToSearch
+            assert user.userId in userIdsToSearch
         assert result['matchedCount'] == 2
         assert result['returnCount'] == 2
 
@@ -293,7 +298,8 @@ class TestUserCRUD:
 
         result = setupDB.getRepo().searchUser(searchFilter, sorter=sorter)
 
-        assert result['users'] == expectedUsers
+        for result_user, expected_user in zip(result['users'], expectedUsers):
+            result_user.userId == expected_user['userId']
 
     def test_updateUserShouldUpdateMatchedUserOnDB(self, setupDB):
         mock = setupDB.getMockPassword()
@@ -303,8 +309,9 @@ class TestUserCRUD:
         ]
         searchFilter = createSearchFilter('userId', 'eq', userIdsToUpdate)
         userProps = self.createUpdateUserProps()
+        user = User(userProps)
 
-        setupDB.getRepo().updateUser(searchFilter, userProps)
+        setupDB.getRepo().updateUser(searchFilter, user)
 
         updatedUsers = setupDB.findUsers(searchFilter)
         for user in updatedUsers:
@@ -322,8 +329,9 @@ class TestUserCRUD:
         ]
         searchFilter = createSearchFilter('userId', 'eq', userIdsToUpdate)
         userProps = self.createUpdateUserProps()
+        user = User(userProps)
 
-        result = setupDB.getRepo().updateUser(searchFilter, userProps)
+        result = setupDB.getRepo().updateUser(searchFilter, user)
 
         assert result['matchedCount'] == 2
         assert result['updatedCount'] == 2
@@ -338,8 +346,9 @@ class TestUserCRUD:
             createSearchFilter('displayName', 'eq', usernameToUpdate),
         ])
         userProps = self.createUpdateUserProps()
+        user = User(userProps)
 
-        result = setupDB.getRepo().updateUser(searchFilter, userProps)
+        result = setupDB.getRepo().updateUser(searchFilter, user)
 
         assert result['matchedCount'] == 1
         assert result['updatedCount'] == 1
@@ -353,22 +362,10 @@ class TestUserCRUD:
             self.createUpdateUserProps(password=1),
         ]
 
-        for userUpdate in userUpdateProperties:
+        for userProps in userUpdateProperties:
             with pytest.raises(EntityValidationError):
-                setupDB.getRepo().updateUser(searchFilter, userUpdate)
-
-    def test_updateUserWithUnexpectedPropertiesRaisesException(self, setupDB):
-        userIdsToUpdate = [ user['userId'] for user in setupDB.getOriginalUsers()[:10] ]
-        searchFilter = createSearchFilter('userId', 'eq', userIdsToUpdate)
-        userUpdateProperties = [
-            self.createUpdateUserProps(createdAt=30.11),
-            self.createUpdateUserProps(userName='Smithy'),
-            self.createUpdateUserProps(someExtraProperty='SomeExtra'),
-        ]
-
-        for userUpdate in userUpdateProperties:
-            with pytest.raises(EntityValidationError):
-                setupDB.getRepo().updateUser(searchFilter, userUpdate)
+                user = User(userProps)
+                setupDB.getRepo().updateUser(searchFilter, user)
 
 
 @pytest.mark.slow
@@ -390,8 +387,9 @@ class TestPostCRUD:
 
     def test_createPostShouldCreatePostInDB(self, setupDB):
         postProps = self.createNewPostProps()
+        post = Post(postProps)
 
-        setupDB.getRepo().createPost(postProps)
+        setupDB.getRepo().createPost(post)
 
         assert setupDB.getPostCount() == len(setupDB.getOriginalPosts()) + 1
         createdPost = setupDB.findPosts(createSearchFilter(
@@ -403,9 +401,10 @@ class TestPostCRUD:
 
     def test_createPostShouldHavePostIdAndIncrementedCounter(self, setupDB):
         postProps = self.createNewPostProps()
+        post = Post(postProps)
         nextPostId = setupDB.getCounter('postId')
 
-        setupDB.getRepo().createPost(postProps)
+        setupDB.getRepo().createPost(post)
 
         createdPost = setupDB.findPosts(createSearchFilter(
             'content', 'eq', [ postProps['content'] ]
@@ -415,9 +414,10 @@ class TestPostCRUD:
     
     def test_createPostShouldReturnCreatedCountAndCreatedId(self, setupDB):
         postProps = self.createNewPostProps()
+        post = Post(postProps)
         nextPostId = str( setupDB.getCounter('postId') )
 
-        result = setupDB.getRepo().createPost(postProps)
+        result = setupDB.getRepo().createPost(post)
 
         assert result['createdCount'] == 1
         assert result['createdId'] == nextPostId
@@ -426,12 +426,12 @@ class TestPostCRUD:
         postsToCreate = [
             self.createNewPostProps(content=None),
             self.createNewPostProps(userId=None),
-            self.createNewPostProps(content2='A test post'),
         ]
 
-        for postToCreate in postsToCreate:
+        for postProps in postsToCreate:
             with pytest.raises(EntityValidationError):
-                setupDB.getRepo().createPost(postToCreate)
+                post = Post(postProps)
+                setupDB.getRepo().createPost(post)
 
     def test_createPostWithWrongPropertyTypeShouldRaiseException(self, setupDB):
         postsToCreate = [
@@ -439,9 +439,10 @@ class TestPostCRUD:
             self.createNewPostProps(content=22),
         ]
 
-        for postToCreate in postsToCreate:
+        for postProps in postsToCreate:
             with pytest.raises(EntityValidationError):
-                setupDB.getRepo().createPost(postToCreate)
+                post = Post(postProps)
+                setupDB.getRepo().createPost(post)
 
     def test_deletePostShouldRemovePostFromDB(self, setupDB):
         postIdToDelete = setupDB.getOriginalPosts()[0]['postId']
@@ -513,7 +514,7 @@ class TestPostCRUD:
 
         posts = result['posts']
         assert len(posts) == 1
-        assert posts[0]['postId'] in postIdsToSearch
+        assert posts[0].postId in postIdsToSearch
         assert result['returnCount'] == 1
         assert result['matchedCount'] == 1
 
@@ -528,7 +529,7 @@ class TestPostCRUD:
         posts = result['posts']
         assert len(posts) == 2
         for post in posts:
-            assert post['postId'] in postIdsToSearch
+            assert post.postId in postIdsToSearch
         assert result['returnCount'] == 2
         assert result['matchedCount'] == 2
 
@@ -632,14 +633,16 @@ class TestPostCRUD:
 
         result = setupDB.getRepo().searchPost(searchFilter, sorter=sorter)
 
-        assert result['posts'] == expectedPosts
+        for result_post, expected_post in zip(result['posts'], expectedPosts):
+            assert result_post.postId == expected_post['postId']
 
     def test_updatePostShouldUpdatePostOnDB(self, setupDB):
         postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]
         searchFilter = createSearchFilter('postId', 'eq', postIdsToUpdate)
         update = self.createUpdatePostProps()
+        post = Post(update)
 
-        setupDB.getRepo().updatePost(searchFilter, update)
+        setupDB.getRepo().updatePost(searchFilter, post)
 
         postsInDB = setupDB.findPosts(createSearchFilter(
             'postId', 'eq', postIdsToUpdate
@@ -652,8 +655,9 @@ class TestPostCRUD:
         postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]
         searchFilter = createSearchFilter('postId', 'eq', postIdsToUpdate)
         update = self.createUpdatePostProps()
+        post = Post(update)
 
-        result = setupDB.getRepo().updatePost(searchFilter, update)
+        result = setupDB.getRepo().updatePost(searchFilter, post)
 
         assert result['matchedCount'] == len(postIdsToUpdate)
         assert result['updatedCount'] == len(postIdsToUpdate)
@@ -666,24 +670,12 @@ class TestPostCRUD:
             createSearchFilter('content', 'eq', contentToSearch),
         ])
         update = self.createUpdatePostProps()
+        post = Post(update)
 
-        result = setupDB.getRepo().updatePost(searchFilter, update)
+        result = setupDB.getRepo().updatePost(searchFilter, post)
 
         assert result['matchedCount'] == len(contentToSearch)
         assert result['updatedCount'] == len(contentToSearch)
-
-    def test_updatePostUpdatesWithNonUpdatablePropertyRaisesException(self, setupDB):
-        postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]
-        searchFilter = createSearchFilter('postId', 'eq', postIdsToUpdate)
-        updatePostProperties = [
-            self.createUpdatePostProps(userId='112233'),
-            self.createUpdatePostProps(createdAt=22.99),
-            self.createUpdatePostProps(randomProp=2),
-        ]
-
-        for postProps in updatePostProperties:
-            with pytest.raises(EntityValidationError):
-                setupDB.getRepo().updatePost(searchFilter, postProps)
 
     def test_updatePostByWrongPropertyTypeRaisesException(self, setupDB):
         postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]
@@ -694,7 +686,8 @@ class TestPostCRUD:
 
         for postProps in updatePostProperties:
             with pytest.raises(EntityValidationError):
-                setupDB.getRepo().updatePost(searchFilter, postProps)
+                post = Post(postProps)
+                setupDB.getRepo().updatePost(searchFilter, post)
 
 
 @pytest.mark.slow
@@ -707,23 +700,22 @@ class TestThreadCRUD:
         subject='test_thread_subject',
     )
     DEFAULT_UPDATE_THREAD = dict(
-        userId='123123',
         title='test_thread_update',
         subject='test_thread_update',
         views=123123,
     )
 
-    def createNewThreadProps(self, **kwargs):
-        return createNewProps(self.DEFAULT_NEW_THREAD, **kwargs)
+    def createNewThread(self, **kwargs):
+        return Thread( createNewProps(self.DEFAULT_NEW_THREAD, **kwargs) )
 
-    def createUpdateThreadProps(self, **kwargs):
-        return createNewProps(self.DEFAULT_UPDATE_THREAD, **kwargs)
+    def createUpdateThread(self, **kwargs):
+        return Thread( createNewProps(self.DEFAULT_UPDATE_THREAD, **kwargs) )
 
     def test_createThreadShouldCreateEntryInDB(self, setupDB):
         originalThreadCount = setupDB.getThreadCount()
-        props = self.createNewThreadProps()
+        thread = self.createNewThread()
 
-        setupDB.getRepo().createThread(props)
+        setupDB.getRepo().createThread(thread)
 
         assert setupDB.getThreadCount() == originalThreadCount + 1
         newThread = setupDB.findThreads(createSearchFilter(
@@ -733,9 +725,9 @@ class TestThreadCRUD:
             assert newThread[field] == value
 
     def test_createThreadShouldAutoGenerateFields(self, setupDB):
-        props = self.createNewThreadProps()
+        thread = self.createNewThread()
 
-        setupDB.getRepo().createThread(props)
+        setupDB.getRepo().createThread(thread)
 
         newThread = setupDB.findThreads(createSearchFilter(
             'title', 'eq', [ self.DEFAULT_NEW_THREAD['title'] ]
@@ -743,61 +735,31 @@ class TestThreadCRUD:
         assert 'threadId' in newThread
         assert 'createdAt' in newThread
 
-    def test_createThreadRaisesExceptionWhenUnknownField(self, setupDB):
-        props = self.createNewThreadProps(test_field=True)
-
-        with pytest.raises(EntityValidationError):
-            setupDB.getRepo().createThread(props)
-
     def test_createThreadShouldRaiseExceptionWhenMissingRequiredFields(self, setupDB):
         propsPatterns = [
-            self.createNewThreadProps(userId=None),
-            self.createNewThreadProps(title=None),
-            self.createNewThreadProps(subject=None),
-            self.createNewThreadProps(userId=None, subject=None),
+            dict(title=None),
+            dict(subject=None),
+            dict(title=None, subject=None),
         ]
 
-        for props in propsPatterns:
+        for threadProps in propsPatterns:
             with pytest.raises(EntityValidationError):
-                setupDB.getRepo().createThread(props)
-
-    def test_createThreadShouldRaiseExceptionWhenFieldTypesDiffer(self, setupDB):
-        propsPatterns = [
-            self.createNewThreadProps(userId=1),
-            self.createNewThreadProps(title=23.33),
-            self.createNewThreadProps(subject=False),
-            self.createNewThreadProps(userId=1.111, subject=True),
-        ]
-
-        for props in propsPatterns:
-            with pytest.raises(EntityValidationError):
-                setupDB.getRepo().createThread(props)
-
-    def test_createThreadShouldRaiseExceptionWhenEmptyOrWhitespace(self, setupDB):
-        propsPatterns = [
-            self.createNewThreadProps(title=''),
-            self.createNewThreadProps(title='   '),
-            self.createNewThreadProps(subject=''),
-            self.createNewThreadProps(subject='    '),
-        ]
-
-        for props in propsPatterns:
-            with pytest.raises(EntityValidationError):
-                setupDB.getRepo().createThread(props)
+                thread = self.createNewThread(**threadProps)
+                setupDB.getRepo().createThread(thread)
 
     def test_createThreadShouldIncrementThreadIdCounter(self, setupDB):
         originalCounter = setupDB.getCounter('threadId')
-        props = self.createNewThreadProps()
+        thread = self.createNewThread()
 
-        setupDB.getRepo().createThread(props)
+        setupDB.getRepo().createThread(thread)
 
         assert setupDB.getCounter('threadId') == originalCounter + 1
     
     def test_createThreadShouldReturnCreatedCountAndCreatedId(self, setupDB):
-        props = self.createNewThreadProps()
+        thread = self.createNewThread()
         nextThreadId = str( setupDB.getCounter('threadId') )
 
-        result = setupDB.getRepo().createThread(props)
+        result = setupDB.getRepo().createThread(thread)
 
         assert result['createdCount'] == 1
         assert result['createdId'] == nextThreadId
@@ -812,7 +774,7 @@ class TestThreadCRUD:
 
         threads = result['threads']
         assert len(threads) == 1
-        assert threads[0]['threadId'] in threadIdsToSearch
+        assert threads[0].threadId in threadIdsToSearch
         assert result['returnCount'] == 1
         assert result['matchedCount'] == 1
 
@@ -827,7 +789,7 @@ class TestThreadCRUD:
         threads = result['threads']
         assert len(threads) == 2
         for thread in threads:
-            assert thread['threadId'] in threadIdsToSearch
+            assert thread.threadId in threadIdsToSearch
         assert result['returnCount'] == 2
         assert result['matchedCount'] == 2
 
@@ -924,22 +886,23 @@ class TestThreadCRUD:
 
         result = setupDB.getRepo().searchThread(searchFilter, sorter=sorter)
 
-        assert result['threads'] == expectedThreads
+        for result_thread, expected_thread in zip(result['threads'], expectedThreads):
+            assert result_thread.threadId == expected_thread['threadId']
     
     def test_updateThreadShouldUpdateMatchedThreadOnDB(self, setupDB):
         threadIdsToUpdate = [
             thread['threadId'] for thread in setupDB.getOriginalThreads()[:2]
         ]
         searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
-        expectedProps = self.createUpdateThreadProps()
+        thread = self.createUpdateThread()
 
-        setupDB.getRepo().updateThread(searchFilter, expectedProps)
+        setupDB.getRepo().updateThread(searchFilter, thread)
 
         updatedThreads = setupDB.findThreads(searchFilter)
         assert len(updatedThreads) == len(threadIdsToUpdate)
-        for thread in updatedThreads:
-            for field, expectedValue in expectedProps.items():
-                assert thread[field] == expectedValue
+        for updated_thread in updatedThreads:
+            for field, expected_value in self.DEFAULT_UPDATE_THREAD.items():
+                assert updated_thread[field] == expected_value
 
     def test_updateThreadShouldBeCapableOfIncrementingFields(self, setupDB):
         threadIdsToUpdate = [
@@ -948,7 +911,9 @@ class TestThreadCRUD:
         searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
         incrementCount = 3
         for i in range(incrementCount):
-            setupDB.getRepo().updateThread(searchFilter, dict(increment='views'))
+            thread = Thread(increment='views')
+            print(thread)
+            setupDB.getRepo().updateThread(searchFilter, thread)
 
         updatedThreads = setupDB.findThreads(searchFilter)
         assert len(updatedThreads) == len(threadIdsToUpdate)
@@ -962,7 +927,7 @@ class TestThreadCRUD:
             thread['threadId'] for thread in setupDB.getOriginalThreads()[:2]
         ]
         searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
-        threadProps = self.createUpdateThreadProps()
+        threadProps = self.createUpdateThread()
 
         result = setupDB.getRepo().updateThread(searchFilter, threadProps)
 
@@ -978,52 +943,12 @@ class TestThreadCRUD:
             createSearchFilter('threadId', 'eq', threadIdsToUpdate),
             createSearchFilter('title', 'eq', threadTitleToUpdate),
         ])
-        threadProps = self.createUpdateThreadProps()
+        threadProps = self.createUpdateThread()
 
         result = setupDB.getRepo().updateThread(searchFilter, threadProps)
 
         assert result['matchedCount'] == 1
         assert result['updatedCount'] == 1
-
-    def test_updateThreadByWrongUpdatePropertiesRaisesException(self, setupDB):
-        threadIdsToUpdate = [ thread['threadId'] for thread in setupDB.getOriginalThreads()[:10] ]
-        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
-        threadUpdateProperties = [
-            self.createUpdateThreadProps(threadId=1),
-            self.createUpdateThreadProps(displayName=1),
-            self.createUpdateThreadProps(password=1),
-        ]
-
-        for threadUpdate in threadUpdateProperties:
-            with pytest.raises(EntityValidationError):
-                setupDB.getRepo().updateThread(searchFilter, threadUpdate)
-
-    def test_updateThreadWithUnexpectedPropertiesRaisesException(self, setupDB):
-        threadIdsToUpdate = [ thread['threadId'] for thread in setupDB.getOriginalThreads()[:10] ]
-        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
-        threadUpdateProperties = [
-            self.createUpdateThreadProps(createdAt=30.11),
-            self.createUpdateThreadProps(threadName='Smithy'),
-            self.createUpdateThreadProps(someExtraProperty='SomeExtra'),
-        ]
-
-        for threadUpdate in threadUpdateProperties:
-            with pytest.raises(EntityValidationError):
-                setupDB.getRepo().updateThread(searchFilter, threadUpdate)
-
-    def test_updateThreadShouldRaiseExceptionWhenEmptyOrWhitespace(self, setupDB):
-        threadIdsToUpdate = [ thread['threadId'] for thread in setupDB.getOriginalThreads()[:10] ]
-        searchFilter = createSearchFilter('threadId', 'eq', threadIdsToUpdate)
-        propsPatterns = [
-            self.createNewThreadProps(title=''),
-            self.createNewThreadProps(title='   '),
-            self.createNewThreadProps(subject=''),
-            self.createNewThreadProps(subject='    '),
-        ]
-
-        for threadUpdate in propsPatterns:
-            with pytest.raises(EntityValidationError):
-                setupDB.getRepo().updateThread(searchFilter, threadUpdate)
 
     def test_deleteThreadShouldRemoveThreadFromDB(self, setupDB):
         threadIdToDelete = setupDB.getOriginalThreads()[0]['threadId']

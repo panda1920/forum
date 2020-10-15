@@ -200,7 +200,7 @@ class Thread(Entity):
         'title': {
             'validation_rules': {
                 'type': 'string',
-                'regex': r'\s*\S+\s*',
+                'regex': r'.*\S+.*',
             },
             'conversion_rules': {
                 'to_json': {
@@ -220,7 +220,7 @@ class Thread(Entity):
         'subject': {
             'validation_rules': {
                 'type': 'string',
-                'regex': r'\s*\S+\s*',
+                'regex': r'.*\S+.*',
             },
             'conversion_rules': {
                 'to_json': {

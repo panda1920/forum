@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This file contains classes to help setup/cleanup needed for
+This file contains classes to help setup/cleanup for
 testing database CRUD management classes
 """
 

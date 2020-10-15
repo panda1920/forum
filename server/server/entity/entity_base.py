@@ -70,7 +70,10 @@ class Entity:
         if not self._validator.validate(normalized):
             self._logger.error('Failed validation in %s creation', self.__class__.__name__)
             for attr, reason in self._validator.errors.items():
-                self._logger.error('{ attribute: %s,  reason: %s }', attr, reason)
+                self._logger.error(
+                    '{ attribute: %s,  value: %s, reason: %s }',
+                    attr, normalized[attr], reason
+                )
 
             raise EntityValidationError(f'Failed to validate {self.__class__.__name__}')
         
