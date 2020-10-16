@@ -23,7 +23,7 @@ from server.entity import Entity
 from server.middleware.session_user import SessionUserManager
 
 
-def createMockDB():
+def createMockRepo():
     return create_autospec(CrudManager)
 
 

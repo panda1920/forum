@@ -35,7 +35,7 @@ DEFAULT_USER_RETURNED = dict(
 @pytest.fixture(scope='function')
 def mockApp(app):
     # replace with mock
-    mockDB = mocks.createMockDB()
+    mockDB = mocks.createMockRepo()
     app.config['DATABASE_REPOSITORY'] = mockDB
 
     mockCreate = mocks.createMockEntityCreationService()

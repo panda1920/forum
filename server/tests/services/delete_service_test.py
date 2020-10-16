@@ -16,7 +16,7 @@ TEST_DEFAULT_THREADID = '22123123'
 
 @pytest.fixture(scope='function')
 def delete_service():
-    mock_repo = mocks.createMockDB()
+    mock_repo = mocks.createMockRepo()
     mock_session = mocks.createMockSessionService()
     mock_session.get_user.return_value = dict(userId=TEST_DEFAULT_USERID)
     service = DeleteService(mock_repo, mock_session)

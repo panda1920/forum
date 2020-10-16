@@ -696,8 +696,11 @@ class TestThreadCRUD:
     DEFAULT_NEW_THREAD = dict(
         boardId='1',
         userId='1',
+        lastPostId='1',
         title='test_thread_title',
         subject='test_thread_subject',
+        views=128,
+        postCount=32,
     )
     DEFAULT_UPDATE_THREAD = dict(
         title='test_thread_update',

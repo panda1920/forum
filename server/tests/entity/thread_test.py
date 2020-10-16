@@ -14,15 +14,17 @@ DEFAULT_ARGS = dict(
     userId='test_thread',
     boardId='test_id',
     threadId='test_id',
+    lastPostId='test_id',
     title='Anonymous\'s thread',
     subject='test_subject',
     views=0,
+    postCount=0,
     createdAt=123123.12,
     updatedAt=123123.12,
 )
 
 
-class TestUserCreation:
+class TestThreadCreation:
     def test_construction_with_kwargs(self):
         thread = Thread(**DEFAULT_ARGS)
 
@@ -57,9 +59,11 @@ class TestUserCreation:
             userId=9999,
             boardId=9999,
             threadId=9999,
+            lastPostId=9999,
             title=9999,
             subject=9999,
             views='test_value',
+            postCount='test_value',
             increment=9999,
             createdAt='123123.12',
             updatedAt='123123.12',
@@ -112,6 +116,13 @@ class TestUserCreation:
             with pytest.raises(EntityValidationError):
                 Thread(args)
 
+    def test_constructionAllowsNoneLastPostId(self):
+        attr = { 'lastPostId': None }
+        
+        thread = Thread({ **DEFAULT_ARGS, **attr })
+
+        assert getattr(thread, 'lastPostId') is None
+
 
 class TestConversionMethods:
     @pytest.fixture(scope='function')
@@ -139,9 +150,11 @@ class TestConversionMethods:
             'threadId',
             'userId',
             'boardId',
+            'lastPostId',
             'title',
             'subject',
             'views',
+            'postCount',
             'createdAt',
             'updatedAt',
         ]
@@ -160,7 +173,15 @@ class TestConversionMethods:
             assert DEFAULT_ARGS[attr] == value
 
     def test_to_createValidatesForRequiredAttributes(self):
-        required_attributes = ['userId', 'boardId', 'title', 'subject', ]
+        required_attributes = [
+            'userId',
+            'boardId',
+            'lastPostId',
+            'title',
+            'subject',
+            'views',
+            'postCount',
+        ]
         for required_attribute in required_attributes:
             args = DEFAULT_ARGS.copy()
             args.pop(required_attribute)
@@ -173,7 +194,6 @@ class TestConversionMethods:
         ignored_args = {
             'threadId': 'test_value',
             '_id': 'test_value',
-            'views': 0,
             'increment': 'views',
             'createdAt': 123123.12,
             'updatedAt': 123123.12,
@@ -213,7 +233,9 @@ class TestConversionMethods:
         optional_attrs = {
             'title': 'test_value',
             'subject': 'test_value',
+            'lastPostId': 'test_value',
             'views': 9999,
+            'postCount': 9999,
             'increment': 'views',
         }
         args = { **DEFAULT_ARGS, **optional_attrs }

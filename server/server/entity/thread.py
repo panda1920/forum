@@ -197,6 +197,26 @@ class Thread(Entity):
                 },
             },
         },
+        'lastPostId': {
+            'validation_rules': {
+                'type': 'string',
+                'nullable': True,
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': False,
+                },
+            },
+        },
         'title': {
             'validation_rules': {
                 'type': 'string',
@@ -247,8 +267,27 @@ class Thread(Entity):
                     'hide': False,
                 },
                 'to_create': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_update': {
                     'required': False,
-                    'hide': True,
+                    'hide': False,
+                },
+            },
+        },
+        'postCount': {
+            'validation_rules': {
+                'type': 'integer',
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': True,
+                    'hide': False,
                 },
                 'to_update': {
                     'required': False,
@@ -259,7 +298,7 @@ class Thread(Entity):
         'increment': {
             'validation_rules': {
                 'type': 'string',
-                'allowed': ['views']
+                'allowed': ['views', 'postCount']
             },
             'conversion_rules': {
                 'to_json': {

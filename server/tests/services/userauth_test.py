@@ -13,7 +13,7 @@ import tests.mocks as mocks
 
 @pytest.fixture(scope='function')
 def user_auth():
-    repo = mocks.createMockDB()
+    repo = mocks.createMockRepo()
     session = mocks.createMockSessionService()
     return UserAuthenticationService(repo, PrimitiveFilter, session)
     

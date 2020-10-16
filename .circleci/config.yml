@@ -134,17 +134,19 @@ workflows:
   version: 2.1
   test_and_build:
     jobs:
-      - test_server
-      - test_client
+      - test_server:
+          filters:
+            branches:
+              ignore: master
+      - test_client:
+          filters:
+            branches:
+              ignore: master
       - publish_server:
-          requires:
-            - test_server
           filters:
             branches:
               only: master
       - publish_client:
-          requires:
-            - test_client
           filters:
             branches:
               only: master

@@ -16,7 +16,7 @@ MOCKAGGREGATE_RETURN_AND = 'and'
 
 @pytest.fixture(scope='function')
 def service():
-    mockRepo = mocks.createMockDB()
+    mockRepo = mocks.createMockRepo()
     mockFilter = mocks.createMockFilter()
     mockAggregate = mocks.createMockAggregateFilter()
     mockAggregate.createFilter.side_effect = lambda x, y: x

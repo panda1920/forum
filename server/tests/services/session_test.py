@@ -30,7 +30,7 @@ FILTERED_USER = {
 def session_service():
     mock_context = mocks.createMockFlaskContext()
 
-    mock_repo = mocks.createMockDB()
+    mock_repo = mocks.createMockRepo()
     mock_repo.searchUser.return_value = dict(
         users=[ DEFAULT_USER ],
         returnCount=1,

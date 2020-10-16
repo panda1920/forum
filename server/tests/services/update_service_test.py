@@ -17,7 +17,7 @@ TEST_SESSION_USER = dict(userId='test_user_id')
 
 @pytest.fixture(scope='function')
 def setup_service():
-    mock_repo = mocks.createMockDB()
+    mock_repo = mocks.createMockRepo()
     mock_session = mocks.createMockSessionService()
     mock_session.get_user.return_value = TEST_SESSION_USER
     
