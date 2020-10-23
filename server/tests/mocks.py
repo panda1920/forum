@@ -21,6 +21,7 @@ from server.services.flask_context import FlaskContext
 from server.services.image_scaler import ImageScalerBase
 from server.entity import Entity
 from server.middleware.session_user import SessionUserManager
+from server.services.searchfilter_creator import SearchFilterCreator
 
 
 def createMockRepo():
@@ -89,3 +90,7 @@ def createMockImageScaler():
 
 def createMockEntity():
     return create_autospec(Entity)
+
+
+def createMockSearchFilterCreatorService():
+    return create_autospec(SearchFilterCreator)

@@ -20,6 +20,7 @@ from server.services.update_service import UpdateService
 from server.services.delete_service import DeleteService
 from server.services.session import SessionService
 from server.services.image_scaler import ImageScaler
+from server.services.searchfilter_creator import SearchFilterCreator
 from server.middleware.session_user import SessionUserManager
 
 # object initialization
@@ -31,7 +32,7 @@ repo = MongoCrudManager(
 flask_context = FlaskContext()
 session_service = SessionService(repo, flask_context)
 creation_service = EntityCreationService(repo, PrimitiveFilter, session_service)
-search_service = SearchService(repo, PrimitiveFilter, AggregateFilter, Paging)
+search_service = SearchService(repo, SearchFilterCreator, PrimitiveFilter, AggregateFilter, Paging)
 update_service = UpdateService(repo, PrimitiveFilter, session_service)
 delete_service = DeleteService(repo, session_service)
 image_scaler = ImageScaler()
@@ -50,6 +51,7 @@ class Config:
     DATABASE_REPOSITORY = repo
     SEARCH_FILTER = PrimitiveFilter
     AGGREGATE_FILTER = AggregateFilter
+    SEARCH_FILTER_CREATOR = SearchFilterCreator
     PAGING = Paging
 
     # services

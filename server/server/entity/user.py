@@ -163,6 +163,9 @@ class User(Entity):
                     'hide': True,
                 },
             },
+            'search_rules': {
+                'fuzzy': True,
+            },
         },
         'displayName': {
             'validation_rules': {
@@ -181,6 +184,9 @@ class User(Entity):
                     'required': False,
                     'hide': False,
                 },
+            },
+            'search_rules': {
+                'fuzzy': True,
             },
         },
         'password': {

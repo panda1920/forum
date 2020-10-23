@@ -85,6 +85,23 @@ class AggregateFilter(Filter):
         """
         raise NotImplementedError
 
+    def __eq__(self, other):
+        """
+        Compares logical equality of self with other
+        
+        Args:
+            other: other object
+        Returns:
+            Boolean
+        """
+        if not isinstance(other, AggregateFilter):
+            return NotImplemented
+
+        return all([
+            self.getOpString() == other.getOpString(),
+            self._filters == other._filters
+        ])
+
 
 class AndFilter(AggregateFilter):
     """
@@ -136,6 +153,12 @@ class OrFilter(AggregateFilter):
         self._filters.append(filter)
 
     def matches(self, entity):
+        if len(self) == 0:
+            # any of empty list returns False in python
+            # found it more convenient if or filters does not block search
+            # when it is empty
+            return True
+            
         return any([
             f.matches(entity) for f in self._filters
         ])

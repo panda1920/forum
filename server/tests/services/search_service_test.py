@@ -7,96 +7,57 @@ from unittest.mock import ANY
 
 from server.database.sorter import AscendingSorter, DescendingSorter, NullSorter
 from server.services.search_service import SearchService
-
+from server.database.filter import PrimitiveFilter
+from server.database.aggregate_filter import AggregateFilter
 import tests.mocks as mocks
-
-MOCKAGGREGATE_RETURN_OR = 'or'
-MOCKAGGREGATE_RETURN_AND = 'and'
+from tests.mocks import createMockEntity
 
 
 @pytest.fixture(scope='function')
 def service():
     mockRepo = mocks.createMockRepo()
-    mockFilter = mocks.createMockFilter()
-    mockAggregate = mocks.createMockAggregateFilter()
-    mockAggregate.createFilter.side_effect = lambda x, y: x
+    mockSearchCreator = mocks.createMockSearchFilterCreatorService()
     mockPaging = mocks.createMockPaging()
-    yield SearchService(mockRepo, mockFilter, mockAggregate, mockPaging)
+
+    yield SearchService(mockRepo, mockSearchCreator, PrimitiveFilter, AggregateFilter, mockPaging)
 
 
 class TestSearchUsersByKeyValues:
     MOCKDB_DEFAULT_RETURN = dict(
-        users=[ dict(userId=0, _id='11223344'), dict(userId=1, _id='11223345') ],
+        users=[ createMockEntity(), createMockEntity() ],
         returnCount=2,
         matchedCount=2,
     )
-    MOCKFILTER_DEFAULT_RETURN = 'default_filter'
-    MOCKFILTER_NULL_RETURN = 'null_filter'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
-    DEFAULT_KEYVALUES = dict(search='username1')
+    DEFAULT_KEYVALUES = dict(
+        search='username1',
+        userId='11223344',
+    )
+    MOCK_SEARCHFILTER = 'some_mock_value'
 
     @pytest.fixture(scope='function', autouse=True)
     def setDefaultReturnValues(self, service):
         service._repo.searchUser.return_value = self.MOCKDB_DEFAULT_RETURN
-        service._filter.createFilter.return_value = self.MOCKFILTER_DEFAULT_RETURN
-        service._filter.createNullFilter.return_value = self.MOCKFILTER_NULL_RETURN
         service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
+        service._searchFilterCreator.create_usersearch.return_value = self.MOCK_SEARCHFILTER
 
-    def test_searchUsersByKeyValuesConvertsSearchTermToFilters(self, service):
-        mockFilter = service._filter
-
-        service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mockFilter.createFilter.assert_any_call({
-            'field': 'userName',
-            'operator': 'fuzzy',
-            'value': [ 'username1' ]
-        })
-        mockFilter.createFilter.assert_any_call({
-            'field': 'displayName',
-            'operator': 'fuzzy',
-            'value': [ 'username1' ]
-        })
-
-    def test_searchUsersConvertMultipleSearchKeys(self, service):
-        mockFilter = service._filter
-        keyValues = dict(search='username1 username2')
-
-        service.searchUsersByKeyValues(keyValues)
-
-        mockFilter.createFilter.assert_any_call({
-            'field': 'userName',
-            'operator': 'fuzzy',
-            'value': [ 'username1', 'username2' ]
-        })
-        mockFilter.createFilter.assert_any_call({
-            'field': 'displayName',
-            'operator': 'fuzzy',
-            'value': [ 'username1', 'username2' ]
-        })
-
-    def test_searchUsersShouldConvertUserIdToEqFilter(self, service):
-        mockFilter = service._filter
-        userIdToSearch = '11223344'
-        keyValues = dict(userId=userIdToSearch)
-
-        service.searchUsersByKeyValues(keyValues)
-
-        mockFilter.createFilter.assert_any_call({
-            'field': 'userId',
-            'operator': 'eq',
-            'value': [ userIdToSearch ]
-        })
-
-    def test_searchUsersPassesFiltersToAggregate(self, service):
-        mockAggregate = service._aggregate
+    def test_searchUsersByKeyValuesPassesKeyValuesToSearchFilterCreator(self, service):
+        creator = service._searchFilterCreator
 
         service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockAggregate.createFilter.assert_any_call(
-            'or',
-            [ self.MOCKFILTER_DEFAULT_RETURN, self.MOCKFILTER_DEFAULT_RETURN ]
-        )
+        assert len(creator.create_usersearch.call_args_list) > 0
+        passed_arg, *_ = creator.create_usersearch.call_args_list[0][0]
+        assert passed_arg == self.DEFAULT_KEYVALUES
+
+    def test_searchUsersByKeyValuesPassesSearchFilterToRepo(self, service):
+        repo = service._repo
+
+        service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
+
+        assert len(repo.searchUser.call_args_list) > 0
+        passed_filter, *_ = repo.searchUser.call_args_list[0][0]
+        assert passed_filter == self.MOCK_SEARCHFILTER
 
     def test_searchUserByKeyValuesPassesKeyValuessToPaging(self, service):
         mockPaging = service._paging
@@ -111,7 +72,7 @@ class TestSearchUsersByKeyValues:
         service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
 
         mockRepo.searchUser.assert_called_with(
-            MOCKAGGREGATE_RETURN_AND,
+            ANY,
             paging=self.MOCKPAGING_DEFAULT_RETURN, sorter=NullSorter()
         )
 
@@ -140,132 +101,57 @@ class TestSearchUsersByKeyValues:
             ANY, paging=ANY, sorter=expectedSorter
         )
 
-    def test_searchUsersByKeyValuesPassesNullFilterToQuery(self, service):
-        keyValues = dict(offset=30, limit=500)
-        mockRepo = service._repo
-
-        service.searchUsersByKeyValues(keyValues)
-
-        mockRepo.searchUser.assert_called_with(
-            self.MOCKFILTER_NULL_RETURN, paging=ANY, sorter=ANY
-        )
-
     def test_searchUsersByKeyValuesReturnFilteredReturnUsersFromQuery(self, service):
-        # MOCKDB_DEFAULT_RETURN = dict(
-        #     users=[ dict(userId=0, _id='11223344'), dict(userId=1, _id='11223345') ],
-        #     returnCount=2,
-        #     matchedCount=2,
-        # )
-        expectedResult = dict(
-            users=[ dict(userId=0), dict(userId=1) ],
-            returnCount=2,
-            matchedCount=2,
-        )
-        
         searchResult = service.searchUsersByKeyValues(self.DEFAULT_KEYVALUES)
 
-        assert searchResult == expectedResult
+        assert searchResult == self.MOCKDB_DEFAULT_RETURN
 
 
 class TestSearchPostsByKeyValues:
-    MOCKDB_DEFAULT_RETURN = dict(
-        posts=[ dict(postId='2222', userId='11111111', _id='some_random_id') ],
-        returnCount=1,
-        matchedCount=1,
-    )
-    MOCKDB_USER_DEFAULT_RETURN = dict(
-        users=[ dict(userId='11111111', name='Alan', _id='some_random_id')],
-        returnCount=1,
-        matchedCount=1,
-    )
-    MOCKFILTER_DEFAULT_RETURN = 'default_filter'
-    MOCKFILTER_NULL_RETURN = 'null_filter'
+    DEFAULT_POST_OWNERID = 'test_id'
+    DEFAULT_KEYVALUES = dict(search='some_content', postId='test_postid')
+    MOCK_POST_ATTRSET = [
+        dict(postId='test_postid', userId='test_userid')
+    ]
+    MOCK_USER_ATTRSET = [
+        dict(userId='test_userid'),
+        dict(userId='test_userid1'),
+        dict(userId='test_userid2'),
+    ]
+    MOCK_SEARCHFILTER = 'test_search_filter'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
-    DEFAULT_KEYVALUES = dict(search='some_content')
 
     @pytest.fixture(scope='function', autouse=True)
     def setDefaultReturnValues(self, service):
-        service._repo.searchPost.return_value = self.MOCKDB_DEFAULT_RETURN
-        service._repo.searchUser.return_value = self.MOCKDB_USER_DEFAULT_RETURN
-        service._filter.createFilter.return_value = self.MOCKFILTER_DEFAULT_RETURN
-        service._filter.createNullFilter.return_value = self.MOCKFILTER_NULL_RETURN
+        mock_posts = create_mock_entities(self.MOCK_POST_ATTRSET)
+        mock_users = create_mock_entities(self.MOCK_USER_ATTRSET)
+        searchpost_return = create_return_from_repo(mock_posts, 'posts')
+        searchuser_return = create_return_from_repo(mock_users, 'users')
+
+        service._repo.searchPost.return_value = searchpost_return
+        service._repo.searchUser.return_value = searchuser_return
+        service._searchFilterCreator.create_postsearch.return_value = self.MOCK_SEARCHFILTER
         service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
 
-    def test_searchPostsByKeyValuesConvertsSearchTermToFuzzyFilter(self, service):
-        mockFilter = service._filter
+    def test_searchPostsByKeyValuesPassesKeyValuesToSearchFilterCreator(self, service):
+        creator = service._searchFilterCreator
 
         service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockFilter.createFilter.assert_any_call(dict(
-            field='content',
-            operator='fuzzy',
-            value=[ self.DEFAULT_KEYVALUES['search'] ]
-        ))
+        assert len(creator.create_postsearch.call_args_list) > 0
+        passed_arg, *_ = creator.create_postsearch.call_args_list[0][0]
+        assert passed_arg == self.DEFAULT_KEYVALUES
 
-    def test_searchPostByKeyValuesConvertsCertainKeysToEqFilter(self, service):
-        mockFilter = service._filter
-        fieldNameAgainstValuesList = [
-            dict(fieldname=['threadId'], value=['11223344']),
-            dict(fieldname=['userId'], value=['99999999']),
-            dict(fieldname=['createdAt'], value=[11113333]),
-            dict(fieldname=['threadId', 'createdAt'], value=['11223344', 11113333]),
-        ]
-
-        for fieldNameAgainstValues in fieldNameAgainstValuesList:
-            mockFilter.reset_mock()
-            keyValue = {}
-            for fieldname, value in zip(fieldNameAgainstValues['fieldname'], fieldNameAgainstValues['value']):
-                keyValue[fieldname] = value
-            
-            service.searchPostsByKeyValues(keyValue)
-
-            for fieldname, value in zip(fieldNameAgainstValues['fieldname'], fieldNameAgainstValues['value']):
-                mockFilter.createFilter.assert_any_call(dict(
-                    field=fieldname,
-                    operator='eq',
-                    value=[value]
-                ))
-
-    def test_searchPostsByKeyValuesPassesFiltersToAggregate(self, service):
-        mockAggregate = service._aggregate
+    def test_searchPostsByKeyValuesPassesSearchFilterToRepo(self, service):
+        repo = service._repo
 
         service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockAggregate.createFilter.assert_any_call('or', [ self.MOCKFILTER_DEFAULT_RETURN ])
+        assert len(repo.searchPost.call_args_list) > 0
+        passed_filter, *_ = repo.searchPost.call_args_list[0][0]
+        assert passed_filter == self.MOCK_SEARCHFILTER
 
-    def test_searchPostsByKeyValuesPassesKeyValueToPaging(self, service):
-        mockPaging = service._paging
-
-        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mockPaging.assert_called_with(self.DEFAULT_KEYVALUES)
-
-    def test_searchPostsByKeyValuesWithNoSearchTermReturnsNoMatch(self, service):
-        mockRepo = service._repo
-        keyValues = dict(
-            offset=30, limit=100
-        )
-
-        service.searchPostsByKeyValues(keyValues)
-
-        mockRepo.searchPost.assert_any_call(
-            self.MOCKFILTER_NULL_RETURN,
-            paging=ANY,
-            sorter=ANY
-        )
-
-    def test_searchPostsByKeyValuesPassesCreatedFilterToQuery(self, service):
-        mockRepo = service._repo
-
-        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mockRepo.searchPost.assert_any_call(
-            MOCKAGGREGATE_RETURN_AND,
-            paging=ANY,
-            sorter=NullSorter()
-        )
-
-    def test_searchPostByKeyValuesPassesDefaultPagingToQuery(self, service):
+    def test_searchPostsByKeyValuesPassesDefaultPagingToQuery(self, service):
         mockRepo = service._repo
 
         service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
@@ -276,7 +162,7 @@ class TestSearchPostsByKeyValues:
             sorter=NullSorter()
         )
 
-    def test_searchPostByKeyValuesPassesAscSorterToQueryWhenSortInKeyValues(self, service):
+    def test_searchPostsByKeyValuesPassesAscSorterToQueryWhenSortInKeyValues(self, service):
         mockRepo = service._repo
         keyValues = self.DEFAULT_KEYVALUES.copy()
         keyValues['sortBy'] = 'createdAt'
@@ -290,7 +176,7 @@ class TestSearchPostsByKeyValues:
             sorter=expectedSorter,
         )
 
-    def test_searchPostByKeyValuessDescSorterToQueryWhenDescOrderWasSpecified(self, service):
+    def test_searchPostsByKeyValuessDescSorterToQueryWhenDescOrderWasSpecified(self, service):
         mockRepo = service._repo
         keyValues = self.DEFAULT_KEYVALUES.copy()
         keyValues['sortBy'] = 'createdAt'
@@ -305,137 +191,124 @@ class TestSearchPostsByKeyValues:
             sorter=expectedSorter
         )
 
-    def test_searchPostsByKeyValuesCreatesEQFilterFromUserId(self, service):
-        mockFilter = service._filter
-
-        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mockFilter.createFilter.assert_any_call(dict(
+    def test_searchPostsByKeyValuesSearchesForOwnerId(self, service):
+        repo = service._repo
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='userId',
             operator='eq',
-            value=[ self.MOCKDB_DEFAULT_RETURN['posts'][0]['userId'] ]
+            value=[ self.MOCK_POST_ATTRSET[0]['userId'] ]
         ))
-
-    def test_searchPostsByKeyValuesCreatesEQFilterFromMultiplePosts(self, service):
-        mockRepo = service._repo
-        mockRepo.searchPost.return_value = dict(
-            posts=[ dict(userId='11111111'), dict(userId='22222222') ],
-            returnCount=2,
-            matchedCount=2,
-        )
-        mockFilter = service._filter
 
         service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockFilter.createFilter.assert_any_call(dict(
+        narrowing_filter = repo.searchUser.call_args_list[0][0][0]
+        assert narrowing_filter == expected_filter
+
+    def test_searchPostsByKeyValuesSearchesOwnerUsersForMultiplePosts(self, service):
+        repo = service._repo
+        mock_attrset = [
+            dict(postId='test_postid1', userId='test_userid_1'),
+            dict(postId='test_postid2', userId='test_userid_2'),
+            dict(postId='test_postid3', userId='test_userid_3'),
+        ]
+        owner_ids = [ attr['userId'] for attr in mock_attrset ]
+        mock_posts = create_mock_entities(mock_attrset)
+        repo.searchPost.return_value = create_return_from_repo(mock_posts, 'posts')
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='userId',
             operator='eq',
-            value=[ '11111111', '22222222' ]
+            value=owner_ids
         ))
-
-    def test_searchPostsByKeyValuesQueriesUserByCreatedFilter(self, service):
-        mockRepo = service._repo
 
         service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockRepo.searchUser.assert_called_with(
-            self.MOCKFILTER_DEFAULT_RETURN
-        )
+        narrowing_filter = repo.searchUser.call_args_list[0][0][0]
+        assert narrowing_filter == expected_filter
 
-    def test_searchPostByKeyValuesReturnFilteredReturnFromBothQueries(self, service):
-        expectedResult = dict(
-            posts=[
-                dict(
-                    postId='2222',
-                    userId='11111111',
-                    owner=dict(userId='11111111', name='Alan'),
-                )
-            ],
-            returnCount=1,
-            matchedCount=1,
-        )
+    def test_searchPostsByKeyValuesShouldNotSearchForOwnerWhenNoPostReturned(self, service):
+        repo = service._repo
+        repo.searchPost.return_value = create_return_from_repo([], 'posts')
+
+        service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        assert repo.searchUser.call_count == 0
+
+    def test_searchPostsByKeyValuesReturnPosts(self, service):
+        expected_post = self.MOCK_POST_ATTRSET[0]
 
         searchResult = service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        assert searchResult == expectedResult
+        assert len(searchResult['posts']) == len(self.MOCK_POST_ATTRSET)
+        assert searchResult['returnCount'] == len(self.MOCK_POST_ATTRSET)
+        assert searchResult['matchedCount'] == len(self.MOCK_POST_ATTRSET)
+        post = searchResult['posts'][0]
+        for k, v in expected_post.items():
+            assert getattr(post, k) == v
+        
+    def test_searchPostsByKeyValuesReturnPostsWithOwnerId(self, service):
+        expected_owner = self.MOCK_USER_ATTRSET[0]
+
+        searchResult = service.searchPostsByKeyValues(self.DEFAULT_KEYVALUES)
+        
+        post = searchResult['posts'][0]
+        owner = getattr(post, 'owner')
+        assert len(owner) == 1
+        for k, v in expected_owner.items():
+            assert getattr(owner[0], k) == v
 
 
-class TestSearchThreadByKeyValues:
+class TestSearchThreadsByKeyValues:
     DEFAULT_KEYVALUES = dict(
         userId='test_id',
         search='test_search',
     )
-    MOCKDB_DEFAULT_RETURN = dict(
-        threads=[ dict(threadId='2222', userId='11111111', _id='some_random_id', lastPostId='1234') ],
-        returnCount=1,
-        matchedCount=1,
-    )
-    MOCKDB_USER_DEFAULT_RETURN = dict(
-        users=[
-            dict(userId='11111111', name='Alan', _id='some_random_id'),
-            dict(userId='33333333', name='Bobby', _id='some_random_id'),
-        ],
-        returnCount=1,
-        matchedCount=1,
-    )
-    MOCKDB_POST_DEFAULT_RETURN = dict(
-        posts=[ dict(postId='1234', userId='33333333') ],
-        returnCount=1,
-        matchedCount=1,
-    )
-    MOCKFILTER_DEFAULT_RETURN = 'default_filter'
-    MOCKFILTER_NULL_RETURN = 'null_filter'
+    MOCKDB_THREAD_ATTRSET = [
+        dict(threadId='2222', userId='11111111', _id='some_random_id', lastPostId='1234')
+    ]
+    MOCK_USER_ATTRSET = [
+        dict(userId='11111111', name='Alan', _id='some_random_id'),
+        dict(userId='33333333', name='Bobby', _id='some_random_id'),
+    ]
+    MOCKDB_POST_ATTRSET = [
+        dict(postId='1234', userId='33333333'),
+        dict(postId='3456', userId='33333333'),
+        dict(postId='4567', userId='33333333'),
+    ]
+    MOCK_SEARCHFILTER = 'test_search_filter'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
 
     @pytest.fixture(scope='function', autouse=True)
     def setDefaultReturnValues(self, service):
-        service._repo.searchThread.return_value = self.MOCKDB_DEFAULT_RETURN
-        service._repo.searchUser.return_value = self.MOCKDB_USER_DEFAULT_RETURN
-        service._repo.searchPost.return_value = self.MOCKDB_POST_DEFAULT_RETURN
-        service._filter.createFilter.return_value = self.MOCKFILTER_DEFAULT_RETURN
-        service._filter.createNullFilter.return_value = self.MOCKFILTER_NULL_RETURN
+        mock_threads = create_mock_entities(self.MOCKDB_THREAD_ATTRSET)
+        threads_from_repo = create_return_from_repo(mock_threads, 'threads')
+        mock_users = create_mock_entities(self.MOCK_USER_ATTRSET)
+        users_from_repo = create_return_from_repo(mock_users, 'users')
+        mock_posts = create_mock_entities(self.MOCKDB_POST_ATTRSET)
+        posts_from_repo = create_return_from_repo(mock_posts, 'posts')
+
+        service._repo.searchThread.return_value = threads_from_repo
+        service._repo.searchUser.return_value = users_from_repo
+        service._repo.searchPost.return_value = posts_from_repo
+        service._searchFilterCreator.create_threadsearch.return_value = self.MOCK_SEARCHFILTER
         service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
 
-    def test_searchThreadsByKeyValuesShouldCreateFuzzyFilterForFields(self, service):
-        mockFilter = service._filter
+    def test_searchThreadsByKeyValuesPassesKeyValuesToSearchFilterCreator(self, service):
+        creator = service._searchFilterCreator
 
         service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockFilter.createFilter.assert_any_call(dict(
-            field='subject',
-            operator='fuzzy',
-            value=[ self.DEFAULT_KEYVALUES['search'] ],
-        ))
-        mockFilter.createFilter.assert_any_call(dict(
-            field='title',
-            operator='fuzzy',
-            value=[ self.DEFAULT_KEYVALUES['search'] ],
-        ))
-    
-    def test_searchThreadsByKeyValuesShouldCreateEqFilterForId(self, service):
-        mockFilter = service._filter
+        assert len(creator.create_threadsearch.call_args_list) > 0
+        passed_arg, *_ = creator.create_threadsearch.call_args_list[0][0]
+        assert passed_arg == self.DEFAULT_KEYVALUES
+
+    def test_searchThreadsByKeyValuesPassesSearchFilterToRepo(self, service):
+        repo = service._repo
 
         service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockFilter.createFilter.assert_any_call(dict(
-            field='userId',
-            operator='eq',
-            value=[ self.DEFAULT_KEYVALUES['userId'] ],
-        ))
-
-    def test_searchThreadsByKeyValuesShouldGenerateAggregate(self, service):
-        mockAggregate = service._aggregate
-
-        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mockAggregate.createFilter.assert_any_call(
-            'or',
-            [ self.MOCKFILTER_DEFAULT_RETURN, self.MOCKFILTER_DEFAULT_RETURN ]
-        )
-        mockAggregate.createFilter.assert_any_call(
-            'and',
-            [ self.MOCKFILTER_DEFAULT_RETURN, MOCKAGGREGATE_RETURN_OR ]
-        )
+        assert len(repo.searchThread.call_args_list) > 0
+        passed_filter, *_ = repo.searchThread.call_args_list[0][0]
+        assert passed_filter == self.MOCK_SEARCHFILTER
 
     def test_searchThreadsByKeyValuesShouldPassKeyValuesToPaging(self, service):
         mockPaging = service._paging
@@ -443,17 +316,6 @@ class TestSearchThreadByKeyValues:
         service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
 
         mockPaging.assert_called_with(self.DEFAULT_KEYVALUES)
-
-    def test_searchThreadsByKeyValuesShouldCallRepoWithAndFilter(self, service):
-        mockRepo = service._repo
-
-        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mockRepo.searchThread.assert_called_with(
-            MOCKAGGREGATE_RETURN_AND,
-            paging=self.MOCKPAGING_DEFAULT_RETURN,
-            sorter=NullSorter()
-        )
 
     def test_searchThreadByKeyValuesPassesAscSorterToQueryWhenSortInKeyValues(self, service):
         mockRepo = service._repo
@@ -493,195 +355,277 @@ class TestSearchThreadByKeyValues:
         assert mockRepo.updateThread.call_count == 0
 
     def test_searchThreadsByKeyValuesShouldGenerateSearchForOwnerUser(self, service):
-        mockFilter = service._filter
         mockRepo = service._repo
+        owner_ids = [ attrs['userId'] for attrs in self.MOCKDB_THREAD_ATTRSET ]
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='userId',
+            operator='eq',
+            value=owner_ids
+        ))
 
         service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockFilter.createFilter.assert_any_call(dict(
+        passed_filter, *_ = mockRepo.searchUser.call_args_list[0][0]
+        assert passed_filter == expected_filter
+
+    def test_searchThreadsByKeyValuesShouldGenerateSearchForAllOwners(self, service):
+        repo = service._repo
+        thread_attrs = [
+            dict(threadId='test_1', userId='user_1', lastPostId='post_1'),
+            dict(threadId='test_2', userId='user_2', lastPostId='post_2'),
+            dict(threadId='test_3', userId='user_3', lastPostId='post_3'),
+        ]
+        mock_threads = create_mock_entities(thread_attrs)
+        repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
+        owner_ids = [ attrs['userId'] for attrs in thread_attrs ]
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='userId',
             operator='eq',
-            value=[ self.DEFAULT_KEYVALUES['userId'] ],
+            value=owner_ids
         ))
-        mockFilter.createFilter.assert_any_call(dict(
-            field='userId',
-            operator='eq',
-            value=[ self.MOCKDB_POST_DEFAULT_RETURN['posts'][0]['userId'] ],
-        ))
-        mockRepo.searchUser.assert_any_call(
-            self.MOCKFILTER_DEFAULT_RETURN
-        )
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        passed_filter, *_ = repo.searchUser.call_args_list[0][0]
+        assert passed_filter == expected_filter
 
     def test_searchThreadsByKeyValuesShouldGenerateSearchForLastPost(self, service):
-        mockFilter = service._filter
+        repo = service._repo
+        lastpost_ids = [ attrs['lastPostId'] for attrs in self.MOCKDB_THREAD_ATTRSET ]
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='postId',
+            operator='eq',
+            value=lastpost_ids
+        ))
 
         service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        mockFilter.createFilter.assert_any_call(dict(
+        passed_filter, *_ = repo.searchPost.call_args_list[0][0]
+        assert passed_filter == expected_filter
+
+    def test_searchThreadsByKeyValuesShouldGenerateSearchForAllLastPosts(self, service):
+        repo = service._repo
+        thread_attrs = [
+            dict(threadId='test_1', userId='user_1', lastPostId='post_1'),
+            dict(threadId='test_2', userId='user_2', lastPostId='post_2'),
+            dict(threadId='test_3', userId='user_3', lastPostId='post_3'),
+        ]
+        mock_threads = create_mock_entities(thread_attrs)
+        repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
+        lastpost_ids = [ attrs['lastPostId'] for attrs in thread_attrs ]
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='postId',
             operator='eq',
-            value=[ self.MOCKDB_DEFAULT_RETURN['threads'][0]['lastPostId'] ],
+            value=lastpost_ids
         ))
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        passed_filter, *_ = repo.searchPost.call_args_list[0][0]
+        assert passed_filter == expected_filter
+
+    def test_searchThreadsByKeyValuesShouldIgnoreEmptyLastPostId(self, service):
+        repo = service._repo
+        thread_attrs = [
+            dict(threadId='test_1', userId='user_1', lastPostId=None),
+            dict(threadId='test_2', userId='user_2', lastPostId=None),
+            dict(threadId='test_3', userId='user_3', lastPostId='post_3'),
+        ]
+        mock_threads = create_mock_entities(thread_attrs)
+        repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
+        lastpost_ids = [
+            attrs['lastPostId']
+            for attrs in thread_attrs
+            if attrs['lastPostId'] is not None
+        ]
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='postId',
+            operator='eq',
+            value=lastpost_ids
+        ))
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        passed_filter, *_ = repo.searchPost.call_args_list[0][0]
+        assert passed_filter == expected_filter
+
+    def test_searchThreadsByKeyValuesShouldNotSearchForLastPostOrOwnerWhenNoThreadReturned(self, service):
+        repo = service._repo
+        repo.searchThread.return_value = create_return_from_repo([], 'threads')
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        assert repo.searchUser.call_count == 0
+        assert repo.searchPost.call_count == 0
 
     def test_searchThreadsByKeyValuesShouldReturnSearchResult(self, service):
         result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        assert result['returnCount'] == self.MOCKDB_DEFAULT_RETURN['returnCount']
-        assert result['matchedCount'] == self.MOCKDB_DEFAULT_RETURN['matchedCount']
         threads = result['threads']
-        assert len(threads) == len(self.MOCKDB_DEFAULT_RETURN['threads'])
-        assert threads[0]['threadId'] == self.MOCKDB_DEFAULT_RETURN['threads'][0]['threadId']
+        assert len(threads) == len(self.MOCKDB_THREAD_ATTRSET)
+        assert result['returnCount'] == len(threads)
+        assert result['matchedCount'] == len(threads)
+        for k, v in self.MOCKDB_THREAD_ATTRSET[0].items():
+            assert getattr(threads[0], k) == v
 
-    def test_searchThreadsByKeyValuesShouldReturnNoMatchWhenNothingToSearchFor(self, service):
-        mockRepo = service._repo
-        keyValues = dict(offset=30, limit=100)
-
-        service.searchThreadsByKeyValues(keyValues)
-
-        mockRepo.searchThread.assert_called_with(
-            self.MOCKFILTER_NULL_RETURN,
-            paging=ANY,
-            sorter=ANY
-        )
-
-    def test_searchThreadsByKeyValuesShouldContainOwnerInfo(self, service):
+    def test_searchThreadsByKeyValuesReturnThreadsWithOwnerUser(self, service):
         result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
 
         threads = result['threads']
         for thread in threads:
-            assert 'owner' in thread
+            owner = getattr(thread, 'owner')
+            assert len(owner) == 1
+            assert getattr(owner[0], 'userId') == getattr(thread, 'userId')
 
     def test_searchThreadsByKeyValuesShouldContainLastPostInfo(self, service):
         result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+        expected_lastpost_attrs = self.MOCKDB_POST_ATTRSET[0]
 
-        threads = result['threads']
-        for thread in threads:
-            assert 'lastPost' in thread
-            assert 'owner' in thread['lastPost']
-
-    def test_searchThreadsByKeyValuesShouldFilterFieldsFromResult(self, service):
-        result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
-
-        threads = result['threads']
-        owners = [
-            thread['owner'] for thread in threads
-        ]
-        lastPosts = [
-            thread['lastPost'] for thread in threads
-        ]
-        for thread in threads:
-            assert '_id' not in thread
-        for owner in owners:
-            assert '_id' not in owner
-        for lastPost in lastPosts:
-            assert '_id' not in lastPost
-            assert '_id' not in lastPost['owner']
+        thread = result['threads'][0]
+        lastpost = getattr(thread, 'lastPost')
+        assert len(lastpost) == 1
+        for k, v in expected_lastpost_attrs.items():
+            assert getattr(lastpost[0], k) == v
 
 
-class TestSaerchThreadByExplicitId:
+class TestSearchThreadByExplicitId:
     DEFAULT_THREAD_ID = 'test_id'
-    MOCKDB_DEFAULT_RETURN = dict(
-        threads=[ dict(threadId='test_id', userId='11111111', _id='some_random_id') ],
-        returnCount=1,
-        matchedCount=1,
-    )
-    MOCKDB_USER_DEFAULT_RETURN = dict(
-        users=[ dict(userId='11111111', name='Alan', _id='some_random_id')],
-        returnCount=1,
-        matchedCount=1,
-    )
-    MOCKFILTER_DEFAULT_RETURN = 'default_filter'
-    MOCKFILTER_NULL_RETURN = 'null_filter'
+    MOCKDB_THREAD_ATTRSET = [
+        dict(threadId='test_id', userId='11111111', _id='some_random_id', lastPostId='1234')
+    ]
+    MOCK_USER_ATTRSET = [
+        dict(userId='11111111', name='Alan', _id='some_random_id'),
+        dict(userId='33333333', name='Bobby', _id='some_random_id'),
+    ]
+    MOCKDB_POST_ATTRSET = [
+        dict(postId='1234', userId='33333333'),
+        dict(postId='3456', userId='33333333'),
+        dict(postId='4567', userId='33333333'),
+    ]
+    MOCK_SEARCHFILTER = 'test_search_filter'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
 
     @pytest.fixture(scope='function', autouse=True)
     def setDefaultReturnValues(self, service):
-        service._repo.searchThread.return_value = self.MOCKDB_DEFAULT_RETURN
-        service._repo.searchUser.return_value = self.MOCKDB_USER_DEFAULT_RETURN
-        service._filter.createFilter.return_value = self.MOCKFILTER_DEFAULT_RETURN
-        service._filter.createNullFilter.return_value = self.MOCKFILTER_NULL_RETURN
+        mock_threads = create_mock_entities(self.MOCKDB_THREAD_ATTRSET)
+        threads_from_repo = create_return_from_repo(mock_threads, 'threads')
+        mock_users = create_mock_entities(self.MOCK_USER_ATTRSET)
+        users_from_repo = create_return_from_repo(mock_users, 'users')
+        mock_posts = create_mock_entities(self.MOCKDB_POST_ATTRSET)
+        posts_from_repo = create_return_from_repo(mock_posts, 'posts')
+
+        service._repo.searchThread.return_value = threads_from_repo
+        service._repo.searchUser.return_value = users_from_repo
+        service._repo.searchPost.return_value = posts_from_repo
+        service._searchFilterCreator.create_threadsearch.return_value = self.MOCK_SEARCHFILTER
         service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
 
-    def test_searchThreadByExplicitIdShouldCreateEqFilterForId(self, service):
-        mockFilter = service._filter
+    def test_searchThreadByExplicitIdPassesThreadIdToSearchFilterCreator(self, service):
+        creator = service._searchFilterCreator
+        expected_arg = dict(threadId=self.DEFAULT_THREAD_ID)
 
         service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
-        mockFilter.createFilter.assert_any_call(dict(
-            field='threadId',
-            operator='eq',
-            value=[ self.DEFAULT_THREAD_ID ],
-        ))
+        assert len(creator.create_threadsearch.call_args_list) > 0
+        passed_arg, *_ = creator.create_threadsearch.call_args_list[0][0]
+        assert passed_arg == expected_arg
 
-    def test_searchThreadByExplicitIdShouldGenerateAggregate(self, service):
-        mockAggregate = service._aggregate
+    def test_searchThreadByExplicitIdPassesSearchFilterToRepo(self, service):
+        repo = service._repo
 
         service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
-        mockAggregate.createFilter.assert_any_call(
-            'and',
-            [ self.MOCKFILTER_DEFAULT_RETURN ]
-        )
+        assert len(repo.searchThread.call_args_list) > 0
+        passed_filter, *_ = repo.searchThread.call_args_list[0][0]
+        assert passed_filter == self.MOCK_SEARCHFILTER
 
-    def test_searchThreadByExplicitIdShouldCallRepoWithAndFilter(self, service):
-        mockRepo = service._repo
+    def test_searchThreadByExplicitIdShouldPassKeyValuesToPaging(self, service):
+        mockPaging = service._paging
 
         service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
-        mockRepo.searchThread.assert_called_with(
-            MOCKAGGREGATE_RETURN_AND,
-            paging=self.MOCKPAGING_DEFAULT_RETURN
-        )
+        mockPaging.assert_called_with()
+
+    def test_searchThreadByExplicitIdPassesSearchFilterToUpdate(self, service):
+        repo = service._repo
+
+        service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
+
+        assert repo.updateThread.call_count == 1
+        passed_filter, *_ = repo.updateThread.call_args_list[0][0]
+        assert passed_filter == self.MOCK_SEARCHFILTER
 
     def test_searchThreadByExplicitIdShouldUpdateThreadViewCount(self, service):
         mockRepo = service._repo
-        expectedUpdate = dict(increment='views')
 
         service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
         assert mockRepo.updateThread.call_count == 1
         _, update = mockRepo.updateThread.call_args[0]
-        assert update == expectedUpdate
+        assert getattr(update, 'increment') == 'views'
 
     def test_searchThreadByExplicitIdShouldGenerateSearchForOwnerUser(self, service):
-        mockFilter = service._filter
         mockRepo = service._repo
+        owner_ids = [ attrs['userId'] for attrs in self.MOCKDB_THREAD_ATTRSET ]
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='userId',
+            operator='eq',
+            value=owner_ids
+        ))
 
         service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
-        mockFilter.createFilter.assert_any_call(dict(
-            field='userId',
-            operator='eq',
-            value=[ self.MOCKDB_DEFAULT_RETURN['threads'][0]['userId'] ],
-        ))
-        mockRepo.searchUser.assert_any_call(
-            self.MOCKFILTER_DEFAULT_RETURN
-        )
+        assert len(mockRepo.searchUser.call_args_list)
+        passed_filter, *_ = mockRepo.searchUser.call_args_list[0][0]
+        assert passed_filter == expected_filter
+
+    def test_searchThreadsByExplicitIdShouldNotSearchForLastPostOrOwnerWhenNoThreadReturned(self, service):
+        repo = service._repo
+        repo.searchThread.return_value = create_return_from_repo([], 'threads')
+
+        service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
+
+        assert repo.searchUser.call_count == 0
+        assert repo.searchPost.call_count == 0
 
     def test_searchThreadByExplicitIdShouldReturnSearchResult(self, service):
+        expected_thread = self.MOCKDB_THREAD_ATTRSET[0]
+        
         result = service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
-        assert result['returnCount'] == self.MOCKDB_DEFAULT_RETURN['returnCount']
-        assert result['matchedCount'] == self.MOCKDB_DEFAULT_RETURN['matchedCount']
+        assert result['returnCount'] == 1
+        assert result['matchedCount'] == 1
         threads = result['threads']
-        assert len(threads) == len(self.MOCKDB_DEFAULT_RETURN['threads'])
-        assert threads[0]['threadId'] == self.MOCKDB_DEFAULT_RETURN['threads'][0]['threadId']
+        assert len(threads) == 1
+        for k, v in expected_thread.items():
+            assert getattr(threads[0], k) == v
 
-    def test_searchThreadByExplicitIdShouldContainOwnerInfo(self, service):
+    def test_searchThreadByExplicitIdShouldReturnOwnerUser(self, service):
+        expected_user = self.MOCK_USER_ATTRSET[0]
+        
         result = service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
-        threads = result['threads']
-        for thread in threads:
-            assert 'owner' in thread
+        thread = result['threads'][0]
+        owner = getattr(thread, 'owner')
+        assert len(owner) == 1
+        for k, v in expected_user.items():
+            assert getattr(owner[0], k) == v
 
-    def test_searchThreadByExplicitIdShouldFilterFieldsFromResult(self, service):
-        result = service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 
-        threads = result['threads']
-        owners = [
-            thread['owner'] for thread in threads
-        ]
-        for thread in threads:
-            assert '_id' not in thread
-        for owner in owners:
-            assert '_id' not in owner
+# helper functions
+
+def create_mock_entities(attrset):
+    entities = [ createMockEntity() for n in attrset ]
+    for entity, attrs in zip(entities, attrset):
+        for k, v in attrs.items():
+            setattr(entity, k, v)
+
+    return entities
+
+
+def create_return_from_repo(entities, entity_name):
+    return {
+        entity_name: entities,
+        'matchedCount': len(entities),
+        'returnCount': len(entities),
+    }

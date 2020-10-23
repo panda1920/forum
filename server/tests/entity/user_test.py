@@ -177,3 +177,12 @@ class TestConversionMethods:
 
         for optional_attr in optional_attrs:
             assert optional_attr in update_dict
+
+
+class TestSearch:
+    def test_someattrs_are_fuzzysearchable(self):
+        fuzzy_searchables = ['userName', 'displayName']
+
+        for attr in fuzzy_searchables:
+            search_rules = User._attribute_description[attr]['search_rules']
+            assert search_rules['fuzzy'] is True

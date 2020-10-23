@@ -10,18 +10,20 @@ from server.entity import Thread
 from server.exceptions import EntityValidationError
 
 
-DEFAULT_ARGS = dict(
-    userId='test_thread',
-    boardId='test_id',
-    threadId='test_id',
-    lastPostId='test_id',
-    title='Anonymous\'s thread',
-    subject='test_subject',
-    views=0,
-    postCount=0,
-    createdAt=123123.12,
-    updatedAt=123123.12,
-)
+DEFAULT_ARGS = {
+    'userId': 'test_thread',
+    'boardId': 'test_id',
+    'threadId': 'test_id',
+    'lastPostId': 'test_id',
+    'owner': [],
+    'title': 'Anonymous\'s thread',
+    'subject': 'test_subject',
+    'increment': 'views',
+    'views': 0,
+    'postCount': 0,
+    'createdAt': 123123.12,
+    'updatedAt': 123123.12,
+}
 
 
 class TestThreadCreation:
@@ -60,6 +62,7 @@ class TestThreadCreation:
             boardId=9999,
             threadId=9999,
             lastPostId=9999,
+            owner=9999,
             title=9999,
             subject=9999,
             views='test_value',
@@ -151,6 +154,7 @@ class TestConversionMethods:
             'userId',
             'boardId',
             'lastPostId',
+            'owner',
             'title',
             'subject',
             'views',
@@ -190,20 +194,19 @@ class TestConversionMethods:
             with pytest.raises(EntityValidationError):
                 thread.to_create()
 
-    def test_to_createIgnoresUnnecessaryAttributes(self):
-        ignored_args = {
-            'threadId': 'test_value',
-            '_id': 'test_value',
-            'increment': 'views',
-            'createdAt': 123123.12,
-            'updatedAt': 123123.12,
-        }
-        args = {**DEFAULT_ARGS, **ignored_args }
-        thread = Thread(args)
+    def test_to_createIgnoresUnnecessaryAttributes(self, thread):
+        ignored_args = [
+            'threadId',
+            '_id',
+            'increment',
+            'owner',
+            'createdAt',
+            'updatedAt',
+        ]
 
         create_dict = thread.to_create()
         
-        for attr in ignored_args.keys():
+        for attr in ignored_args:
             assert attr not in create_dict
 
     def test_to_updateGeneratesDictForUpdate(self, thread):
@@ -212,36 +215,43 @@ class TestConversionMethods:
         for attr, value in update_dict.items():
             assert DEFAULT_ARGS[attr] == value
 
-    def test_to_updateIgnoresUnnecessaryAttributes(self):
-        ignored_args = {
-            '_id': 'test_value',
-            'threadId': 'test_value',
-            'userId': 'test_value',
-            'boardId': 'test_value',
-            'createdAt': 123123.12,
-            'updatedAt': 123123.12,
-        }
-        args = { **DEFAULT_ARGS, **ignored_args }
-        thread = Thread(args)
+    def test_to_updateIgnoresUnnecessaryAttributes(self, thread):
+        ignored_args = [
+            '_id',
+            'threadId',
+            'userId',
+            'boardId',
+            'owner',
+            'createdAt',
+            'updatedAt',
+        ]
 
         update_dict = thread.to_update()
 
-        for ignored_attr in ignored_args.keys():
+        for ignored_attr in ignored_args:
             assert ignored_attr not in update_dict
 
-    def test_to_updateGeneratesDictWithOptionalAttributes(self):
-        optional_attrs = {
-            'title': 'test_value',
-            'subject': 'test_value',
-            'lastPostId': 'test_value',
-            'views': 9999,
-            'postCount': 9999,
-            'increment': 'views',
-        }
-        args = { **DEFAULT_ARGS, **optional_attrs }
-        thread = Thread(args)
+    def test_to_updateGeneratesDictWithOptionalAttributes(self, thread):
+        optional_attrs = [
+            'title',
+            'subject',
+            'lastPostId',
+            'views',
+            'postCount',
+            'increment',
+        ]
 
         update_dict = thread.to_update()
 
         for optional_attr in optional_attrs:
             assert optional_attr in update_dict
+            assert DEFAULT_ARGS[optional_attr] == update_dict[optional_attr]
+
+
+class TestSearch:
+    def test_someattrs_are_fuzzysearchable(self):
+        fuzzy_searchables = ['title', 'subject']
+
+        for attr in fuzzy_searchables:
+            search_rules = Thread._attribute_description[attr]['search_rules']
+            assert search_rules['fuzzy'] is True

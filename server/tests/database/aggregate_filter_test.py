@@ -193,7 +193,7 @@ class TestOrFilter:
             True,
             True,
             False,
-            False,
+            True,
         ]
 
         for filters, expected in zip(filterPatterns, expectedMatchResult):

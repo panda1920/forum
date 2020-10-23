@@ -92,6 +92,7 @@ class Entity:
         """
         attrs = self._create_attrs_for(operation)
         self._validate_required_for(attrs, operation)
+        self._recursively_convert_dict_for(attrs, operation)
 
         return attrs
 
@@ -118,6 +119,16 @@ class Entity:
                 self._logger.error('Failed validation in %s', operation)
                 self._logger.error('Missing required attribute: %s', required_attr)
                 raise EntityValidationError(f'Failed to validate {self.__class__.__name__}')
+
+    def _recursively_convert_dict_for(self, attrs, operation):
+        for attr in attrs.keys():
+            conversion_rules = self._attribute_description[attr]['conversion_rules']
+            is_entity = conversion_rules[operation].get('entity', False)
+            if is_entity is False:
+                continue
+
+            # convert entities to serializable dict
+            attrs[attr] = [ entity._convert_dict_for(operation) for entity in attrs[attr] ]
 
 
 def extract_schema(attribute_description):

@@ -217,6 +217,25 @@ class Thread(Entity):
                 },
             },
         },
+        'owner': {
+            'validation_rules': {
+                'type': 'list'
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': False,
+                    'hide': True,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': True,
+                },
+            },
+        },
         'title': {
             'validation_rules': {
                 'type': 'string',
@@ -235,6 +254,9 @@ class Thread(Entity):
                     'required': False,
                     'hide': False,
                 },
+            },
+            'search_rules': {
+                'fuzzy': True
             },
         },
         'subject': {
@@ -255,6 +277,9 @@ class Thread(Entity):
                     'required': False,
                     'hide': False,
                 },
+            },
+            'search_rules': {
+                'fuzzy': True
             },
         },
         'views': {
