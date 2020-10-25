@@ -119,7 +119,6 @@ class TestSignupUser:
 
 class TestCreateNewPost:
     DEFAULT_ATTRS = dict(
-        userId=OWNER_ID,
         threadId='owner_thread_id',
         content='This is test content',
         random_key1='key1',
@@ -146,12 +145,14 @@ class TestCreateNewPost:
         mock_repo.createPost.call_count == 1
         mock_repo.createPost.assert_called_with(mock_post)
 
-    def test_createPostShouldRaiseExceptioonWhenSessionUserNotMatchOwner(self, service, mock_post):
-        session_user = dict(userId='2233444')
-        service._session.get_user.return_value = session_user
+    def test_createNewPostShouldInsertSessionUserIdAsItsOwner(self, service, mock_post):
+        repo = service._repo
+        expected_ownerid = DEFAULT_SESSION_USER['userId']
 
-        with pytest.raises(exceptions.UnauthorizedError):
-            service.createNewPost(mock_post)
+        service.createNewPost(mock_post)
+
+        post_passed, *_ = repo.createPost.call_args_list[0][0]
+        assert getattr(post_passed, 'userId') == expected_ownerid
 
     def test_createNewPostShouldReturnResultFromRepo(self, service, mock_post):
         result = service.createNewPost(mock_post)
@@ -185,7 +186,6 @@ class TestCreateNewPost:
 
 class TestCreateNewThread:
     DEFAULT_ATTRS = dict(
-        userId=OWNER_ID,
         title='test_title',
         subject='test_subject',
     )
@@ -215,17 +215,19 @@ class TestCreateNewThread:
 
         service.createNewThread(mock_thread)
 
-        thread, *_ = mock_repo.createThread.call_args_list[0][0]
-        assert thread.lastPostId is None
-        assert thread.views == 0
-        assert thread.postCount == 0
+        thread_passed, *_ = mock_repo.createThread.call_args_list[0][0]
+        assert thread_passed.lastPostId is None
+        assert thread_passed.views == 0
+        assert thread_passed.postCount == 0
 
-    def test_createThreadShouldRaiseExceptionoWhenSessionUserNotMatchOwner(self, service, mock_thread):
-        session_user = dict(userId='2233444')
-        service._session.get_user.return_value = session_user
+    def test_createNewThreadShouldInsertSessionUserIdAsItsOwner(self, service, mock_thread):
+        repo = service._repo
+        expected_ownerid = DEFAULT_SESSION_USER['userId']
 
-        with pytest.raises(exceptions.UnauthorizedError):
-            service.createNewThread(mock_thread)
+        service.createNewThread(mock_thread)
+
+        thread_passed, *_ = repo.createThread.call_args_list[0][0]
+        assert getattr(thread_passed, 'userId') == expected_ownerid
 
     def test_createNewThreadShouldReturnResultFromRepo(self, service, mock_thread):
         result = service.createNewThread(mock_thread)

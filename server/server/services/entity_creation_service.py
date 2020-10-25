@@ -39,8 +39,7 @@ class EntityCreationService:
         Returns:
             dictionary that reports result of operation
         """
-        self._checkOwnerMatchesSession(post)
-        result = self._repo.createPost(post)
+        result = self._createPost(post)
         self._updateThreadForNewPost(post, result['createdId'])
         return result
 
@@ -53,7 +52,6 @@ class EntityCreationService:
         Returns:
             dictionary that reports result of operation
         """
-        self._checkOwnerMatchesSession(thread)
         return self._createThread(thread)
 
     def _checkUserExists(self, user):
@@ -94,10 +92,16 @@ class EntityCreationService:
 
         return self._repo.createUser(user)
 
+    def _createPost(self, post):
+        post.userId = self._session.get_user()['userId']
+
+        return self._repo.createPost(post)
+
     def _createThread(self, thread):
         thread.lastPostId = None
         thread.views = 0
         thread.postCount = 0
+        thread.userId = self._session.get_user()['userId']
 
         return self._repo.createThread(thread)
 

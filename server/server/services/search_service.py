@@ -14,9 +14,7 @@ class SearchService:
     """
 
     # TODO
-    # select fields to retrieve based on each use case
     # sanitization of args
-    # possibly change return value to contain more info for the upper layer
 
     def __init__(self, repo, searchFilterCreator, filterClass, aggregateFilterClass, pagingClass):
         self._repo = repo

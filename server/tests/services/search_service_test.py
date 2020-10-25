@@ -262,14 +262,14 @@ class TestSearchThreadsByKeyValues:
         userId='test_id',
         search='test_search',
     )
-    MOCKDB_THREAD_ATTRSET = [
+    MOCK_THREAD_ATTRSET = [
         dict(threadId='2222', userId='11111111', _id='some_random_id', lastPostId='1234')
     ]
     MOCK_USER_ATTRSET = [
         dict(userId='11111111', name='Alan', _id='some_random_id'),
         dict(userId='33333333', name='Bobby', _id='some_random_id'),
     ]
-    MOCKDB_POST_ATTRSET = [
+    MOCK_POST_ATTRSET = [
         dict(postId='1234', userId='33333333'),
         dict(postId='3456', userId='33333333'),
         dict(postId='4567', userId='33333333'),
@@ -279,11 +279,11 @@ class TestSearchThreadsByKeyValues:
 
     @pytest.fixture(scope='function', autouse=True)
     def setDefaultReturnValues(self, service):
-        mock_threads = create_mock_entities(self.MOCKDB_THREAD_ATTRSET)
+        mock_threads = create_mock_entities(self.MOCK_THREAD_ATTRSET)
         threads_from_repo = create_return_from_repo(mock_threads, 'threads')
         mock_users = create_mock_entities(self.MOCK_USER_ATTRSET)
         users_from_repo = create_return_from_repo(mock_users, 'users')
-        mock_posts = create_mock_entities(self.MOCKDB_POST_ATTRSET)
+        mock_posts = create_mock_entities(self.MOCK_POST_ATTRSET)
         posts_from_repo = create_return_from_repo(mock_posts, 'posts')
 
         service._repo.searchThread.return_value = threads_from_repo
@@ -356,7 +356,7 @@ class TestSearchThreadsByKeyValues:
 
     def test_searchThreadsByKeyValuesShouldGenerateSearchForOwnerUser(self, service):
         mockRepo = service._repo
-        owner_ids = [ attrs['userId'] for attrs in self.MOCKDB_THREAD_ATTRSET ]
+        owner_ids = [ attrs['userId'] for attrs in self.MOCK_THREAD_ATTRSET ]
         expected_filter = PrimitiveFilter.createFilter(dict(
             field='userId',
             operator='eq',
@@ -391,7 +391,7 @@ class TestSearchThreadsByKeyValues:
 
     def test_searchThreadsByKeyValuesShouldGenerateSearchForLastPost(self, service):
         repo = service._repo
-        lastpost_ids = [ attrs['lastPostId'] for attrs in self.MOCKDB_THREAD_ATTRSET ]
+        lastpost_ids = [ attrs['lastPostId'] for attrs in self.MOCK_THREAD_ATTRSET ]
         expected_filter = PrimitiveFilter.createFilter(dict(
             field='postId',
             operator='eq',
@@ -462,10 +462,10 @@ class TestSearchThreadsByKeyValues:
         result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
 
         threads = result['threads']
-        assert len(threads) == len(self.MOCKDB_THREAD_ATTRSET)
+        assert len(threads) == len(self.MOCK_THREAD_ATTRSET)
         assert result['returnCount'] == len(threads)
         assert result['matchedCount'] == len(threads)
-        for k, v in self.MOCKDB_THREAD_ATTRSET[0].items():
+        for k, v in self.MOCK_THREAD_ATTRSET[0].items():
             assert getattr(threads[0], k) == v
 
     def test_searchThreadsByKeyValuesReturnThreadsWithOwnerUser(self, service):
@@ -479,25 +479,41 @@ class TestSearchThreadsByKeyValues:
 
     def test_searchThreadsByKeyValuesShouldContainLastPostInfo(self, service):
         result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
-        expected_lastpost_attrs = self.MOCKDB_POST_ATTRSET[0]
+        expected_lastpost_attrs = self.MOCK_POST_ATTRSET[0]
 
         thread = result['threads'][0]
-        lastpost = getattr(thread, 'lastPost')
-        assert len(lastpost) == 1
+        lastposts = getattr(thread, 'lastPost')
+        assert len(lastposts) == 1
         for k, v in expected_lastpost_attrs.items():
-            assert getattr(lastpost[0], k) == v
+            assert getattr(lastposts[0], k) == v
 
+    def test_searchThreadsByKeyValuesShouldHaveEmptyLastpostsWhenNoMatchingPostFound(self, service):
+        repo = service._repo
+        thread_attrset = [
+            dict(threadId='test_id1', userId='test_user1', lastPostId='nonexistant_id'),
+            dict(threadId='test_id2', userId='test_user1', lastPostId='nonexistant_id'),
+            dict(threadId='test_id3', userId='test_user1', lastPostId='nonexistant_id'),
+        ]
+        mock_threads = create_mock_entities(thread_attrset)
+        repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
+
+        result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        for thread in result['threads']:
+            lastposts = getattr(thread, 'lastPost')
+            assert len(lastposts) == 0
+            
 
 class TestSearchThreadByExplicitId:
     DEFAULT_THREAD_ID = 'test_id'
-    MOCKDB_THREAD_ATTRSET = [
+    MOCK_THREAD_ATTRSET = [
         dict(threadId='test_id', userId='11111111', _id='some_random_id', lastPostId='1234')
     ]
     MOCK_USER_ATTRSET = [
         dict(userId='11111111', name='Alan', _id='some_random_id'),
         dict(userId='33333333', name='Bobby', _id='some_random_id'),
     ]
-    MOCKDB_POST_ATTRSET = [
+    MOCK_POST_ATTRSET = [
         dict(postId='1234', userId='33333333'),
         dict(postId='3456', userId='33333333'),
         dict(postId='4567', userId='33333333'),
@@ -507,11 +523,11 @@ class TestSearchThreadByExplicitId:
 
     @pytest.fixture(scope='function', autouse=True)
     def setDefaultReturnValues(self, service):
-        mock_threads = create_mock_entities(self.MOCKDB_THREAD_ATTRSET)
+        mock_threads = create_mock_entities(self.MOCK_THREAD_ATTRSET)
         threads_from_repo = create_return_from_repo(mock_threads, 'threads')
         mock_users = create_mock_entities(self.MOCK_USER_ATTRSET)
         users_from_repo = create_return_from_repo(mock_users, 'users')
-        mock_posts = create_mock_entities(self.MOCKDB_POST_ATTRSET)
+        mock_posts = create_mock_entities(self.MOCK_POST_ATTRSET)
         posts_from_repo = create_return_from_repo(mock_posts, 'posts')
 
         service._repo.searchThread.return_value = threads_from_repo
@@ -566,7 +582,7 @@ class TestSearchThreadByExplicitId:
 
     def test_searchThreadByExplicitIdShouldGenerateSearchForOwnerUser(self, service):
         mockRepo = service._repo
-        owner_ids = [ attrs['userId'] for attrs in self.MOCKDB_THREAD_ATTRSET ]
+        owner_ids = [ attrs['userId'] for attrs in self.MOCK_THREAD_ATTRSET ]
         expected_filter = PrimitiveFilter.createFilter(dict(
             field='userId',
             operator='eq',
@@ -589,7 +605,7 @@ class TestSearchThreadByExplicitId:
         assert repo.searchPost.call_count == 0
 
     def test_searchThreadByExplicitIdShouldReturnSearchResult(self, service):
-        expected_thread = self.MOCKDB_THREAD_ATTRSET[0]
+        expected_thread = self.MOCK_THREAD_ATTRSET[0]
         
         result = service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
 

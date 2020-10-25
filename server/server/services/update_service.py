@@ -6,7 +6,8 @@ This file houses business logic related to entity update
 import logging
 
 import server.exceptions as exceptions
-from server.services.session import SessionService
+
+logger = logging.getLogger(__name__)
 
 
 class UpdateService:
@@ -19,29 +20,57 @@ class UpdateService:
         self._filter = PrimitiveFilter
         self._session = session
 
-    def updateUserByKeyValues(self, keyValues):
-        searchFilter = self._createEQSearchFilter(keyValues, 'userId')
+    def updateUser(self, user):
+        """
+        Updates a single user.
+        
+        Args:
+            user(entity): A user entity object
+        Returns:
+            dict that reports result of updating repository
+        """
+        searchFilter = self._create_eqfilter(user, 'userId')
         self._authorizeUpdateUser(searchFilter)
-        update = keyValues.copy()
-        update.pop('userId')
 
-        return self._repo.updateUser(searchFilter, update)
+        return self._repo.updateUser(searchFilter, user)
 
-    def updatePostByKeyValues(self, keyValues):
-        searchFilter = self._createEQSearchFilter(keyValues, 'postId')
+    def updatePost(self, post):
+        """
+        Updates a single post.
+        
+        Args:
+            post(entity): A post entity object
+        Returns:
+            dict that reports result of updating repository
+        """
+        searchFilter = self._create_eqfilter(post, 'postId')
         self._authorizeUpdatePost(searchFilter)
-        update = keyValues.copy()
-        update.pop('postId')
 
-        return self._repo.updatePost(searchFilter, update)
+        return self._repo.updatePost(searchFilter, post)
 
-    def updateThreadByKeyValues(self, keyValues):
-        searchFilter = self._createEQSearchFilter(keyValues, 'threadId')
+    def updateThread(self, thread):
+        """
+        Updates a single thread.
+        
+        Args:
+            thread(entity): A thread entity object
+        Returns:
+            dict that reports result of updating repository
+        """
+        searchFilter = self._create_eqfilter(thread, 'threadId')
         self._authorizeUpdateThread(searchFilter)
-        update = keyValues.copy()
-        update.pop('threadId')
 
-        return self._repo.updateThread(searchFilter, update)
+        return self._repo.updateThread(searchFilter, thread)
+
+    def _create_eqfilter(self, entity, fieldname):
+        try:
+            return self._filter.createFilter(dict(
+                field=fieldname, operator='eq', value=[ getattr(entity, fieldname) ]
+            ))
+        except AttributeError as e:
+            logger.error(e)
+            logger.error('Failed to update user')
+            raise exceptions.IdNotSpecifiedError(f'{fieldname} was missing')
 
     def _createEQSearchFilter(self, keyValues, fieldname):
         try:
@@ -49,7 +78,7 @@ class UpdateService:
                 field=fieldname, operator='eq', value=[ keyValues[fieldname] ]
             ))
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
             raise exceptions.IdNotSpecifiedError(f'{fieldname} was missing')
 
     def _authorizeUpdateUser(self, searchFilter):
@@ -100,9 +129,10 @@ class UpdateService:
         Returns:
             None
         """
-        ownerIds = [ entity['userId'] for entity in entities ]
-        session_user = self._session.get_user()
+        ownerIds = [ entity.userId for entity in entities ]
+        session_userid = self._session.get_user()['userId']
         for ownerId in ownerIds:
-            if session_user['userId'] != ownerId:
-                logging.error('')
+            if session_userid != ownerId:
+                logger.warning('Failed to authorize user')
+                logger.debug(f'owner: {ownerId}, session user: {session_userid}')
                 raise exceptions.UnauthorizedError('Failed to authorize user for update')

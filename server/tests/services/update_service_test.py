@@ -4,7 +4,6 @@ This file houses test for update_service.py
 """
 from unittest.mock import ANY
 
-
 import pytest
 
 from tests import mocks
@@ -13,6 +12,24 @@ from server.database.filter import PrimitiveFilter
 from server.services.update_service import UpdateService
 
 TEST_SESSION_USER = dict(userId='test_user_id')
+
+
+# helper functions
+def create_mock_entities(attrset):
+    mock_entities = [ mocks.createMockEntity() for attrs in attrset ]
+    for mock, attrs in zip(mock_entities, attrset):
+        for k, v in attrs.items():
+            setattr(mock, k, v)
+
+    return mock_entities
+
+
+def create_repo_return(entities, name):
+    return {
+        name: entities,
+        'returnCount': len(entities),
+        'matchedCount': len(entities),
+    }
 
 
 @pytest.fixture(scope='function')
@@ -26,233 +43,207 @@ def setup_service():
 
 class TestUserUpdateService:
     DEFAULT_REPOUPDATE_RESULT = 'default_result'
-    DEFAULT_SEARCH_RETURN = dict(
-        users=[ dict(userId=TEST_SESSION_USER['userId']) ],
-        returnCount=1,
-        matchedCount=1,
-    )
-    DEFAULT_KEYVALUES = dict(
-        userId='0',
-        displayName='Bobby'
-    )
+    REPOUSER_ATTRSET = [
+        dict(userId=TEST_SESSION_USER['userId']),
+    ]
+    DEFAULT_USER_ATTRSET = [
+        dict(userId='0', displayName='Bobby'),
+    ]
+    DEFAULT_USER = create_mock_entities(DEFAULT_USER_ATTRSET)[0]
     
     @pytest.fixture(scope='function', autouse=True)
     def setup_mocks(self, setup_service):
+        mock_users = create_mock_entities(self.REPOUSER_ATTRSET)
+        repouser_return = create_repo_return(mock_users, 'users')
+
         mock_repo = setup_service._repo
-        mock_repo.searchUser.return_value = self.DEFAULT_SEARCH_RETURN
+        mock_repo.searchUser.return_value = repouser_return
         mock_repo.updateUser.return_value = self.DEFAULT_REPOUPDATE_RESULT
 
-    def test_updateUserByKeyValuesShouldCallSearchForUserInformation(self, setup_service):
+    def test_updateUserShouldCallSearchForUserInformation(self, setup_service):
         mock_repo = setup_service._repo
         expectedFilter = PrimitiveFilter.createFilter(dict(
-            field='userId', operator='eq', value=[ self.DEFAULT_KEYVALUES['userId'] ]
+            field='userId', operator='eq', value=[ self.DEFAULT_USER.userId ]
         ))
 
-        setup_service.updateUserByKeyValues(self.DEFAULT_KEYVALUES)
+        setup_service.updateUser(self.DEFAULT_USER)
 
         mock_repo.searchUser.assert_called_with(expectedFilter)
 
-    def test_updateUserByKeyValuesShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
+    def test_updateUserShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
         session_user = dict(userId='some_random_id')
         setup_service._session.get_user.return_value = session_user
 
         with pytest.raises(exceptions.UnauthorizedError):
-            setup_service.updateUserByKeyValues(self.DEFAULT_KEYVALUES)
+            setup_service.updateUser(self.DEFAULT_USER)
 
-    def test_updateUserByKeyValuesShouldNotUpdateWhenAuthorizationFail(self, setup_service):
+    def test_updateUserShouldNotUpdateWhenAuthorizationFail(self, setup_service):
         session_user = dict(userId='some_random_id')
         setup_service._session.get_user.return_value = session_user
 
         try:
-            setup_service.updateUserByKeyValues(self.DEFAULT_KEYVALUES)
+            setup_service.updateUser(self.DEFAULT_USER)
         except Exception:
             pass
 
         assert setup_service._repo.updateUser.call_count == 0
 
-    def test_updateUserByKeyValuesShouldPassCreatedFilterToUpdate(self, setup_service):
+    def test_updateUserShouldPassCreatedFilterAndUserToUpdate(self, setup_service):
         mock_repo = setup_service._repo
         expectedFilter = PrimitiveFilter.createFilter(dict(
-            field='userId', operator='eq', value=[ self.DEFAULT_KEYVALUES['userId'] ]
+            field='userId', operator='eq', value=[ self.DEFAULT_USER.userId ]
         ))
 
-        setup_service.updateUserByKeyValues(self.DEFAULT_KEYVALUES)
+        setup_service.updateUser(self.DEFAULT_USER)
 
-        mock_repo.updateUser.assert_called_with(expectedFilter, ANY)
+        mock_repo.updateUser.assert_called_with(expectedFilter, self.DEFAULT_USER)
 
-    def test_updateUserByKeyValuesShouldRaiseExceptionWhenNoUserId(self, setup_service):
-        keyValues = self.DEFAULT_KEYVALUES.copy()
-        keyValues.pop('userId')
+    def test_updateUserShouldRaiseExceptionWhenNoUserId(self, setup_service):
+        attributes = [{ 'displayName': 'test_name' }]
+        nouserid_user = create_mock_entities(attributes)[0]
 
         with pytest.raises(exceptions.IdNotSpecifiedError):
-            setup_service.updateUserByKeyValues(keyValues)
+            setup_service.updateUser(nouserid_user)
 
-    def test_updateUserShouldPassAllKeyValuesExceptIdAsUpdateValue(self, setup_service):
-        mock_repo = setup_service._repo
-        expectedUpdate = self.DEFAULT_KEYVALUES.copy()
-        expectedUpdate.pop('userId')
-
-        setup_service.updateUserByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mock_repo.updateUser.assert_called_with(ANY, expectedUpdate)
-
-    def test_updateUserByKeyValuesShouldReturnResultFromRepo(self, setup_service):
-        result = setup_service.updateUserByKeyValues(self.DEFAULT_KEYVALUES)
+    def test_updateUserShouldReturnResultFromRepo(self, setup_service):
+        result = setup_service.updateUser(self.DEFAULT_USER)
 
         assert result == self.DEFAULT_REPOUPDATE_RESULT
 
 
 class TestPostUpdateService:
     DEFAULT_REPOUPDATE_RESULT = 'default_result'
-    DEFAULT_SEARCH_RETURN = dict(
-        posts=[ dict(postId=0, userId=TEST_SESSION_USER['userId']) ],
-        returnCount=1,
-        matchedCount=1,
-    )
-    DEFAULT_KEYVALUES = dict(
-        postId='0',
-        content='Hello this is my first post'
-    )
+    REPOPOST_ATTRSET = [
+        dict(postId='0', userId=TEST_SESSION_USER['userId'], content='test_post_1')
+    ]
+    DEFAULT_POST_ATTRSET = [
+        dict(postId='0', content='Hello this is my first post')
+    ]
+    DEFAULT_POST = create_mock_entities(DEFAULT_POST_ATTRSET)[0]
     
     @pytest.fixture(scope='function', autouse=True)
     def setup_mocks(self, setup_service):
+        mock_posts = create_mock_entities(self.REPOPOST_ATTRSET)
+        repopost_return = create_repo_return(mock_posts, 'posts')
+
         mock_repo = setup_service._repo
-        mock_repo.searchPost.return_value = self.DEFAULT_SEARCH_RETURN
+        mock_repo.searchPost.return_value = repopost_return
         mock_repo.updatePost.return_value = self.DEFAULT_REPOUPDATE_RESULT
 
-    def test_updatePostByKeyValuesShouldCallSearchForPostInformation(self, setup_service):
+    def test_updatePostShouldCallSearchForPostInformation(self, setup_service):
         mock_repo = setup_service._repo
         expectedFilter = PrimitiveFilter.createFilter(dict(
-            field='postId', operator='eq', value=[ self.DEFAULT_KEYVALUES['postId'] ]
+            field='postId', operator='eq', value=[ self.DEFAULT_POST.postId ]
         ))
 
-        setup_service.updatePostByKeyValues(self.DEFAULT_KEYVALUES)
+        setup_service.updatePost(self.DEFAULT_POST)
 
         mock_repo.searchPost.assert_called_with(expectedFilter)
 
-    def test_updatePostByKeyValuesShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
+    def test_updatePostShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
         session_user = dict(userId='some_random_id')
         setup_service._session.get_user.return_value = session_user
 
         with pytest.raises(exceptions.UnauthorizedError):
-            setup_service.updatePostByKeyValues(self.DEFAULT_KEYVALUES)
+            setup_service.updatePost(self.DEFAULT_POST)
 
-    def test_updatePostByKeyValuesShouldNotUpdateWhenAuthorizationFail(self, setup_service):
+    def test_updatePostShouldNotUpdateWhenAuthorizationFail(self, setup_service):
         session_user = dict(userId='some_random_id')
         setup_service._session.get_user.return_value = session_user
 
         try:
-            setup_service.updatePostByKeyValues(self.DEFAULT_KEYVALUES)
+            setup_service.updatePost(self.DEFAULT_POST)
         except Exception:
             pass
 
         assert setup_service._repo.updatePost.call_count == 0
 
-    def test_updatePostByKeyValuesShouldPassCreatedFilterToUpdate(self, setup_service):
+    def test_updatePostShouldPassCreatedFilterAndPostToUpdate(self, setup_service):
         mock_repo = setup_service._repo
         expectedFilter = PrimitiveFilter.createFilter(dict(
-            field='postId', operator='eq', value=[ self.DEFAULT_KEYVALUES['postId'] ]
+            field='postId', operator='eq', value=[ self.DEFAULT_POST.postId ]
         ))
 
-        setup_service.updatePostByKeyValues(self.DEFAULT_KEYVALUES)
+        setup_service.updatePost(self.DEFAULT_POST)
 
-        mock_repo.updatePost.assert_called_with(expectedFilter, ANY)
+        mock_repo.updatePost.assert_called_with(expectedFilter, self.DEFAULT_POST)
 
-    def test_updatePostByKeyValuesShouldRaiseExceptionWhenNoPostId(self, setup_service):
-        keyValues = self.DEFAULT_KEYVALUES.copy()
-        keyValues.pop('postId')
+    def test_updatePostShouldRaiseExceptionWhenNoPostId(self, setup_service):
+        mock_post = create_mock_entities([dict(content='test_content')])[0]
 
         with pytest.raises(exceptions.IdNotSpecifiedError):
-            setup_service.updatePostByKeyValues(keyValues)
+            setup_service.updatePost(mock_post)
 
-    def test_updatePostShouldPassAllKeyValuesExceptIdAsUpdateValue(self, setup_service):
-        mock_repo = setup_service._repo
-        expectedUpdate = self.DEFAULT_KEYVALUES.copy()
-        expectedUpdate.pop('postId')
-
-        setup_service.updatePostByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mock_repo.updatePost.assert_called_with(ANY, expectedUpdate)
-
-    def test_updatePostByKeyValuesShouldReturnResultFromRepo(self, setup_service):
-        result = setup_service.updatePostByKeyValues(self.DEFAULT_KEYVALUES)
+    def test_updatePostShouldReturnResultFromRepo(self, setup_service):
+        result = setup_service.updatePost(self.DEFAULT_POST)
 
         assert result == self.DEFAULT_REPOUPDATE_RESULT
 
 
 class TestThreadUpdateService:
     DEFAULT_REPOUPDATE_RESULT = 'default_result'
-    DEFAULT_SEARCH_RETURN = dict(
-        threads=[ dict(threadId=0, userId=TEST_SESSION_USER['userId']) ],
-        returnCount=1,
-        matchedCount=1,
-    )
-    DEFAULT_KEYVALUES = dict(
-        threadId='0',
-        title='Hello this is my first thread'
-    )
+    REPOTHREAD_ATTRSET = [
+        dict(threadId='0', userId=TEST_SESSION_USER['userId'], title='test_thread_1')
+    ]
+    DEFAULT_THREAD_ATTRSET = [
+        dict(threadId='0', title='Hello this is my first thread')
+    ]
+    DEFAULT_THREAD = create_mock_entities(DEFAULT_THREAD_ATTRSET)[0]
 
     @pytest.fixture(scope='function', autouse=True)
     def setup_mocks(self, setup_service):
+        mock_threads = create_mock_entities(self.REPOTHREAD_ATTRSET)
+        repothread_return = create_repo_return(mock_threads, 'threads')
+
         mock_repo = setup_service._repo
-        mock_repo.searchThread.return_value = self.DEFAULT_SEARCH_RETURN
+        mock_repo.searchThread.return_value = repothread_return
         mock_repo.updateThread.return_value = self.DEFAULT_REPOUPDATE_RESULT
 
-    def test_updateThreadByKeyValuesShouldCallSearchForThreadInformation(self, setup_service):
+    def test_updateThreadShouldCallSearchForThreadInformation(self, setup_service):
         mock_repo = setup_service._repo
         expectedFilter = PrimitiveFilter.createFilter(dict(
-            field='threadId', operator='eq', value=[ self.DEFAULT_KEYVALUES['threadId'] ]
+            field='threadId', operator='eq', value=[ self.DEFAULT_THREAD.threadId ]
         ))
 
-        setup_service.updateThreadByKeyValues(self.DEFAULT_KEYVALUES)
+        setup_service.updateThread(self.DEFAULT_THREAD)
 
         mock_repo.searchThread.assert_called_with(expectedFilter)
 
-    def test_updateThreadByKeyValuesShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
+    def test_updateThreadShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
         session_user = dict(userId='some_random_id')
         setup_service._session.get_user.return_value = session_user
 
         with pytest.raises(exceptions.UnauthorizedError):
-            setup_service.updateThreadByKeyValues(self.DEFAULT_KEYVALUES)
+            setup_service.updateThread(self.DEFAULT_THREAD)
 
-    def test_updateThreadByKeyValuesShouldNotUpdateWhenAuthorizationFail(self, setup_service):
+    def test_updateThreadShouldNotUpdateWhenAuthorizationFail(self, setup_service):
         session_user = dict(userId='some_random_id')
         setup_service._session.get_user.return_value = session_user
 
         try:
-            setup_service.updateThreadByKeyValues(self.DEFAULT_KEYVALUES)
+            setup_service.updateThread(self.DEFAULT_THREAD)
         except Exception:
             pass
 
         assert setup_service._repo.updateThread.call_count == 0
 
-    def test_updateThreadByKeyValuesShouldPassCreatedFilterToUpdate(self, setup_service):
+    def test_updateThreadShouldPassCreatedFilterToUpdate(self, setup_service):
         mock_repo = setup_service._repo
         expectedFilter = PrimitiveFilter.createFilter(dict(
-            field='threadId', operator='eq', value=[ self.DEFAULT_KEYVALUES['threadId'] ]
+            field='threadId', operator='eq', value=[ self.DEFAULT_THREAD.threadId ]
         ))
 
-        setup_service.updateThreadByKeyValues(self.DEFAULT_KEYVALUES)
+        setup_service.updateThread(self.DEFAULT_THREAD)
 
         mock_repo.updateThread.assert_called_with(expectedFilter, ANY)
 
-    def test_updateThreadByKeyValuesShouldRaiseExceptionWhenNoThreadId(self, setup_service):
-        keyValues = self.DEFAULT_KEYVALUES.copy()
-        keyValues.pop('threadId')
+    def test_updateThreadShouldRaiseExceptionWhenNoThreadId(self, setup_service):
+        mock_thread = create_mock_entities([dict(title='test_title')])[0]
 
         with pytest.raises(exceptions.IdNotSpecifiedError):
-            setup_service.updateThreadByKeyValues(keyValues)
+            setup_service.updateThread(mock_thread)
 
-    def test_updateThreadShouldPassAllKeyValuesExceptIdAsUpdateValue(self, setup_service):
-        mock_repo = setup_service._repo
-        expectedUpdate = self.DEFAULT_KEYVALUES.copy()
-        expectedUpdate.pop('threadId')
-
-        setup_service.updateThreadByKeyValues(self.DEFAULT_KEYVALUES)
-
-        mock_repo.updateThread.assert_called_with(ANY, expectedUpdate)
-
-    def test_updateThreadByKeyValuesShouldReturnResultFromRepo(self, setup_service):
-        result = setup_service.updateThreadByKeyValues(self.DEFAULT_KEYVALUES)
+    def test_updateThreadShouldReturnResultFromRepo(self, setup_service):
+        result = setup_service.updateThread(self.DEFAULT_THREAD)
 
         assert result == self.DEFAULT_REPOUPDATE_RESULT
