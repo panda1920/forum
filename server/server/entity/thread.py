@@ -165,7 +165,7 @@ class Thread(Entity):
             },
             'conversion_rules': {
                 'to_json': {
-                    'required': True,
+                    'required': False,
                     'hide': False,
                 },
                 'to_create': {
@@ -204,7 +204,7 @@ class Thread(Entity):
             },
             'conversion_rules': {
                 'to_json': {
-                    'required': True,
+                    'required': False,
                     'hide': False,
                 },
                 'to_create': {
@@ -218,6 +218,25 @@ class Thread(Entity):
             },
         },
         'owner': {
+            'validation_rules': {
+                'type': 'list'
+            },
+            'conversion_rules': {
+                'to_json': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': False,
+                    'hide': True,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': True,
+                },
+            },
+        },
+        'lastPost': {
             'validation_rules': {
                 'type': 'list'
             },

@@ -8,6 +8,8 @@ import server.exceptions as exceptions
 from server.database.filter import PrimitiveFilter
 from server.database.paging import PagingNoLimit
 
+logger = logging.getLogger(__name__)
+
 
 class DeleteService:
     """
@@ -19,50 +21,58 @@ class DeleteService:
         self._repo = repo
         self._session = session
 
-    def deleteUserByKeyValues(self, keyValues):
+    def deleteUserById(self, id):
         """
-        Delete user by passing criteria as keyValues.
+        Delete User by its id.
         
         Args:
-            keyValues(dict): criteria of user to delete
+            id(str): id of User to delete
         Returns:
             result of operation
         """
-        userId = keyValues.get('userId')
-        if userId is None:
-            logging.error('Failed to delete due to no Id specified in keyValues')
+        if not id:
+            logger.error('Failed to delete beceuase Id was not provided')
             raise exceptions.IdNotSpecifiedError('Specify entity Id to perform delete')
-        self._authorizeDelete(userId)
-        searchFilter = self._createSearchFilterFromKeyValuesForField(keyValues, 'userId')
+
+        self._authorizeDelete(id)
+        searchFilter = self._createEqFilterForId(id, 'userId')
         
         return self._repo.deleteUser(searchFilter)
 
-    def deletePostByKeyValues(self, keyValues):
+    def deletePostById(self, id):
         """
-        Delete post by passing criteria as keyValues.
+        Delete Post by its id.
         
         Args:
-            keyValues(dict): criteria of post to delete
+            id(str): id of Post to delete
         Returns:
             result of operation
         """
-        searchFilter = self._createSearchFilterFromKeyValuesForField(keyValues, 'postId')
+        if not id:
+            logger.error('Failed to delete beceuase Id was not provided')
+            raise exceptions.IdNotSpecifiedError('Specify entity Id to perform delete')
+
+        searchFilter = self._createEqFilterForId(id, 'postId')
         self._authorizeDeletePost(searchFilter)
         
         return self._repo.deletePost(searchFilter)
 
-    def deleteThreadByKeyValues(self, keyValues):
+    def deleteThreadById(self, id):
         """
-        Delete thread by passing criteria as keyValues
+        Delete Thread by its id.
         
         Args:
-            keyValues(dict): criteria of thread to delete
+            id(str): id of Thread to delete
         Returns:
             result of operation
         """
-        searchFilter = self._createSearchFilterFromKeyValuesForField(keyValues, 'threadId')
+        if not id:
+            logger.error('Failed to delete beceuase Id was not provided')
+            raise exceptions.IdNotSpecifiedError('Specify entity Id to perform delete')
+
+        searchFilter = self._createEqFilterForId(id, 'threadId')
         self._authorizeDeleteThread(searchFilter)
-        
+
         return self._repo.deleteThread(searchFilter)
 
     def _createSearchFilterFromKeyValuesForField(self, keyValues, fieldname):
@@ -78,11 +88,25 @@ class DeleteService:
         """
         fieldvalue = keyValues.get(fieldname, None)
         if fieldvalue is None:
-            logging.error('Failed to delete due to no Id specified in keyValues')
+            logger.error('Failed to delete due to no Id specified in keyValues')
             raise exceptions.IdNotSpecifiedError('Specify entity Id to perform delete')
         
         return PrimitiveFilter.createFilter(dict(
             operator='eq', field=fieldname, value=[ fieldvalue ]
+        ))
+
+    def _createEqFilterForId(self, id, fieldname):
+        """
+        Create filter that matches the value id for specified fielddname
+        
+        Args:
+            id(str): value of filter
+            fieldname(str): fieldname of filter
+        Returns:
+            PrimitiveFilter
+        """
+        return PrimitiveFilter.createFilter(dict(
+            field=fieldname, operator='eq', value=[ id ]
         ))
 
     def _authorizeDeletePost(self, searchFilter):
@@ -97,7 +121,7 @@ class DeleteService:
         posts = self._repo.searchPost(searchFilter, paging=PagingNoLimit())['posts']
         
         for post in posts:
-            self._authorizeDelete( post['userId'] )
+            self._authorizeDelete( post.userId )
 
     def _authorizeDeleteThread(self, searchFilter):
         """
@@ -111,7 +135,7 @@ class DeleteService:
         threads = self._repo.searchThread(searchFilter, paging=PagingNoLimit())['threads']
         
         for thread in threads:
-            self._authorizeDelete( thread['userId'] )
+            self._authorizeDelete( thread.userId )
 
     def _authorizeDelete(self, userId):
         """
@@ -125,5 +149,5 @@ class DeleteService:
         """
         session_user = self._session.get_user()
         if (session_user is None) or (session_user['userId'] != userId):
-            logging.error('Failed operation due to unauthorized user')
+            logger.error('Failed operation due to unauthorized user')
             raise exceptions.UnauthorizedError('Unauthorized action')

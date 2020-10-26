@@ -11,6 +11,8 @@ from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 import tests.mocks as mocks
 from tests.mocks import createMockEntity
+from tests.helpers import create_mock_entities
+
 
 
 @pytest.fixture(scope='function')
@@ -629,16 +631,6 @@ class TestSearchThreadByExplicitId:
 
 
 # helper functions
-
-def create_mock_entities(attrset):
-    entities = [ createMockEntity() for n in attrset ]
-    for entity, attrs in zip(entities, attrset):
-        for k, v in attrs.items():
-            setattr(entity, k, v)
-
-    return entities
-
-
 def create_return_from_repo(entities, entity_name):
     return {
         entity_name: entities,

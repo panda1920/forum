@@ -16,6 +16,7 @@ DEFAULT_ARGS = {
     'threadId': 'test_id',
     'lastPostId': 'test_id',
     'owner': [],
+    'lastPost': [],
     'title': 'Anonymous\'s thread',
     'subject': 'test_subject',
     'increment': 'views',
@@ -63,6 +64,7 @@ class TestThreadCreation:
             threadId=9999,
             lastPostId=9999,
             owner=9999,
+            lastPost=9999,
             title=9999,
             subject=9999,
             views='test_value',
@@ -139,7 +141,7 @@ class TestConversionMethods:
         for attr, value in json_dict.items():
             assert DEFAULT_ARGS[attr] == value
 
-    def test_to_jsonIgnoresPrivateInformation(self, thread):
+    def test_to_jsonIgnoresUnnecessaryAttributes(self, thread):
         private_attrs = ['_id', 'increment', ]
 
         json_string = thread.to_json()
@@ -151,10 +153,9 @@ class TestConversionMethods:
     def test_to_jsonValidatesRequiredAttributes(self, thread):
         required_attributes = [
             'threadId',
-            'userId',
             'boardId',
-            'lastPostId',
             'owner',
+            'lastPost',
             'title',
             'subject',
             'views',
@@ -200,6 +201,7 @@ class TestConversionMethods:
             '_id',
             'increment',
             'owner',
+            'lastPost',
             'createdAt',
             'updatedAt',
         ]
@@ -222,6 +224,7 @@ class TestConversionMethods:
             'userId',
             'boardId',
             'owner',
+            'lastPost',
             'createdAt',
             'updatedAt',
         ]

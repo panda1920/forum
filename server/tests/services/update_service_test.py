@@ -8,6 +8,7 @@ import pytest
 
 from tests import mocks
 import server.exceptions as exceptions
+from tests.helpers import create_mock_entities
 from server.database.filter import PrimitiveFilter
 from server.services.update_service import UpdateService
 
@@ -15,15 +16,6 @@ TEST_SESSION_USER = dict(userId='test_user_id')
 
 
 # helper functions
-def create_mock_entities(attrset):
-    mock_entities = [ mocks.createMockEntity() for attrs in attrset ]
-    for mock, attrs in zip(mock_entities, attrset):
-        for k, v in attrs.items():
-            setattr(mock, k, v)
-
-    return mock_entities
-
-
 def create_repo_return(entities, name):
     return {
         name: entities,
