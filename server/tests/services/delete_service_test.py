@@ -6,7 +6,7 @@ import pytest
 
 import tests.mocks as mocks
 import server.exceptions as exceptions
-from tests.helpers import create_mock_entities
+from tests.helpers import create_mock_entities, create_mock_entity_fromattrs
 from server.database.filter import PrimitiveFilter
 from server.services.delete_service import DeleteService
 
@@ -17,9 +17,11 @@ TEST_DEFAULT_THREADID = '22123123'
 
 @pytest.fixture(scope='function')
 def delete_service():
+    session_user = create_mock_entity_fromattrs(dict(userId=TEST_DEFAULT_USERID))
+
     mock_repo = mocks.createMockRepo()
     mock_session = mocks.createMockSessionService()
-    mock_session.get_user.return_value = dict(userId=TEST_DEFAULT_USERID)
+    mock_session.get_user.return_value = session_user
     service = DeleteService(mock_repo, mock_session)
     return service
 
@@ -46,7 +48,8 @@ class TestUserDeleteService:
 
     def test_deleteUserByIdShouldRaiseExceptionWhenAuthorizationFail(self, delete_service):
         invalid_session_users = [
-            None, dict(userId='some_random_id')
+            None,
+            create_mock_entity_fromattrs(dict(userId='some_random_id')),
         ]
 
         for user in invalid_session_users:
@@ -56,13 +59,19 @@ class TestUserDeleteService:
                 delete_service.deleteUserById(TEST_DEFAULT_USERID)
 
     def test_deleteUserByIdShouldNotCallRepoWhenAuthorizationFail(self, delete_service):
-        delete_service._session.get_user.return_value = None
+        invalid_session_users = [
+            None,
+            create_mock_entity_fromattrs(dict(userId='some_random_id')),
+        ]
         mock_repo = delete_service._repo
+        
+        for user in invalid_session_users:
+            delete_service._session.get_user.return_value = user
 
-        try:
-            delete_service.deleteUserById(TEST_DEFAULT_USERID)
-        except Exception:
-            pass
+            try:
+                delete_service.deleteUserById(TEST_DEFAULT_USERID)
+            except Exception:
+                pass
 
         assert mock_repo.deleteUser.call_count == 0
 

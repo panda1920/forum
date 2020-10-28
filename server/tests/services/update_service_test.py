@@ -8,11 +8,11 @@ import pytest
 
 from tests import mocks
 import server.exceptions as exceptions
-from tests.helpers import create_mock_entities
+from tests.helpers import create_mock_entities, create_mock_entity_fromattrs
 from server.database.filter import PrimitiveFilter
 from server.services.update_service import UpdateService
 
-TEST_SESSION_USER = dict(userId='test_user_id')
+DEFAULT_SESSION_USER = create_mock_entity_fromattrs( dict(userId='test_user_id') )
 
 
 # helper functions
@@ -28,7 +28,7 @@ def create_repo_return(entities, name):
 def setup_service():
     mock_repo = mocks.createMockRepo()
     mock_session = mocks.createMockSessionService()
-    mock_session.get_user.return_value = TEST_SESSION_USER
+    mock_session.get_user.return_value = DEFAULT_SESSION_USER
     
     return UpdateService(mock_repo, PrimitiveFilter, mock_session)
 
@@ -36,7 +36,7 @@ def setup_service():
 class TestUserUpdateService:
     DEFAULT_REPOUPDATE_RESULT = 'default_result'
     REPOUSER_ATTRSET = [
-        dict(userId=TEST_SESSION_USER['userId']),
+        dict(userId=DEFAULT_SESSION_USER.userId),
     ]
     DEFAULT_USER_ATTRSET = [
         dict(userId='0', displayName='Bobby'),
@@ -63,14 +63,14 @@ class TestUserUpdateService:
         mock_repo.searchUser.assert_called_with(expectedFilter)
 
     def test_updateUserShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
-        session_user = dict(userId='some_random_id')
+        session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
         setup_service._session.get_user.return_value = session_user
 
         with pytest.raises(exceptions.UnauthorizedError):
             setup_service.updateUser(self.DEFAULT_USER)
 
     def test_updateUserShouldNotUpdateWhenAuthorizationFail(self, setup_service):
-        session_user = dict(userId='some_random_id')
+        session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
         setup_service._session.get_user.return_value = session_user
 
         try:
@@ -106,7 +106,7 @@ class TestUserUpdateService:
 class TestPostUpdateService:
     DEFAULT_REPOUPDATE_RESULT = 'default_result'
     REPOPOST_ATTRSET = [
-        dict(postId='0', userId=TEST_SESSION_USER['userId'], content='test_post_1')
+        dict(postId='0', userId=DEFAULT_SESSION_USER.userId, content='test_post_1')
     ]
     DEFAULT_POST_ATTRSET = [
         dict(postId='0', content='Hello this is my first post')
@@ -133,14 +133,14 @@ class TestPostUpdateService:
         mock_repo.searchPost.assert_called_with(expectedFilter)
 
     def test_updatePostShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
-        session_user = dict(userId='some_random_id')
+        session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
         setup_service._session.get_user.return_value = session_user
 
         with pytest.raises(exceptions.UnauthorizedError):
             setup_service.updatePost(self.DEFAULT_POST)
 
     def test_updatePostShouldNotUpdateWhenAuthorizationFail(self, setup_service):
-        session_user = dict(userId='some_random_id')
+        session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
         setup_service._session.get_user.return_value = session_user
 
         try:
@@ -175,7 +175,7 @@ class TestPostUpdateService:
 class TestThreadUpdateService:
     DEFAULT_REPOUPDATE_RESULT = 'default_result'
     REPOTHREAD_ATTRSET = [
-        dict(threadId='0', userId=TEST_SESSION_USER['userId'], title='test_thread_1')
+        dict(threadId='0', userId=DEFAULT_SESSION_USER.userId, title='test_thread_1')
     ]
     DEFAULT_THREAD_ATTRSET = [
         dict(threadId='0', title='Hello this is my first thread')
@@ -202,14 +202,14 @@ class TestThreadUpdateService:
         mock_repo.searchThread.assert_called_with(expectedFilter)
 
     def test_updateThreadShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
-        session_user = dict(userId='some_random_id')
+        session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
         setup_service._session.get_user.return_value = session_user
 
         with pytest.raises(exceptions.UnauthorizedError):
             setup_service.updateThread(self.DEFAULT_THREAD)
 
     def test_updateThreadShouldNotUpdateWhenAuthorizationFail(self, setup_service):
-        session_user = dict(userId='some_random_id')
+        session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
         setup_service._session.get_user.return_value = session_user
 
         try:

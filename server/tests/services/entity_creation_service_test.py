@@ -9,9 +9,10 @@ import tests.mocks as mocks
 import server.exceptions as exceptions
 from server.services.entity_creation_service import EntityCreationService
 from server.entity import Thread
+from tests.helpers import create_mock_entity_fromattrs
 
 OWNER_ID = '1'
-DEFAULT_SESSION_USER = dict(userId=OWNER_ID)
+DEFAULT_SESSION_USER = create_mock_entity_fromattrs( dict(userId=OWNER_ID) )
 CREATE_USER_RETURN = dict(createdCount=1, createdId='test_inserted_user')
 CREATE_POST_RETURN = dict(createdCount=1, createdId='test_inserted_post')
 CREATE_THREAD_RETURN = dict(createdCount=1, createdId='test_inserted_thread')
@@ -147,7 +148,7 @@ class TestCreateNewPost:
 
     def test_createNewPostShouldInsertSessionUserIdAsItsOwner(self, service, mock_post):
         repo = service._repo
-        expected_ownerid = DEFAULT_SESSION_USER['userId']
+        expected_ownerid = DEFAULT_SESSION_USER.userId
 
         service.createNewPost(mock_post)
 
@@ -222,7 +223,7 @@ class TestCreateNewThread:
 
     def test_createNewThreadShouldInsertSessionUserIdAsItsOwner(self, service, mock_thread):
         repo = service._repo
-        expected_ownerid = DEFAULT_SESSION_USER['userId']
+        expected_ownerid = DEFAULT_SESSION_USER.userId
 
         service.createNewThread(mock_thread)
 

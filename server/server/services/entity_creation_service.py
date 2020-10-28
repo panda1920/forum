@@ -75,9 +75,8 @@ class EntityCreationService:
             raise exceptions.DuplicateUserError('Username already exist')
 
     def _checkOwnerMatchesSession(self, entity):
-        resource_owner = getattr(entity, 'userId', None)
-        session = self._session.get_user()
-        session_user = session.get('userId', None)
+        resource_owner = entity.userId
+        session_user = self._session.get_user().userId
 
         if resource_owner != session_user:
             logger.error(f'Failed to authorize user: {session_user} to create thread')
@@ -93,7 +92,7 @@ class EntityCreationService:
         return self._repo.createUser(user)
 
     def _createPost(self, post):
-        post.userId = self._session.get_user()['userId']
+        post.userId = self._session.get_user().userId
 
         return self._repo.createPost(post)
 
@@ -101,7 +100,7 @@ class EntityCreationService:
         thread.lastPostId = None
         thread.views = 0
         thread.postCount = 0
-        thread.userId = self._session.get_user()['userId']
+        thread.userId = self._session.get_user().userId
 
         return self._repo.createThread(thread)
 

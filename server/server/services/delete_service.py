@@ -148,6 +148,6 @@ class DeleteService:
             None
         """
         session_user = self._session.get_user()
-        if (session_user is None) or (session_user['userId'] != userId):
+        if (session_user is None) or (session_user.userId != userId):
             logger.error('Failed operation due to unauthorized user')
             raise exceptions.UnauthorizedError('Unauthorized action')

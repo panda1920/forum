@@ -21,7 +21,7 @@ from server.services.delete_service import DeleteService
 from server.services.session import SessionService
 from server.services.image_scaler import ImageScaler
 from server.services.searchfilter_creator import SearchFilterCreator
-from server.middleware.session_user import SessionUserManager
+from server.middleware.request_user import RequestUserManager
 
 # object initialization
 repo = MongoCrudManager(
@@ -38,7 +38,7 @@ delete_service = DeleteService(repo, session_service)
 image_scaler = ImageScaler()
 authentication_service = UserAuthenticationService(repo, PrimitiveFilter, session_service)
 
-session_user = SessionUserManager(session_service, flask_context)
+session_user = RequestUserManager(session_service, flask_context)
 
 
 class Config:

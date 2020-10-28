@@ -1,6 +1,6 @@
 from flask import Blueprint, current_app, render_template, session
 
-# from server.middleware.session_user import SessionUserManager
+# from server.middleware.request_user import RequestUserManager
 from server.config import Config
 import server.routes.route_utils as route_utils
 
@@ -11,7 +11,7 @@ routes = Blueprint('miscRoutes', __name__)
 @routes.route('/index', methods=['GET'])
 def hello_world():
     # currentUser = session.get('userId', 'None')
-    # SessionUserManager.setCurrentUserFromSession(g, session)
+    # RequestUserManager.setCurrentUserFromSession(g, session)
     # return f'You have a userId of {currentUser}!'
     return 'hello world!'
 

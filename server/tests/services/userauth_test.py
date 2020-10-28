@@ -9,7 +9,7 @@ import server.exceptions as exceptions
 from server.services.userauth import PasswordService, UserAuthenticationService
 from server.database.filter import PrimitiveFilter
 import tests.mocks as mocks
-
+from tests.helpers import create_mock_entity_fromattrs
 
 @pytest.fixture(scope='function')
 def user_auth():
@@ -53,12 +53,12 @@ class TestLogin:
         userName='bobby@myforumwebapp.com',
         password='password'
     )
-    DEFAULT_USER_IN_REPO = dict(
+    DEFAULT_USER_IN_REPO = create_mock_entity_fromattrs(dict(
         _id='some_random_id',
         userId='000',
         userName='bobby@myforumwebapp.com',
         password='$pbkdf2-sha256$29000$6z0nxLh37v3fOydkjBHi3A$51waSF7m1N5sFyz/b9wfd6pcuWu4l0T1VceK3WcxJxI',
-    )
+    ))
 
     def test_loginShouldCallSearchUserOnRepo(self, user_auth):
         credentials = self.DEFAULT_USER_CREDENTIALS

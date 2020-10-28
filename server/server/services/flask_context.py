@@ -7,6 +7,8 @@ import logging
 
 from flask import g, session
 
+logger = logging.getLogger(__name__)
+
 
 class FlaskContext:
     """
@@ -26,6 +28,8 @@ class FlaskContext:
         Returns:
             None
         """
+        logger.info('Writing value to global context')
+        logger.debug('with key %s', key)
         setattr(g, key, value)
 
     def read_global(self, key):
@@ -37,9 +41,11 @@ class FlaskContext:
         Returns:
             return value that corresponds to key
         """
+        logger.info('Reading value from global context')
+        logger.debug('with key %s', key)
         value = g.get(key, None)
         if value is None:
-            logging.warning(f'Key {key} not found in flask.g')
+            logger.warning(f'Key {key} not found in flask.g')
 
         return value
     
@@ -52,10 +58,12 @@ class FlaskContext:
         Returns:
             None
         """
+        logger.info('Deleting value from global context')
+        logger.debug('with key %s', key)
         try:
             g.pop(key)
         except Exception:
-            logging.warning(f'Key {key} not found in flask.g')
+            logger.warning(f'Key {key} not found in flask.g')
 
     def write_session(self, key, value):
         """
@@ -67,6 +75,8 @@ class FlaskContext:
         Returns:
             None
         """
+        logger.info('Writing value to flask.session')
+        logger.debug('with key %s', key)
         session[key] = value
         session.modified = True
 
@@ -79,9 +89,11 @@ class FlaskContext:
         Returns:
             return value that corresponds to key
         """
+        logger.info('Reading value from flask.session')
+        logger.debug('with key %s', key)
         value = session.get(key, None)
         if value is None:
-            logging.warning(f'Key {key} not found in flask.session')
+            logger.warning(f'Key {key} not found in flask.session')
 
         return value
     
@@ -94,7 +106,9 @@ class FlaskContext:
         Returns:
             None
         """
+        logger.info('Deleting value from flask.session')
+        logger.debug('with key %s', key)
         try:
             session.pop(key)
         except Exception:
-            logging.warning(f'Key {key} not found in flask.session')
+            logger.warning(f'Key {key} not found in flask.session')

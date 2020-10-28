@@ -9,6 +9,7 @@ import pytest
 from flask import session, g
 
 from server.services.flask_context import FlaskContext
+from tests.helpers import create_mock_entity_fromattrs
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -24,10 +25,12 @@ def context():
 
 class TestFlaskContextCrudGlobals:
     DEFAULT_KEY = 'currentUser'
-    DEFAULT_VALUE = dict(
-        userId='11223344',
-        userName='sampleuser@myforumwebapp.com',
-    )
+    DEFAULT_VALUE = create_mock_entity_fromattrs(dict(
+        userId='test_id',
+        userName='JohnDoe@example.com',
+        displayName='John Doe',
+        password='password123',
+    ))
 
     def test_write_globalShouldReflectChangeOnFlaskGlobal(self, context):
         context.write_global(self. DEFAULT_KEY, self.DEFAULT_VALUE)
@@ -69,10 +72,12 @@ class TestFlaskContextCrudGlobals:
 
 class TestFlaskContextCrudSession:
     DEFAULT_KEY = 'currentUser'
-    DEFAULT_VALUE = dict(
-        userId='11223344',
-        userName='sampleuser@myforumwebapp.com',
-    )
+    DEFAULT_VALUE = create_mock_entity_fromattrs(dict(
+        userId='test_id',
+        userName='JohnDoe@example.com',
+        displayName='John Doe',
+        password='password123',
+    ))
 
     def test_write_sessionShouldReflectChangeOnFlaskGlobal(self, context):
         context.write_session(self. DEFAULT_KEY, self.DEFAULT_VALUE)

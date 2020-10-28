@@ -9,6 +9,8 @@ from passlib.context import CryptContext
 
 import server.exceptions as exceptions
 
+logger = logging.getLogger(__name__)
+
 
 class PasswordService:
     """
@@ -30,6 +32,7 @@ class PasswordService:
         Returns:
             str: hashed password
         """
+        logger.info('Hashing password')
         return cls._context.hash(password)
 
     @classmethod
@@ -43,6 +46,7 @@ class PasswordService:
         Returns:
             boolean: whether verification succeeded or not
         """
+        logger.info('Verifying password')
         try:
             return cls._context.verify(password, hash)
         except Exception:
@@ -71,11 +75,12 @@ class UserAuthenticationService:
         Returns:
             None
         """
+        logger.info('Authenticating credentials')
         userName, password = self._extractUserNameAndPassword(credential)
         user_indb = self._searchUserFromRepo(userName)
 
-        if not PasswordService.verifyPassword(password, user_indb['password']):
-            logging.info('Failed to verify password')
+        if not PasswordService.verifyPassword(password, user_indb.password):
+            logger.info('Failed to verify password')
             raise exceptions.InvalidUserCredentials('Incorrect password')
 
         self._session.set_user(user_indb)
@@ -85,7 +90,7 @@ class UserAuthenticationService:
         password = credential.get('password', None)
 
         if not userName or not password:
-            logging.info('Invalid user credential')
+            logger.info('Invalid user credential')
             raise exceptions.InvalidUserCredentials('Invalid credential')
 
         return (userName, password)
@@ -99,7 +104,7 @@ class UserAuthenticationService:
         try:
             return result['users'][0]
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
             raise exceptions.InvalidUserCredentials('Email not registered')
 
     def logout(self):
@@ -111,4 +116,5 @@ class UserAuthenticationService:
         Returns:
             None
         """
+        logger.info('Logout user')
         self._session.remove_user()

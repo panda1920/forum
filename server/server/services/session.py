@@ -2,16 +2,20 @@
 """
 This file houses session related service methods
 """
-from server.entity.user import removePrivateInfo
+import logging
+
 from server.database.filter import PrimitiveFilter
+
+logger = logging.getLogger(__name__)
 
 
 class SessionService:
     """
     Provides methods that interacts with current session user.
     """
-    SESSION_USER_KEY = 'sessionUser'
-    ANONYMOUS_USER = dict(userId='0')
+    SESSION_USER_KEY = 'sessionUserId'
+    REQUEST_USER_KEY = 'currentUser'
+    ANONYMOUS_USERID = '0'
 
     def __init__(self, repo, flask_context):
         self._repo = repo
@@ -27,11 +31,9 @@ class SessionService:
         Returns:
             None
         """
-        userId = user['userId']
-        # want to keep session information as small as possible
-        # which is why only userId info is stored in session
-        self._context.write_session(self.SESSION_USER_KEY, dict(userId=userId))
-        self.set_global_user(user)
+        logger.info('Setting session user')
+        self._context.write_session(self.SESSION_USER_KEY, user.userId)
+        self._context.write_global(self.REQUEST_USER_KEY, user)
 
     def remove_user(self):
         """
@@ -43,33 +45,43 @@ class SessionService:
         Returns:
             None
         """
-        self.set_user(self.ANONYMOUS_USER)
-
-    def set_global_user(self, user):
-        """
-        set current user in the global context to designated user.
-        Performs query to the repository because this method requires
-        complete information of user.
-        
-        Args:
-            user(dict): user entity
-        Returns:
-            return value
-        """
-        searchFilter = PrimitiveFilter.createFilter(dict(
-            field='userId', operator='eq', value=[ user['userId'] ]
-        ))
-        user_indb = self._repo.searchUser(searchFilter)['users'][0]
-
-        self._context.write_global(self.SESSION_USER_KEY, removePrivateInfo(user_indb) )
+        logger.info('Removing session user')
+        anonymous = self._find_user(self.ANONYMOUS_USERID)
+        self.set_user(anonymous)
 
     def get_user(self):
         """
-        Reads current session user from global context.
+        Reads user information from current request context.
         Intended to be used in situations where authorizations are required.
         
         Args:
         Returns:
             user dict
         """
-        return self._context.read_global(self.SESSION_USER_KEY)
+        logger.info('Reading user from request context')
+        return self._context.read_global(self.REQUEST_USER_KEY)
+
+    def populate_request_user(self):
+        """
+        Popualtes request context user based on session user.
+        Anonymous user is set if no session found.
+        
+        Args:
+            None
+        Returns:
+            None
+        """
+        logger.info('Populating user information in request context')
+        session_userid = self._context.read_session(self.SESSION_USER_KEY)
+        if session_userid is None:
+            user = self._find_user(self.ANONYMOUS_USERID)
+        else:
+            user = self._find_user(session_userid)
+
+        self._context.write_global(self.REQUEST_USER_KEY, user)
+
+    def _find_user(self, userid):
+        search_filter = PrimitiveFilter.createFilter(dict(
+            field='userId', operator='eq', value=[ userid ]
+        ))
+        return self._repo.searchUser(search_filter)['users'][0]

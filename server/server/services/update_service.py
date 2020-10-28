@@ -130,7 +130,7 @@ class UpdateService:
             None
         """
         ownerIds = [ entity.userId for entity in entities ]
-        session_userid = self._session.get_user()['userId']
+        session_userid = self._session.get_user().userId
         for ownerId in ownerIds:
             if session_userid != ownerId:
                 logger.warning('Failed to authorize user')
