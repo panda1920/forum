@@ -126,7 +126,7 @@ class Thread(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': False,
                     'hide': True,
                 },
@@ -145,7 +145,7 @@ class Thread(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -164,7 +164,7 @@ class Thread(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': False,
                     'hide': False,
                 },
@@ -183,7 +183,7 @@ class Thread(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -203,7 +203,7 @@ class Thread(Entity):
                 'nullable': True,
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': False,
                     'hide': False,
                 },
@@ -222,7 +222,7 @@ class Thread(Entity):
                 'type': 'list'
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -241,7 +241,7 @@ class Thread(Entity):
                 'type': 'list'
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -261,7 +261,7 @@ class Thread(Entity):
                 'regex': r'.*\S+.*',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -284,7 +284,7 @@ class Thread(Entity):
                 'regex': r'.*\S+.*',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -306,7 +306,7 @@ class Thread(Entity):
                 'type': 'integer',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -325,7 +325,7 @@ class Thread(Entity):
                 'type': 'integer',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -345,7 +345,7 @@ class Thread(Entity):
                 'allowed': ['views', 'postCount']
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': False,
                     'hide': True,
                 },
@@ -364,7 +364,7 @@ class Thread(Entity):
                 'type': 'float',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -383,7 +383,7 @@ class Thread(Entity):
                 'type': 'float',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },

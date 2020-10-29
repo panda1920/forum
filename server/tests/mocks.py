@@ -56,7 +56,7 @@ def createMockG():
     return create_autospec(g, instance=True)
 
 
-def createMockSessionMiddleware():
+def createMockRequestUserManager():
     return create_autospec(RequestUserManager)
 
 

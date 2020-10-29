@@ -8,8 +8,7 @@ from server.entity import Thread
 
 class SearchService:
     """
-    Provides search service for various use cases for the upper layers.
-    Coveres all entities involved in this app: user, posts, threads etc.
+    Provides methods to search for entities.
     Contains most of the search related business logic.
     """
 

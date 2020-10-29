@@ -95,7 +95,7 @@ class Post(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': False,
                     'hide': True,
                 },
@@ -114,7 +114,7 @@ class Post(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -133,7 +133,7 @@ class Post(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -152,7 +152,7 @@ class Post(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -174,7 +174,7 @@ class Post(Entity):
                 'type': 'list',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                     'entity': True,
@@ -194,7 +194,7 @@ class Post(Entity):
                 'type': 'float',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -213,7 +213,7 @@ class Post(Entity):
                 'type': 'float',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },

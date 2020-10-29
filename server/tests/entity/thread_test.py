@@ -4,7 +4,6 @@ This file houses tests for Thread entity
 """
 
 import pytest
-import json
 
 from server.entity import Thread
 from server.exceptions import EntityValidationError
@@ -134,23 +133,21 @@ class TestConversionMethods:
     def thread(self):
         return Thread(DEFAULT_ARGS)
 
-    def test_to_json(self, thread):
-        json_string = thread.to_json()
+    def test_to_serialize(self, thread):
+        serialized = thread.to_serialize()
 
-        json_dict = json.loads(json_string)
-        for attr, value in json_dict.items():
+        for attr, value in serialized.items():
             assert DEFAULT_ARGS[attr] == value
 
-    def test_to_jsonIgnoresUnnecessaryAttributes(self, thread):
+    def test_to_serializeIgnoresUnnecessaryAttributes(self, thread):
         private_attrs = ['_id', 'increment', ]
 
-        json_string = thread.to_json()
+        serialized = thread.to_serialize()
 
-        json_dict = json.loads(json_string)
-        for attr, value in json_dict.items():
+        for attr in serialized.keys():
             assert attr not in private_attrs
 
-    def test_to_jsonValidatesRequiredAttributes(self, thread):
+    def test_to_serializeValidatesRequiredAttributes(self, thread):
         required_attributes = [
             'threadId',
             'boardId',
@@ -169,7 +166,7 @@ class TestConversionMethods:
             thread = Thread(args)
 
             with pytest.raises(EntityValidationError):
-                thread.to_json()
+                thread.to_serialize()
 
     def test_to_createGeneratesDictForCreation(self, thread):
         create_dict = thread.to_create()

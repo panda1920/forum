@@ -4,7 +4,6 @@ This file houses tests for Post entity
 """
 
 import pytest
-import json
 
 from server.entity import Post
 from server.exceptions import EntityValidationError
@@ -78,30 +77,28 @@ class TestConversionMethods:
 
         return post
 
-    def test_to_json(self, post):
-        json_string = post.to_json()
+    def test_to_serialize(self, post):
+        serialized = post.to_serialize()
 
-        json_dict = json.loads(json_string)
-        for attr, value in json_dict.items():
+        for attr, value in serialized.items():
             if attr == 'owner':
                 assert [ self.MOCK_USER_ATTRS ] == value
             else:
                 assert DEFAULT_ARGS[attr] == value
 
-    def test_to_jsonIgnoresPrivateInformation(self, post):
+    def test_to_serializeIgnoresPrivateInformation(self, post):
         private_attrs = ['_id', ]
 
-        json_string = post.to_json()
+        serialized = post.to_serialize()
 
-        json_dict = json.loads(json_string)
-        for attr, value in json_dict.items():
+        for attr in serialized.keys():
             assert attr not in private_attrs
 
-    def test_to_jsonCallsConvertDictForEachOwners(self, post):
+    def test_to_serializeCallsConvertDictForEachOwners(self, post):
         owners = post.owner
 
         try:
-            post.to_json()
+            post.to_serialize()
         except Exception:
             # ignore failed serialization during tests
             pass
@@ -109,9 +106,9 @@ class TestConversionMethods:
         for owner in owners:
             assert len(owner._convert_dict_for.call_args_list) > 0
             arg1, *_ = owner._convert_dict_for.call_args_list[0][0]
-            assert arg1 == 'to_json'
+            assert arg1 == 'to_serialize'
 
-    def test_to_jsonValidatesRequiredAttributes(self, post):
+    def test_to_serializeValidatesRequiredAttributes(self, post):
         required_attributes = [
             'postId',
             'userId',
@@ -126,7 +123,7 @@ class TestConversionMethods:
             post = Post(args)
 
             with pytest.raises(EntityValidationError):
-                post.to_json()
+                post.to_serialize()
 
     def test_to_createGeneratesDictForCreation(self, post):
         create_dict = post.to_create()

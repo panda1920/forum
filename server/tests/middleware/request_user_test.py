@@ -29,14 +29,12 @@ DEFAULT_RESPONSE_DATA = {
 @pytest.fixture(scope='function')
 def session_user():
     mock_user = create_mock_entity_fromattrs(DEFAULT_USER_ATTRS)
-    mock_user.to_json.return_value = DEFAULT_USER_ATTRS
+    mock_user.to_serialize.return_value = DEFAULT_USER_ATTRS
     mock_session = mocks.createMockSessionService()
     mock_session.get_user.return_value = mock_user
     mock_session.REQUEST_USER_KEY = SessionService.REQUEST_USER_KEY
     
-    mock_context = mocks.createMockFlaskContext()
-
-    return RequestUserManager(mock_session, mock_context)
+    return RequestUserManager(mock_session)
 
 
 def createMockResponse():
@@ -68,7 +66,7 @@ class TestRequestUserManager:
 
         session_user.addCurrentUserToResponse(mock_response)
 
-        assert mock_user.to_json.call_count == 1
+        assert mock_user.to_serialize.call_count == 1
 
     def test_addCurrentUserToResponseShouldUpdateDataWithRequestContextUser(self, session_user):
         mock_response = createMockResponse()

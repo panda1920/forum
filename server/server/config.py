@@ -31,14 +31,13 @@ repo = MongoCrudManager(
 # repo = FileCrudManager(Path(DATA_LOCATION), AUTHENTICATION_SERVICE)
 flask_context = FlaskContext()
 session_service = SessionService(repo, flask_context)
+request_user = RequestUserManager(session_service)
 creation_service = EntityCreationService(repo, PrimitiveFilter, session_service)
 search_service = SearchService(repo, SearchFilterCreator, PrimitiveFilter, AggregateFilter, Paging)
 update_service = UpdateService(repo, PrimitiveFilter, session_service)
 delete_service = DeleteService(repo, session_service)
 image_scaler = ImageScaler()
 authentication_service = UserAuthenticationService(repo, PrimitiveFilter, session_service)
-
-session_user = RequestUserManager(session_service, flask_context)
 
 
 class Config:
@@ -65,11 +64,11 @@ class Config:
     AUTHENTICATION_SERVICE = authentication_service
 
     # middlewares
-    SESSION_MIDDLEWARE = session_user
+    REQUESTUSER_MIDDLEWARE = request_user
 
     # for session
     SECRET_KEY = os.environ.get('SECRET_KEY')
-    # define how long persisting session information would be held by client
+    # define how long session information would be held by client
     # PERMANENT_SESSION_LIFETIME = os.environ.get('')
     PERMANENT_SESSION_LIFETIME = timedelta(days=31)
 
@@ -128,4 +127,4 @@ class Config:
 
     @staticmethod
     def getSessionMiddleware(app):
-        return app.config['SESSION_MIDDLEWARE']
+        return app.config['REQUESTUSER_MIDDLEWARE']

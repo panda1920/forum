@@ -4,7 +4,6 @@ This file houses tests for User entity
 """
 
 import pytest
-import json
 
 from server.entity import User
 from server.exceptions import EntityValidationError
@@ -79,23 +78,21 @@ class TestConversionMethods:
     def user(self):
         return User(DEFAULT_ARGS)
 
-    def test_to_json(self, user):
-        json_string = user.to_json()
+    def test_to_serialize(self, user):
+        serialized = user.to_serialize()
 
-        json_dict = json.loads(json_string)
-        for attr, value in json_dict.items():
+        for attr, value in serialized.items():
             assert DEFAULT_ARGS[attr] == value
 
-    def test_to_jsonIgnoresPrivateInformation(self, user):
+    def test_to_serializeIgnoresPrivateInformation(self, user):
         private_attrs = ['_id', 'password', ]
 
-        json_string = user.to_json()
+        serialized = user.to_serialize()
 
-        json_dict = json.loads(json_string)
-        for attr, value in json_dict.items():
+        for attr in serialized.items():
             assert attr not in private_attrs
 
-    def test_to_jsonValidatesRequiredAttributes(self, user):
+    def test_to_serializeValidatesRequiredAttributes(self, user):
         required_attributes = [
             'userId',
             'userName',
@@ -110,7 +107,7 @@ class TestConversionMethods:
             user = User(args)
 
             with pytest.raises(EntityValidationError):
-                user.to_json()
+                user.to_serialize()
 
     def test_to_createGeneratesDictForCreation(self, user):
         create_dict = user.to_create()

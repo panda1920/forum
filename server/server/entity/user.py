@@ -111,7 +111,7 @@ class User(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': False,
                     'hide': True,
                 },
@@ -130,7 +130,7 @@ class User(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -150,7 +150,7 @@ class User(Entity):
                 'regex': r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -172,7 +172,7 @@ class User(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -194,7 +194,7 @@ class User(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': False,
                     'hide': True,
                 },
@@ -213,7 +213,7 @@ class User(Entity):
                 'type': 'float',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -232,7 +232,7 @@ class User(Entity):
                 'type': 'float',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },
@@ -251,7 +251,7 @@ class User(Entity):
                 'type': 'string',
             },
             'conversion_rules': {
-                'to_json': {
+                'to_serialize': {
                     'required': True,
                     'hide': False,
                 },

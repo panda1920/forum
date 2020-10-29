@@ -2,8 +2,6 @@
 """
 This file houses Base Entity class
 """
-import json
-
 from server.exceptions import EntityValidationError
 
 
@@ -16,19 +14,16 @@ class Entity:
         sanitized = self._sanitize_attributes(object, **kwargs)
         self.__dict__.update(sanitized)
 
-    def to_json(self):
+    def to_serialize(self):
         """
-        Creates a JSON representation of this entity.
-        Intended to be used in situations where entity data is being sent over the wire.
+        Creates a dictionary of attributes so that it could be sent over the wire.
         
         Args:
             None
         Returns:
-            JSON string
+            Dict of attributes
         """
-        attrs = self._convert_dict_for('to_json')
-
-        return json.dumps(attrs)
+        return self._convert_dict_for('to_serialize')
 
     def to_create(self):
         """
@@ -86,7 +81,7 @@ class Entity:
         validates that attributes meets requirements of the operation.
         
         Args:
-            operation(string): 'to_json'|'to_create'|'to_update'
+            operation(string): 'to_serialize'|'to_create'|'to_update'
         Returns:
             dictionary of attributes
         """
