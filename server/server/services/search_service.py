@@ -1,91 +1,103 @@
 # -*- coding: utf-8 -*-
 """
-This file houses buisness logic for searches made by apis
+This file houses business logic for searches made by apis
 """
+from server.database.sorter import AscendingSorter, DescendingSorter, NullSorter
+from server.entity import Thread
+
 
 class SearchService:
     """
-    Provides search service for various use cases for the upper layers.
-    Coveres all entities involved in this app: user, posts, threads etc.
+    Provides methods to search for entities.
     Contains most of the search related business logic.
     """
 
-    SEARCHKEY_TO_FILTER_OPSTRING_MAPPING = dict(
-        userId='eq',
-        postId='eq',
-        threadId='eq',
-        createdAt='eq',
-    )
-
     # TODO
-    # user authorization
-    # select fields to retrieve based on each use case
     # sanitization of args
-    # possibly change return value to contain more info for the upper layer
-    
-    # post search can be made based on threadId, userId, createdAt...
 
-    def __init__(self, repo, filterClass, aggregateFilterClass, pagingClass):
+    def __init__(self, repo, searchFilterCreator, filterClass, aggregateFilterClass, pagingClass):
         self._repo = repo
+        self._searchFilterCreator = searchFilterCreator
         self._filter = filterClass
         self._aggregate = aggregateFilterClass
         self._paging = pagingClass
 
     def searchUsersByKeyValues(self, keyValues):
-        searchFilters = self._createFiltersForDesignatedFields(
-            keyValues, 'userName', 'displayName'
-        )
-        if len(searchFilters) == 0:
-            return dict(users=[], returnCount=0, matchedCount=0)
-
-        aggregate = self._aggregate.createFilter('or', searchFilters)
+        searchFilter = self._searchFilterCreator.create_usersearch(keyValues)
         paging = self._paging(keyValues)
-
-        return self._repo.searchUser(aggregate, paging)
-
-    def searchPostsByKeyValues(self, keyValues):
-        # create aggregate search filter
-        searchFilters = []
-        searchFilters.extend( self._createFiltersForDesignatedFields(
-            keyValues, 'content'
-        ) )
-        searchFilters.extend( self._createFiltersForPredeterminedFields(keyValues) )
-        if len(searchFilters) == 0:
-            return dict(posts=[], returnCount=0, matchedCount=0)
+        sorter = self._createSorterFromKeyValues(keyValues)
         
-        aggregate = self._aggregate.createFilter('and', searchFilters)
-        paging = self._paging(keyValues)
-        
-        postResult = self._repo.searchPost(aggregate, paging)
-        
-        posts = postResult['posts']
-        userSearchFilter = self._createEqFiltersFromRelatedIds('userId', posts)
-        users = self._repo.searchUser(userSearchFilter)['users']
-        postsJoined = self._joinDocuments(posts, users, 'userId', 'user')
+        result = self._repo.searchUser(searchFilter, paging=paging, sorter=sorter)
 
         return dict(
-            posts=postsJoined,
-            returnCount=postResult['returnCount'],
-            matchedCount=postResult['matchedCount'],
+            users=result['users'],
+            returnCount=result['returnCount'],
+            matchedCount=result['matchedCount'],
         )
 
-    def _createFiltersForDesignatedFields(self, keyValues, *fieldnames):
-        searchFilters = [
-            self._createFuzzyFilterFromSearch(keyValues, fieldname)
-            for fieldname in fieldnames
-        ]
-        searchFilters = [ f for f in searchFilters if f is not None ]
-
-        return searchFilters
-
-    def _createFuzzyFilterFromSearch(self, keyValues, fieldname):
-        search = keyValues.get('search', None)
-        if search is None:
-            return None
+    def searchPostsByKeyValues(self, keyValues):
+        searchFilter = self._searchFilterCreator.create_postsearch(keyValues)
+        paging = self._paging(keyValues)
+        sorter = self._createSorterFromKeyValues(keyValues)
         
-        searchTerm = search.split(' ')
-        searchFilter = self._createFilter(fieldname, 'fuzzy', searchTerm)
-        return searchFilter
+        result = self._repo.searchPost(searchFilter, paging=paging, sorter=sorter)
+        self._joinOwner(result['posts'])
+
+        return dict(
+            posts=result['posts'],
+            returnCount=result['returnCount'],
+            matchedCount=result['matchedCount'],
+        )
+
+    def searchThreadsByKeyValues(self, keyValues):
+        """
+        Searches for threads based on criterias in keyValues
+        
+        Args:
+            keyValues(dict): criterias to search
+        Returns:
+            dict: result of search operation
+        """
+        searchFilter = self._searchFilterCreator.create_threadsearch(keyValues)
+        paging = self._paging(keyValues)
+        sorter = self._createSorterFromKeyValues(keyValues)
+
+        result = self._repo.searchThread(searchFilter, paging=paging, sorter=sorter)
+        self._joinOwner(result['threads'])
+        self._joinLastPost(result['threads'])
+        
+        return dict(
+            threads=result['threads'],
+            returnCount=result['returnCount'],
+            matchedCount=result['matchedCount'],
+        )
+
+    def searchThreadByExplicitId(self, threadId):
+        """
+        Searches for thread based on threadId
+        
+        Args:
+            threadId(string): Id of thread to search
+        Returns:
+            dict: result of search operation
+        """
+        searchFilter = self._searchFilterCreator.create_threadsearch(
+            dict(threadId=threadId)
+        )
+        paging = self._paging()
+
+        result = self._repo.searchThread(searchFilter, paging=paging)
+        self._joinOwner(result['threads'])
+
+        updateThread = Thread()
+        updateThread.increment = 'views'
+        self._repo.updateThread(searchFilter, updateThread)
+
+        return dict(
+            threads=result['threads'],
+            returnCount=result['returnCount'],
+            matchedCount=result['matchedCount'],
+        )
 
     def _createFilter(self, fieldname, operator, values):
         return self._filter.createFilter(dict(
@@ -94,31 +106,95 @@ class SearchService:
             value=values
         ))
 
-    def _createFiltersForPredeterminedFields(self, keyValues):
-        searchFilters = []
-        for fieldname, opstring in self.SEARCHKEY_TO_FILTER_OPSTRING_MAPPING.items():
-            if fieldname in keyValues:
-                searchFilters.append(self._createFilter(
-                    fieldname, opstring, [ keyValues[fieldname] ]
-                ))
+    def _joinOwner(self, entities):
+        """
+        add owner user information to each entity document
+        by searching for it in repo
+        
+        Args:
+            entities(list): documents of entities like posts
+        Returns:
+            None
+        """
+        if len(entities) == 0:
+            return
 
-        return searchFilters
+        userSearchFilter = self._createEqFiltersFromRelatedFieldnames('userId', 'userId', entities)
+        users = self._repo.searchUser(userSearchFilter)['users']
+        self._joinDocuments(entities, users, 'userId', 'userId', 'owner')
 
-    def _createEqFiltersFromRelatedIds(self, relationFieldname, entities):
-        return self._createFilter(
-            relationFieldname, 'eq',
-            [ entity[relationFieldname] for entity in entities ]
-        )
+    def _joinLastPost(self, entities):
+        """
+        add last post information to each entity document
+        by searching for it in repo
+        
+        Args:
+            entities(list): documents of entities like threads
+        Returns:
+            None
+        """
+        if len(entities) == 0:
+            return 0
 
-    def _joinDocuments(self, primaryDocs, secondaryDocs, joinByField, secondaryName):
-        joined = []
+        postSearchFilter = self._createEqFiltersFromRelatedFieldnames('postId', 'lastPostId', entities)
+        posts = self._repo.searchPost(postSearchFilter)['posts']
+        self._joinOwner(posts)
+        self._joinDocuments(entities, posts, 'lastPostId', 'postId', 'lastPost')
+
+    def _createEqFiltersFromRelatedFieldnames(self, filterFieldname, entityFieldname, entities):
+        value = [
+            getattr(entity, entityFieldname)
+            for entity in entities
+            if getattr(entity, entityFieldname, None) is not None
+        ]
+
+        return self._createFilter(filterFieldname, 'eq', value)
+
+    def _joinDocuments(
+        self, primaryDocs, secondaryDocs, primaryField, secondaryField, newRelationName
+    ):
+        """
+        Join two sets of documents by specified fieldnames.
+        When specified field value matches, secondary document is inserted into primary.
+        
+        Args:
+            primaryDocs(list): inject secondary document to this if possible
+            secondaryDocs(list): documents to inject
+            primaryField(string): fieldname in primary to relate
+            secondaryField(string): fieldname in secondary to relate
+            newRelationName(string): new fieldname created in primary to put secondary under
+        Returns:
+            None
+        """
         for pdoc in primaryDocs:
-            newdoc = pdoc.copy()
+            p_fieldvalue = getattr(pdoc, primaryField)
+            p_relation = getattr(pdoc, newRelationName, [])
 
             for sdoc in secondaryDocs:
-                if pdoc[joinByField] == sdoc[joinByField]:
-                    newdoc[secondaryName] = sdoc
-                    break
-            joined.append(newdoc)
+                s_fieldvalue = getattr(sdoc, secondaryField)
+                if not p_fieldvalue == s_fieldvalue:
+                    continue
 
-        return joined
+                p_relation.append(sdoc)
+
+            setattr(pdoc, newRelationName, p_relation)
+
+    def _createSorterFromKeyValues(self, keyValues):
+        """
+        Constructs appropriate Sorter class from keyValues
+        Produces NullSorter if no 'sortBy' field was found'
+
+        Args:
+            keyValues(dict)
+        Returns:
+            Sorter class
+        """
+        sortField = keyValues.get('sortBy', None)
+        if sortField is None:
+            return NullSorter()
+
+        order = keyValues.get('order', None)
+        if order == 'desc':
+            return DescendingSorter(sortField)
+        else:
+            return AscendingSorter(sortField)

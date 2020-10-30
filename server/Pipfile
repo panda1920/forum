@@ -5,6 +5,8 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
+flake8 = "*"
+python-dotenv = "*"
 
 [packages]
 flask = "*"
@@ -12,13 +14,20 @@ cerberus = "*"
 passlib = "*"
 bcrypt = "*"
 pymongo = "*"
+boto3 = "*"
+pillow = "*"
+flask-session = "*"
 
 [requires]
 python_version = "3.7"
 
 [scripts]
 start = "python -m flask run"
-testdata = "python ./tests/database/datacreator.py"
+createdata = "python -m tests.database.datacreator"
+insertmongo = "python -m tests.database.mongo_testdata_insertor"
+
 random = "python -m server.randomcode"
-test = "python -m pytest -ra"
+test = "python -m pytest -ra -m \"not integration\""
 testl = "python -m pytest -ra -m \"not slow\""
+dockerize = "docker image build --no-cache --pull -t panda1920/forumapp-server:latest ."
+dockerpush = "docker push panda1920/forumapp-server:latest"

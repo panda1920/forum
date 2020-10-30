@@ -1,21 +1,17 @@
 import React from 'react';
-import { BrowserRouter, Switch, Route } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
-import Threads from './components/threads/threads.component';
-import UsersPage from './pages/users/userspage';
-import PostsPage from './pages/posts/postspage';
-import Signup from './components/signup/signup.component';
+import BasePage from './pages/base/base-page.component';
+
+import { CurrentUserContextProvider } from './contexts/current-user/current-user';
 
 function App() {
   return (
     <BrowserRouter>
       <div className="App">
-        <Switch>
-          <Route path='/users' component={UsersPage} />
-          <Route path='/posts' component={PostsPage} />
-          <Route path='/signup' component={Signup} />
-          <Route path='/' component={Threads} />
-        </Switch>
+        <CurrentUserContextProvider>
+          <BasePage />
+        </CurrentUserContextProvider>
       </div>
     </BrowserRouter>
   );

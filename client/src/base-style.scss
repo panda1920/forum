@@ -1,0 +1,62 @@
+// defines base styles to be referenced by other styles
+$colors: (
+    '00': rgb(50, 50, 50),
+    '01': rgb(220, 220, 220),
+    '02': rgb(220, 150, 50),
+    '99': red,
+);
+
+$font-size: (
+    'header': 40px,
+    'large': 20px,
+    'medium': 14px,
+    'small': 12px,
+);
+
+$spaces: (
+    'large': 40px,
+    'medium': 20px,
+    'small': 10px,
+);
+
+$dimensions: (
+    'header-height': 40px,
+    'header-margin-h': 100px,
+    'header-portrait-size': 32px,
+    // 'header-dropdown-width': 200px,
+    'footer-height': 40px,
+    'main-content-width': 1200px,
+    'block-text-height': 2em,
+
+    'form-input-height': 40px,
+    'form-input-width': 400px,
+    'form-button-height': 40px,
+    'form-button-width': 195px,
+
+    'pagination-text-width': 300px,
+    'pagination-buttons-width': 200px,
+    'thread-card-views-width': 150px,
+    'thread-card-lastpost-width': 300px,
+    
+);
+
+$general-styling: (
+    'border-radius-form': 3px,
+    'border-radius-button': 3px,
+);
+
+/* Rules for sizing the icon. */
+.material-icons.md-18 { font-size: 18px; }
+.material-icons.md-24 { font-size: 24px; }
+.material-icons.md-36 { font-size: 36px; }
+.material-icons.md-48 { font-size: 48px; }
+
+// prevents elements and subelements to be selectable and highlighted
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}

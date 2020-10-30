@@ -1,19 +1,29 @@
 ## Project overview
 A generic forum app you can find anywhere on the internet.
 
-This is my first attempt to build a non-trivial web-app.
-The goal of this project is in the learning that happens during the process of app building. Thorough this effort I will cement my understanding of web technologies I gained from courses taken in the past. Along the way I am also aiming to experiment and familiarize myself with other commonly used technologies to further hone my skills.
+This is my first attempt to build a non-trivial web app.
+The goal I set for myself building this app is as follows:
+- Cement my understanding of web technologies I already know. Just knowing is not enough; practice makes perfect.
+- Experiment and familiarize myself with other commonly used technologies. Get in the habit of keeping my mind open to industry standards and best practices.
 
-## Technologies currently being used
+## Technologies
+### Implemented
 - Backend web app framework: Flask
-- Dependency management: pipenv
-- Testing: pytest
-- CI: CircleCI
-- Database: mongoDB
+- Dependency management / task runner: pipenv, npm
+- Backend testing: pytest
+- CI/CD: CircleCI
+- Persistent storage: mongoDB, Amazon S3
 - Frontend framework: React
-
-## To be implemented
-- Frontend testing: node.js + Jest + JSDom + puppeteer
+- Frontend testing: node.js + Jest + testing-library
 - HTTP server/proxy: Gunicorn, Nginx
-- CD: CircleCI
+
+### Planning to implement
 - Hosting: AWS/docker
+
+## Features
+- User signup
+- User authentication/authorization
+- CRUD operations of forum posts
+- CRUD operations of forum threads
+- Profile pic uploads
+- Fast, responsive frontend taking advantage of SPA framework

@@ -4,15 +4,22 @@ This file houses the class MongoCrudManager.
 It implements the CrudManager class to make CRUD operations to a mongoDB.
 """
 import os
+import time
+import logging
+from collections import defaultdict
 
 from pymongo import MongoClient
 from contextlib import contextmanager
 
+from server.database.sorter import NullSorter
 from server.database.crudmanager import CrudManager
 from server.database.paging import Paging
-from server.entity.user import NewUser, UpdateUser
-from server.entity.post import NewPost, UpdatePost
 import server.exceptions as exceptions
+from server.entity import User, Post, Thread
+
+
+logger = logging.getLogger(__name__)
+
 
 class MongoCrudManager(CrudManager):
     """
@@ -28,68 +35,86 @@ class MongoCrudManager(CrudManager):
         self._userauth = userauth
 
     def createUser(self, user):
-        self._validateEntity(NewUser, user)
-        user['password'] = self._userauth.hashPassword( user['password'] )
-        counterQuery = self._createCounterQuery('userId')
+        attrs = user.to_create()
+        attrs['password'] = self._userauth.hashPassword( attrs['password'] )
 
-        with self._mongoOperationHandling('Failed to create user'):
-            userIdCounter = self._db['counters'].find_one(counterQuery)
-            user['userId'] = str( userIdCounter['value'] )
-            update = { '$inc': { 'value': 1 } }
-            self._db['users'].insert_one(user)
-            self._db['counters'].update_one(counterQuery, update)
+        with self._mongoOperationHandling('Failed to create attrs'):
+            nextUserId = str( self._getCounterAndIncrement('userId') )
+            attrs['userId'] = nextUserId
+            self._db['users'].insert_one(attrs)
 
-    def searchUser(self, searchFilter, paging = Paging()):
-        query = {} if searchFilter is None else searchFilter.getMongoFilter() 
-        start = paging.offset
-        end = None if paging.limit is None else start + paging.limit
+        return dict(
+            createdCount=1,
+            createdId=nextUserId
+        )
+
+    def searchUser(self, searchFilter, **options):
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
+        query = {} if searchFilter is None else searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to search user'):
-            users = list( self._db['users'].find(query)[start:end] )
+            users = list( paging.slice( sorter.sortMongoCursor( self._db['users'].find(query) ) ) )
             matchedCount = self._db['users'].count_documents(query)
             
+        # convert dictionary to User object
+        self._convertInnerIdToStr(users)
+        users = [ User(user) for user in users ]
+
         return {
             'users': users,
             'returnCount': len(users),
             'matchedCount': matchedCount,
         }
 
-    def deleteUser(self, userIds):
-        userQuery = { 'userId': { '$in': userIds } }
-        postQuery = userQuery
+    def deleteUser(self, searchFilter):
+        userQuery = searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to delete user'):
-            self._db['users'].delete_many(userQuery)
-            self._db['posts'].delete_many(postQuery)
+            result = self._db['users'].delete_many(userQuery)
 
-    def updateUser(self, user):
-        self._validateEntity(UpdateUser, user)
-        user['password'] = self._userauth.hashPassword( user['password'] )
-        update = self._createMongoUpdate(UpdateUser, user)
-        query = { 'userId': { '$eq': user['userId'] } }
+        return dict(deleteCount=result.deleted_count)
+
+    def updateUser(self, searchFilter, user):
+        attrs = user.to_update()
+        attrs['password'] = self._userauth.hashPassword( attrs['password'] )
+        query = searchFilter.getMongoFilter()
+        update = self._createMongoUpdate(attrs)
         
-        with self._mongoOperationHandling('Failed to update user'):
-            result = self._db['users'].update_one(query, update)
-        
-        if result.matched_count == 0:
-            raise exceptions.RecordNotFoundError('failed to find document')
-        if result.modified_count == 0:
-            raise exceptions.FailedMongoOperation('failed to update document')
+        with self._mongoOperationHandling('Failed to update attrs'):
+            result = self._db['users'].update_many(query, update)
+
+        return dict(
+            matchedCount=result.matched_count,
+            updatedCount=result.modified_count,
+        )
     
     def createPost(self, post):
-        self._validateEntity(NewPost, post)
+        attrs = post.to_create()
         
         with self._mongoOperationHandling('Failed to create post'):
-            result = self._db['posts'].insert_one(post)
+            nextPostId = str( self._getCounterAndIncrement('postId') )
+            attrs['postId'] = nextPostId
+            self._db['posts'].insert_one(attrs)
+
+        return dict(
+            createdCount=1,
+            createdId=nextPostId,
+        )
     
-    def searchPost(self, searchFilter, paging = Paging()):
+    def searchPost(self, searchFilter, **options):
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
         query = {} if searchFilter is None else searchFilter.getMongoFilter()
-        start = paging.offset
-        end = None if paging.limit is None else start + paging.limit
 
         with self._mongoOperationHandling('Failed to search post'):
-            posts = list( self._db['posts'].find(query)[start:end] )
+            posts = list( paging.slice( sorter.sortMongoCursor( self._db['posts'].find(query) ) ) )
             matchedCount = self._db['posts'].count_documents(query)
+
+        self._convertInnerIdToStr(posts)
+        posts = [ Post(post) for post in posts ]
 
         return {
             'posts': posts,
@@ -97,43 +122,120 @@ class MongoCrudManager(CrudManager):
             'matchedCount': matchedCount,
         }
 
-    def deletePost(self, postIds):
-        query = { 'postId': { '$in': postIds } }
+    def deletePost(self, searchFilter):
+        query = searchFilter.getMongoFilter()
 
         with self._mongoOperationHandling('Failed to create post'):
             result = self._db['posts'].delete_many(query)
 
-    def updatePost(self, post):
-        self._validateEntity(UpdatePost, post)
-        query = { 'postId': { '$eq' : post['postId'] } }
-        update = self._createMongoUpdate(UpdatePost, post)
+        return dict(deleteCount=result.deleted_count)
 
-        with self._mongoOperationHandling('Failed to create post'):
-            result = self._db['posts'].update_one(query, update)
-        if result.matched_count == 0:
-            raise exceptions.RecordNotFoundError('failed to find document')
-        if result.modified_count == 0:
-            raise exceptions.FailedMongoOperation('failed to update document')
+    def updatePost(self, searchFilter, post):
+        attrs = post.to_update()
+        query = searchFilter.getMongoFilter()
+        update = self._createMongoUpdate(attrs)
 
-    def _createMongoUpdate(self, entitySchema, updateProps):
-        update = { '$set': {} }
-        for field in entitySchema.getUpdatableFields():
-            update['$set'][field] = updateProps[field]
+        with self._mongoOperationHandling('Failed to update post'):
+            result = self._db['posts'].update_many(query, update)
+
+        return dict(
+            matchedCount=result.matched_count,
+            updatedCount=result.modified_count,
+        )
+
+    def createThread(self, thread):
+        attrs = thread.to_create()
+
+        with self._mongoOperationHandling('Failed to create new thread'):
+            nextThreadId = str( self._getCounterAndIncrement('threadId') )
+            attrs['threadId'] = nextThreadId
+            attrs['createdAt'] = time.time()
+            self._db['threads'].insert_one(attrs)
+
+        return dict(
+            createdCount=1,
+            createdId=nextThreadId,
+        )
+
+    def searchThread(self, searchFilter, **options):
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
+        query = {} if searchFilter is None else searchFilter.getMongoFilter()
+
+        with self._mongoOperationHandling('Failed to search for threads'):
+            threads = list( paging.slice( sorter.sortMongoCursor( self._db['threads'].find(query) ) ) )
+            matchedCount = self._db['threads'].count_documents(query)
+
+        self._convertInnerIdToStr(threads)
+        threads = [ Thread(thread) for thread in threads ]
+
+        return dict(
+            threads=threads,
+            matchedCount=matchedCount,
+            returnCount=len(threads),
+        )
+
+    def updateThread(self, searchFilter, thread):
+        attrs = thread.to_update()
+
+        fil = searchFilter.getMongoFilter()
+        update = self._createMongoUpdate(attrs)
+        with self._mongoOperationHandling('Failed to update thread'):
+            result = self._db['threads'].update_many(fil, update)
+
+        return dict(
+            matchedCount=result.matched_count,
+            updatedCount=result.modified_count,
+        )
+
+    def deleteThread(self, searchFilter):
+        query = searchFilter.getMongoFilter()
+        with self._mongoOperationHandling('Failed to delete thread'):
+            result = self._db['threads'].delete_many(query)
+
+        return dict(
+            deleteCount=result.deleted_count,
+        )
+
+    def _createMongoUpdate(self, updateProps):
+        update = defaultdict(lambda: defaultdict(int))
+        fieldUpdates = updateProps.copy()
+        incrementField = fieldUpdates.pop('increment', None)
+
+        for field, value in fieldUpdates.items():
+            update['$set'][field] = value
+        if incrementField is not None:
+            update['$inc'][incrementField] = 1
+        
         return update
-
-    def _validateEntity(self, entitySchema, entity):
-        if not entitySchema.validate(entity):
-            raise exceptions.EntityValidationError(f'failed to validate {entitySchema.__name__}')
 
     def _createCounterQuery(self, fieldname):
         return dict(
             fieldname={ '$eq': fieldname }
         )
 
+    def _getCounterAndIncrement(self, fieldname):
+        counterQuery = self._createCounterQuery(fieldname)
+        update = { '$inc': { 'value': 1 } }
+        counterValue = self._db['counters'].find_one_and_update(counterQuery, update)
+
+        return counterValue['value']
+
     @contextmanager
     def _mongoOperationHandling(self, errormsg):
         try:
             yield
         except Exception as e:
-            print(e)
+            logger.error(e)
             raise exceptions.FailedMongoOperation(errormsg)
+
+    def _setDefaultSearchOptions(self, options):
+        if 'paging' not in options:
+            options['paging'] = Paging()
+        if 'sorter' not in options:
+            options['sorter'] = NullSorter()
+
+    def _convertInnerIdToStr(self, entities):
+        for entity in entities:
+            entity['_id'] = str(entity['_id'])

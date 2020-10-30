@@ -5,85 +5,104 @@ This file houses utility logic used by various routes
 
 import json
 
-from flask import make_response, current_app
+from flask import make_response, request
 
-import server.app_utils as app_utils
-from server.database.filter import Filter
-from server.exceptions import MissingQueryStringError, RequestDataTypeMismatchError
+from server.exceptions import RequestDataTypeMismatchError
+
 
 def getJsonFromRequest(req):
     jsonData = req.get_json(silent=True)
-    if jsonData == None:
-        raise RequestDataTypeMismatchError('Request expectind json data')
+    if jsonData is None:
+        raise RequestDataTypeMismatchError('Request expecting json data')
     return jsonData
+
 
 def createPostsObject(posts):
     return {
         'posts': posts
     }
 
-def createUsersObject(users):
+
+def createUsersObject(*users):
     return {
         'users': users
     }
 
-def createSearchResultObject(result):
-    return dict(
-        searchResult=result
-    )
 
-def createSearchResultResponse(result):
-    return createJSONResponse([ dict(searchResult=result) ], 200)
+def createResultResponse(result, status_code=200):
+    return createJSONResponse([ dict(result=result) ], status_code)
 
-def createJSONErrorResponse(error, datas = [], additionalHeaders = {}):
+
+def createJSONErrorResponse(error, datas=[], additionalHeaders={}):
     datas.append({
         'error': {
             'description': error.getErrorMsg()
-        } 
+        }
     })
+    
     return createJSONResponse(datas, error.getStatusCode(), additionalHeaders)
 
-def createJSONResponse(datas, statusCode, additionalHeaders = {}):
+
+def createJSONResponse(datas, statusCode, additionalHeaders={}):
     responseBody = {}
     for data in datas:
         responseBody.update(data)
     jsonBody = json.dumps(responseBody)
 
-    headers = {'content-type': 'application/json'}
+    headers = {'Content-Type': 'application/json'}
     headers.update(additionalHeaders)
 
-    return make_response(jsonBody, statusCode, headers)
+    return createCorsifiedResponse(jsonBody, statusCode, headers)
+
 
 def createTextResponse(string, statusCode):
-    return make_response(string, statusCode, {'content-type': 'text/plain'})
+    return createCorsifiedResponse(string, statusCode, {'Content-Type': 'text/plain'})
 
-def createSearchFilters(requestArgs, fieldName):
-    filters = []
 
-    search = requestArgs.get('search', None)
-    if not search:
-        raise MissingQueryStringError('need search key and value as querystring')
+def createCorsifiedResponse(string, statusCode, headers):
+    cors_headers = { 'Access-Control-Allow-Origin': '*' }
+    cors_headers.update(headers)
+    return make_response(string, statusCode, cors_headers)
+
+
+def cors_wrapped_route(route_func, path, **options):
+    """
+    wraps app.route, blueprint.route
+    so it returns CORS preflight response for any OPTIONS request
     
-    searchTerms = search.split(' ')
-    filters.append( createFuzzySearchFilter(searchTerms, fieldName) )
-    return filters
+    Args:
+        route_func(func): designate Blueprint.route or app.route
+        path(string): url
+    Returns:
+        response object
+    """
+    def inner(func):
+        def wrapper(*args, **kwargs):
+            if request.method == 'OPTIONS':
+                return createPreflightCorsResponse()
+            else:
+                return func(*args, **kwargs)
 
-def createIDFilters(fieldName, idValue):
-    filters = [
-        createEQSearchFilter([idValue], fieldName)
-    ]
-    return filters
+        wrapper.__name__ = func.__name__
 
-def createFuzzySearchFilter(searchTerms, fieldName):
-    return app_utils.getFilter(current_app).createFilter({
-        'field': fieldName,
-        'operator': 'fuzzy',
-        'value': searchTerms,
-    })
+        # make sure OPTIONS method are allowed in routes
+        # so CORS preflight can be handled by the wrapper function above
+        if 'methods' in options:
+            if 'OPTIONS' not in options['methods']:
+                options['methods'].append('OPTIONS')
 
-def createEQSearchFilter(values, fieldName):
-    return app_utils.getFilter(current_app).createFilter({
-        'field': fieldName,
-        'operator': 'eq',
-        'value': values,
-    })
+        return route_func(path, **options)(wrapper)
+
+    return inner
+
+
+def createPreflightCorsResponse():
+    response = make_response()
+    cors_headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': '*',
+    }
+    response.headers.extend(cors_headers)
+
+    return response

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This file contains classes to help setup/cleanup needed for
+This file contains classes to help setup/cleanup for
 testing database CRUD management classes
 """
 
@@ -17,6 +17,7 @@ import tests.mocks as mocks
 
 PROJECT_DIR = Path(__file__).resolve().parents[3]
 TESTDATA = PROJECT_DIR / 'server' / 'tests' / 'database' / 'testdata.json'
+
 
 class SetupCrudManager:
     def setup(self):
@@ -49,6 +50,12 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
+    def validateCreatedThreads(self):
+        """
+        validates threads created in the database
+        """
+        raise NotImplementedError
+
     def getAllUsers(self):
         """
         returns a list of objects
@@ -62,7 +69,7 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
-    def findUsers(self, fieldname, fieldvalues):
+    def findUsers(self, searchFilter):
         """
         returns all users that match the criteria
         """
@@ -88,7 +95,7 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
-    def findPosts(self, fieldname, fieldvalues):
+    def findPosts(self, searchFilter):
         """
         returns all posts that match the criteria
         """
@@ -101,14 +108,40 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
-    def getMockUserAuth(self):
+    def getAllThreads(self):
+        """
+        returns a list of objects
+        retrieves all threads in database
+        """
+        raise NotImplementedError
+
+    def getThreadCount(self):
+        """
+        returns the number of threads in the current db
+        """
+        raise NotImplementedError
+
+    def findThreads(self, searchFilter):
+        """
+        returns all threads that match the criteria
+        """
+        raise NotImplementedError
+
+    def getOriginalThreads(self):
+        """
+        returns a list of objects
+        retrieves all threads that were in testdata file
+        """
+        raise NotImplementedError
+
+    def getMockPassword(self):
         """
         returns a mock instance of user authentication class
         this is a depdency that is injected into database manager at its construction
         """
         raise NotImplementedError
 
-    def getDB(self):
+    def getRepo(self):
         """
         returns the instance of database manager class
         this gives access to what we want to test
@@ -126,20 +159,23 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
+
 class Setup_FileCrudManager(SetupCrudManager):
     def __init__(self):
         self._saveLocation = Path(__file__).resolve().parents[0] / 'temp'
         self._usersFile = self._saveLocation / FileCrudManager.USERS_FILENAME
         self._postsFile = self._saveLocation / FileCrudManager.POSTS_FILENAME
+        self._threadsFile = self._saveLocation / FileCrudManager.THREADS_FILENAME
         self._countersFile = self._saveLocation / FileCrudManager.COUNTERS_FILENAME
         self._testdata = self._readTestData()
-        self._userauth = mocks.createMockUserAuth()
-        self._db = FileCrudManager(self._saveLocation, self._userauth)
+        self._password = mocks.createMockPassword()
+        self._repo = FileCrudManager(self._saveLocation, self._password)
 
     def setup(self):
         self._saveLocation.mkdir(exist_ok=True)
         self._writeObjToFile(self._testdata['users'], self._usersFile)
         self._writeObjToFile(self._testdata['posts'], self._postsFile)
+        self._writeObjToFile(self._testdata['threads'], self._threadsFile)
         self._writeObjToFile(self._testdata['counters'], self._countersFile)
 
     def cleanup(self):
@@ -157,6 +193,10 @@ class Setup_FileCrudManager(SetupCrudManager):
         assert self._postsFile.exists()
         assert len(self.getAllPosts()) == len(self.getOriginalPosts())
 
+    def validateCreatedThreads(self):
+        assert self._threadsFile.exists()
+        assert len( self.getAllThreads() ) == len( self.getOriginalThreads() )
+
     def getAllUsers(self):
         return self._readJson( self._usersFile )
 
@@ -166,10 +206,10 @@ class Setup_FileCrudManager(SetupCrudManager):
     def getOriginalUsers(self):
         return self._testdata['users']
 
-    def findUsers(self, fieldname, fieldvalues):
+    def findUsers(self, searchFilter):
         return [
             user for user in self.getAllUsers()
-            if user[fieldname] in fieldvalues
+            if searchFilter.matches(user)
         ]
 
     def getAllPosts(self):
@@ -178,17 +218,32 @@ class Setup_FileCrudManager(SetupCrudManager):
     def getPostCount(self):
         return len( self.getAllPosts() )
 
-    def findPosts(self, fieldname, fieldvalues):
+    def findPosts(self, searchFilter):
         return [
             post for post in self.getAllPosts()
-            if post[fieldname] in fieldvalues
+            if searchFilter.matches(post)
         ]
 
     def getOriginalPosts(self):
         return self._testdata['posts']
 
-    def getDB(self):
-        return self._db
+    def getAllThreads(self):
+        return self._readJson(self._threadsFile)
+
+    def getThreadCount(self):
+        return len( self.getAllThreads() )
+
+    def findThreads(self, searchFilter):
+        return [
+            thread for thread in self.getAllThreads()
+            if searchFilter.matches(thread)
+        ]
+
+    def getOriginalThreads(self):
+        return self._testdata['threads']
+
+    def getRepo(self):
+        return self._repo
 
     def getCounter(self, fieldname):
         counters = self._readJson(self._countersFile)
@@ -197,8 +252,8 @@ class Setup_FileCrudManager(SetupCrudManager):
                 return counter['value']
         return None
 
-    def getMockUserAuth(self):
-        return self._userauth
+    def getMockPassword(self):
+        return self._password
 
     def _readTestData(self):
         with TESTDATA.open('r', encoding='utf-8') as f:
@@ -213,11 +268,16 @@ class Setup_FileCrudManager(SetupCrudManager):
         with filepath.open('r', encoding='utf-8') as f:
             return json.load(f)
 
+
 class Setup_MongoCrudManager(SetupCrudManager):
     TEST_DBNAME = 'test_mongo'
-    def __init__(self):
-        self._userauth = mocks.createMockUserAuth()
-        self._db = MongoCrudManager(self.TEST_DBNAME, self._userauth)
+
+    def __init__(self, dbname=None):
+        if dbname is None:
+            dbname = self.TEST_DBNAME
+        self._dbname = dbname
+        self._password = mocks.createMockPassword()
+        self._repo = MongoCrudManager(dbname, self._password)
 
         hostname = os.getenv('MONGO_HOSTNAME')
         port = int( os.getenv('MONGO_PORT') )
@@ -228,16 +288,18 @@ class Setup_MongoCrudManager(SetupCrudManager):
         db = self._getDB()
         db['users'].insert_many(self._testdata['users'])
         db['posts'].insert_many(self._testdata['posts'])
+        db['threads'].insert_many(self._testdata['threads'])
         db['counters'].insert_many(self._testdata['counters'])
 
     def cleanup(self):
         db = self._getDB()
         db['users'].delete_many({})
         db['posts'].delete_many({})
+        db['threads'].delete_many({})
         db['counters'].delete_many({})
 
     def teardown(self):
-        self._mongo.drop_database(self.TEST_DBNAME)
+        self._mongo.drop_database(self._dbname)
         self._mongo.close()
 
     def validateCreatedUsers(self):
@@ -245,6 +307,9 @@ class Setup_MongoCrudManager(SetupCrudManager):
 
     def validateCreatedPosts(self):
         assert len(self.getAllPosts()) == len(self.getOriginalPosts())
+
+    def validateCreatedThreads(self):
+        assert len( self.getAllThreads() ) == len( self.getOriginalThreads() )
 
     def getAllUsers(self):
         return list( self._getDB()['users'].find() )
@@ -255,8 +320,8 @@ class Setup_MongoCrudManager(SetupCrudManager):
     def getOriginalUsers(self):
         return self._testdata['users']
 
-    def findUsers(self, fieldname, fieldvalues):
-        query = { fieldname: { '$in': fieldvalues } }
+    def findUsers(self, searchFilter):
+        query = searchFilter.getMongoFilter()
         return list( self._getDB()['users'].find(query) )
 
     def getAllPosts(self):
@@ -265,15 +330,28 @@ class Setup_MongoCrudManager(SetupCrudManager):
     def getPostCount(self):
         return self._getDB()['posts'].count_documents({})
 
-    def findPosts(self, fieldname, fieldvalues):
-        query = { fieldname: { '$in': fieldvalues } }
+    def findPosts(self, searchFilter):
+        query = searchFilter.getMongoFilter()
         return list( self._getDB()['posts'].find(query) )
 
     def getOriginalPosts(self):
         return self._testdata['posts']
 
-    def getDB(self):
-        return self._db
+    def getAllThreads(self):
+        return list( self._getDB()['threads'].find() )
+
+    def getThreadCount(self):
+        return self._getDB()['threads'].count_documents({})
+
+    def findThreads(self, searchFilter):
+        query = searchFilter.getMongoFilter()
+        return list( self._getDB()['threads'].find(query) )
+
+    def getOriginalThreads(self):
+        return self._testdata['threads']
+
+    def getRepo(self):
+        return self._repo
 
     def getCounter(self, fieldname):
         query = dict(
@@ -281,14 +359,12 @@ class Setup_MongoCrudManager(SetupCrudManager):
         )
         return self._getDB()['counters'].find_one(query)['value']
 
-    def getMockUserAuth(self):
-        return self._userauth
+    def getMockPassword(self):
+        return self._password
 
     def _readJson(self, filepath):
         with filepath.open('r', encoding='utf-8') as f:
             return json.load(f)
 
     def _getDB(self):
-        # not to be confused with getDB (without the underscore)
-        # this acquires the database instance from pymongo
-        return self._mongo[self.TEST_DBNAME]
+        return self._mongo[self._dbname]

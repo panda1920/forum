@@ -1,0 +1,7 @@
+# This file specifies what to ignore when creating docker image
+./.flake8
+./.pytest_cache
+./*.env
+./pytest.ini
+./tests
+./server/playground

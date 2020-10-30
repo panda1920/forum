@@ -1,0 +1,7 @@
+@import '../../base-style.scss';
+
+.portrait {
+    border-radius: 50%;
+    background-color: map-get($colors, '01');
+    display: inline-block;
+}

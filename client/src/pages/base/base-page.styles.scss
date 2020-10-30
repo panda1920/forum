@@ -1,0 +1,26 @@
+@import '../../base-style';
+
+.base-page {
+    display: flex;
+    flex-direction: column;
+
+    min-height: 100vh;
+
+    header {
+        flex: 0 1 map-get($dimensions, 'header-height');
+    }
+    .main-content {
+        flex: 1 1 auto;
+        width: map-get($dimensions, 'main-content-width');
+        margin: 0 auto;
+        background-color: lighten( map-get($colors, '00'), 10% );
+    }
+    footer {
+        flex: 0 1 map-get($dimensions, 'footer-height');
+    }
+}
+
+.blurred {
+    filter: blur(4px) brightness(40%);
+    background-color: rgba(255, 255, 255, 0.5);
+}

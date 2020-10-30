@@ -2,6 +2,9 @@
 .vscode/
 *.code-workspace
 
+# some docker-compose for local testing
+db.yml
+
 # environment variables
 .env
 
@@ -12,6 +15,10 @@ node_modules/
 # some temporary data
 server/server/data/
 server/**/temp/
+server/**/__pycache__/
+
+# some experimental code
+server/server/playground/
 
 # some research data not part of codebase
 research/
@@ -21,6 +28,10 @@ client/coverage
 
 # production
 client/build/
+
+# archived assets
+client/public/**/*.zip
+client/public/**/*.rar
 
 # misc
 .DS_Store

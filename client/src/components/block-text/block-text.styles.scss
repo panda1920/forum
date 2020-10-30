@@ -1,0 +1,7 @@
+@import '../../base-style';
+
+.block-text {
+    display: block;
+    margin-top: 0px;
+    line-height: map-get($dimensions, 'block-text-height');
+}

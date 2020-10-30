@@ -15,6 +15,7 @@ class MyAppException(Exception):
         """
         return str(self)
 
+
 # client-side error
 class FilterParseError(MyAppException):
     """
@@ -24,6 +25,7 @@ class FilterParseError(MyAppException):
     def getStatusCode(cls):
         return 400
 
+
 class InvalidFilterOperatorError(MyAppException):
     """
     Thrown when invalid filter operator was given to parse
@@ -32,6 +34,7 @@ class InvalidFilterOperatorError(MyAppException):
     def getStatusCode(cls):
         return 400
 
+
 class EntityValidationError(MyAppException):
     """
     Raised when validation of entities fails
@@ -39,6 +42,7 @@ class EntityValidationError(MyAppException):
     @classmethod
     def getStatusCode(cls):
         return 400
+
 
 class MissingQueryStringError(MyAppException):
     """
@@ -49,6 +53,7 @@ class MissingQueryStringError(MyAppException):
     def getStatusCode(cls):
         return 400
 
+
 class RequestDataTypeMismatchError(MyAppException):
     """
     Raised when data in request did not contain expected data type
@@ -56,6 +61,7 @@ class RequestDataTypeMismatchError(MyAppException):
     @classmethod
     def getStatusCode(cls):
         return 400
+
 
 class InvalidUserCredentials(MyAppException):
     """
@@ -65,13 +71,42 @@ class InvalidUserCredentials(MyAppException):
     def getStatusCode(cls):
         return 400
 
+
 class InvalidSession(MyAppException):
     """
-    Raised when session information was unexpectedly missing information.
+    Raised when session information was unexpectedly missing.
     """
     @classmethod
     def getStatusCode(cls):
         return 400
+
+
+class InvalidImageFileError(MyAppException):
+    """
+    Raised when non-valid image file was uploaded
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 400
+
+
+class IdNotSpecifiedError(MyAppException):
+    """
+    Raised when Id was not specified for CRUD operations against entity
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 400
+
+
+class UnauthorizedError(MyAppException):
+    """
+    Raised when API was called by an unauthorized user
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 401
+        
 
 class RecordNotFoundError(MyAppException):
     """
@@ -81,14 +116,16 @@ class RecordNotFoundError(MyAppException):
     def getStatusCode(cls):
         return 404
 
+
 # server-side error
 class ServerMiscError(MyAppException):
     """
-    A general server-side exception 
+    A general server-side exception
     """
     @classmethod
     def getStatusCode(cls):
         return 500
+
 
 class FailedMongoOperation(MyAppException):
     """
@@ -98,10 +135,38 @@ class FailedMongoOperation(MyAppException):
     def getStatusCode(cls):
         return 500
 
+
 class DuplicateUserError(MyAppException):
     """
     User was found when signup
     """
     @classmethod
     def getStatusCode(cls):
-        return 500    
+        return 500
+
+
+class FailedAWSOperation(MyAppException):
+    """
+    Operation on external AWS service failed
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 500
+
+
+class ValueNotFoundOnContext(MyAppException):
+    """
+    Failed to find value in flask context proxies like flask.g
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 500
+
+
+class FieldNotFoundInEntityError(MyAppException):
+    """
+    Failed to find field in entity
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 500

@@ -1,0 +1,30 @@
+@import '../../base-style';
+
+.form-input {
+    font-family: inherit;
+    
+    display: block;
+    padding: 0 5px;
+    font-size: map-get($font-size, 'medium');
+    line-height: map-get($dimensions, 'form-input-height');
+    height: map-get($dimensions, 'form-input-height');
+    width: map-get($dimensions, 'form-input-width');
+    border-radius: map-get($general-styling, 'border-radius-form');
+
+    background-color: lighten(map-get($colors, '01'), 10);
+    border: 1px solid lighten(map-get($colors, '01'), 10);
+
+    &:hover {
+        border: 1px solid map-get($colors, '00');
+    }
+}
+
+.form-input-error {
+    font-size: map-get($font-size, 'small');
+    color: map-get($colors, '99');
+    font-weight: 500;
+}
+
+.error-border {
+    border-color: map-get($colors, '99');
+}

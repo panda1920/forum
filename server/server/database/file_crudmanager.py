@@ -3,17 +3,18 @@
 This file houses class for file-based database system
 Used during the early phases of development
 """
-
-
 import json
 import time
+import logging
 
+from server.database.sorter import NullSorter
 from server.database.crudmanager import CrudManager
-from server.database.filter import PrimitiveFilter
-from server.database.paging import Paging, PagingNoLimit
-from server.entity.user import NewUser, UpdateUser
-from server.entity.post import NewPost, UpdatePost
-from server.exceptions import EntityValidationError, RecordNotFoundError
+from server.database.paging import Paging
+from server.entity import User, Post, Thread
+
+
+logger = logging.getLogger(__name__)
+
 
 def updateJSONFileContent(filenameAttr):
     """
@@ -22,28 +23,32 @@ def updateJSONFileContent(filenameAttr):
     2. edit the content
     3. write the updated content back to the file
     1 and 3 is essentially the same every time.
-    So the motivation was to isolate 2 from the rest of recurring code.
+    So the motivation was to isolate step 2 from the rest of recurring code.
     This decorator helps achieve this.
 
     usage:
     @updateJSONFileContent(<filenameAttr>)
-    def updateContent(self, arg, filecontent = None):
+    def updateContent(self, arg, filecontent=None):
         ... # do something with filecontent and update it
-        return updatedContent
 
     """
     def updateJSONFileContentDecorator(func):
         def wrapper(*args):
-            filename = getattr(args[0], filenameAttr) # args[0] refers to self
+            filename = getattr(args[0], filenameAttr)  # args[0] refers to self
             with filename.open('r', encoding='utf-8') as f:
                 filecontent = json.load(f)
 
-                updatedContent = func(*args, filecontent) # None wont appear in *args
+            # update filecontent with func
+            # None wont appear in *args
+            response = func(*args, filecontent)
             
             with filename.open('w') as f:
-                json.dump(updatedContent, f)
+                json.dump(filecontent, f)
+
+            return response
         return wrapper
     return updateJSONFileContentDecorator
+
 
 class FileCrudManager(CrudManager):
     USERS_FILENAME = 'users.json'
@@ -51,13 +56,13 @@ class FileCrudManager(CrudManager):
     THREADS_FILENAME = 'threads.json'
     COUNTERS_FILENAME = 'counters.json'
 
-    def __init__(self, filePath, userauth):
+    def __init__(self, filePath, passwordService):
         self._saveLocation = filePath
         self._usersFile = self.createIfNotExist(self._saveLocation / self.USERS_FILENAME)
         self._postsFile = self.createIfNotExist(self._saveLocation / self.POSTS_FILENAME)
         self._threadsFile = self.createIfNotExist(self._saveLocation / self.THREADS_FILENAME)
         self._countersFile = self.createIfNotExist(self._saveLocation / self.COUNTERS_FILENAME)
-        self._userauth = userauth
+        self._passwordService = passwordService
 
     def createIfNotExist(self, filePath):
         if not filePath.exists():
@@ -69,142 +74,270 @@ class FileCrudManager(CrudManager):
         return filePath
 
     def createUser(self, user):
-        user['createdAt'] = time.time()
-        if not NewUser.validate(user):
-            raise EntityValidationError('failed to validate new user object')
-        
-        self._createUserImpl(user)
+        attrs = user.to_create()
 
-    def searchUser(self, searchFilter, paging = Paging()):
+        attrs['createdAt'] = time.time()
+        attrs['password'] = self._passwordService.hashPassword( attrs['password'] )
+        attrs['userId'] = str( self._getCounter('userId') )
+        
+        self._createUserImpl(attrs)
+        self._incrementCounter('userId')
+
+        return dict(
+            createdCount=1,
+            createdId=attrs['userId']
+        )
+
+    def searchUser(self, searchFilter, **options):
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
+
         with self._usersFile.open('r', encoding='utf-8') as f:
             users = json.load(f)
 
         if searchFilter is None:
             matchedUsers = users
         else:
-            matchedUsers = []
-            for user in users:
-                if searchFilter.matches(user):
-                    matchedUsers.append(user)
-
-        start = paging.offset
-        end = None if paging.limit is None else start + paging.limit
+            matchedUsers = [
+                user for user in users
+                if searchFilter.matches(user)
+            ]
+        sortedUsers = sorter.sort(matchedUsers)
+        returnUsers = paging.slice(sortedUsers)
+        
         return {
-            'users': matchedUsers[start:end],
-            'returnCount': len(matchedUsers[start:end]),
+            'users': [ User(user) for user in returnUsers ],
+            'returnCount': len(returnUsers),
             'matchedCount': len(matchedUsers),
         }
 
-    def deleteUser(self, userIds):
-        self._deleteUserImpl(userIds)
+    def deleteUser(self, searchFilter):
+        return self._deleteUserImpl(searchFilter)
 
-    def updateUser(self, user):
-        if not UpdateUser.validate(user):
-            raise EntityValidationError('Failed to validate user update object')
+    def updateUser(self, searchFilter, user):
+        attrs = user.to_update()
+        if 'password' in attrs:
+            hashed = self._passwordService.hashPassword( attrs['password'] )
+            attrs['password'] = hashed
         
-        self._updateUserImpl(user)
-
+        return self._updateUserImpl(searchFilter, attrs)
+        
     def createPost(self, post):
-        post['createdAt'] = time.time()
-        if not NewPost.validate(post):
-            raise EntityValidationError('failed to validate new post object')
+        attrs = post.to_create()
 
-        self._createPostImpl(post)
+        attrs['createdAt'] = time.time()
+        attrs['postId'] = str( self._getCounter('postId') )
 
-    def searchPost(self, searchFilter, paging = Paging()):
+        self._createPostImpl(attrs)
+        self._incrementCounter('postId')
+
+        return dict(
+            createdCount=1,
+            createdId=attrs['postId'],
+        )
+
+    def searchPost(self, searchFilter, **options):
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
+
         with self._postsFile.open('r', encoding='utf-8') as f:
             posts = json.load(f)
 
         if searchFilter is None:
             matchedPosts = posts
         else:
-            matchedPosts = []
-            for post in posts:
-                if searchFilter.matches(post):
-                    matchedPosts.append(post)
+            matchedPosts = [
+                post for post in posts
+                if searchFilter.matches(post)
+            ]
+        sortedPosts = sorter.sort(matchedPosts)
+        returnPosts = paging.slice(sortedPosts)
 
-        start = paging.offset
-        end = None if paging.limit is None else start + paging.limit
         return {
-            'posts': matchedPosts[start:end],
-            'returnCount': len(matchedPosts[start:end]),
+            'posts': [ Post(post) for post in returnPosts ],
+            'returnCount': len(returnPosts),
             'matchedCount': len(matchedPosts),
         }
 
-    def deletePost(self, postIds):
-        self._deletePostImpl(postIds)
+    def deletePost(self, searchFilter):
+        return self._deletePostImpl(searchFilter)
 
-    def updatePost(self, post):
-        if not UpdatePost.validate(post):
-            raise EntityValidationError('failed to validate post update object')
+    def updatePost(self, searchFilter, post):
+        attrs = post.to_update()
 
-        self._updatePostImpl(post)
+        return self._updatePostImpl(searchFilter, attrs)
+
+    def createThread(self, thread):
+        attrs = thread.to_create()
+
+        attrs['createdAt'] = time.time()
+        attrs['threadId'] = str( self._getCounter('threadId') )
+
+        self._createThreadImpl(attrs)
+        self._incrementCounter('threadId')
+
+        return dict(
+            createdCount=1,
+            createdId=attrs['threadId'],
+        )
+
+    def searchThread(self, searchFilter, **options):
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
+
+        with self._threadsFile.open('r', encoding='utf-8') as f:
+            threads = json.load(f)
+
+        if searchFilter is None:
+            matchedThreads = threads
+        else:
+            matchedThreads = [
+                thread for thread in threads
+                if searchFilter.matches(thread)
+            ]
+        sortedThreads = sorter.sort(matchedThreads)
+        returnThreads = paging.slice(sortedThreads)
+
+        print(returnThreads)
+
+        return dict(
+            threads=[ Thread(thread) for thread in returnThreads ],
+            matchedCount=len(matchedThreads),
+            returnCount=len(returnThreads),
+        )
+
+    def updateThread(self, searchFilter, thread):
+        attrs = thread.to_update()
+
+        return self._updateThreadImpl(searchFilter, attrs)
+
+    def deleteThread(self, searchFilter):
+        return self._deleteThreadImpl(searchFilter)
 
     @updateJSONFileContent('_usersFile')
-    def _createUserImpl(self, user, currentUsers = None):
-        user['password'] = self._userauth.hashPassword( user['password'] )
-        user['userId'] = str( self._getCounter('userId') )
-        self._incrementCounter('userId')
-        return [*currentUsers, user]
+    def _createUserImpl(self, user, currentUsers=None):
+        currentUsers.append(user)
 
     @updateJSONFileContent('_usersFile')
-    def _deleteUserImpl(self, userIds, currentUsers = None):
-        # delete related posts
-        postsToDelete = self.searchPost(
-            PrimitiveFilter.createFilter({ 'field': 'userId', 'operator': 'eq', 'value': userIds }), 
-            PagingNoLimit()
-        )['posts']
-        self.deletePost( [post['postId'] for post in postsToDelete] )
-        
-        updatedUsers = [
+    def _deleteUserImpl(self, searchFilter, currentUsers=None):
+        deleteCount = 0
+
+        def matches(user):
+            isMatched = searchFilter.matches(user)
+            if isMatched:
+                nonlocal deleteCount
+                deleteCount += 1
+            return isMatched
+
+        currentUsers[:] = [
             user for user in currentUsers
-            if user['userId'] not in userIds
+            if not matches(user)
         ]
-        return updatedUsers
 
+        return dict(deleteCount=deleteCount)
+                
     @updateJSONFileContent('_usersFile')
-    def _updateUserImpl(self, user, currentUsers = None):
-        updatedUsers = [*currentUsers]
+    def _updateUserImpl(self, searchFilter, user_attrs, currentUsers=None):
+        # find out which element in list needs update
+        userIdxToUpdate = [
+            idx for idx, u in enumerate(currentUsers)
+            if searchFilter.matches(u)
+        ]
         
-        try:
-            userIdxToUpdate = [
-                idx for idx, u in enumerate(currentUsers)
-                if u['userId'] == user['userId']
-            ][0]
-        except:
-            raise RecordNotFoundError(f'User with id of {user["userId"]} was not found.')
+        # apply update
+        for idx in userIdxToUpdate:
+            for field, value in user_attrs.items():
+                currentUsers[idx][field] = value
+
+        return dict(
+            matchedCount=len(userIdxToUpdate),
+            updatedCount=len(userIdxToUpdate),
+        )
         
-        for field in UpdateUser.getUpdatableFields():
-            if field == 'password':
-                updatedUsers[userIdxToUpdate][field] = self._userauth.hashPassword( user[field] )
-            else:
-                updatedUsers[userIdxToUpdate][field] = user[field]
-        
-        return updatedUsers
+    @updateJSONFileContent('_postsFile')
+    def _createPostImpl(self, post, currentPosts=None):
+        currentPosts.append(post)
 
     @updateJSONFileContent('_postsFile')
-    def _createPostImpl(self, post, currentPosts = None):
-        return [*currentPosts, post]
+    def _deletePostImpl(self, searchFilter, currentPosts=None):
+        deleteCount = 0
+
+        def matches(user):
+            isMatched = searchFilter.matches(user)
+            if isMatched:
+                nonlocal deleteCount
+                deleteCount += 1
+            return isMatched
+
+        currentPosts[:] = [
+            post for post in currentPosts
+            if not matches(post)
+        ]
+
+        return dict(deleteCount=deleteCount)
 
     @updateJSONFileContent('_postsFile')
-    def _deletePostImpl(self, postIds, currentPosts = None):
-        return [ post for post in currentPosts if post['postId'] not in postIds ]
+    def _updatePostImpl(self, searchFilter, post_attrs, currentPosts=None):
+        # determine which element in list needs update
+        postIdxToUpdate = [
+            idx for idx, p in enumerate(currentPosts)
+            if searchFilter.matches(p)
+        ]
+        # apply update
+        for idx in postIdxToUpdate:
+            for field, value in post_attrs.items():
+                currentPosts[idx][field] = value
 
-    @updateJSONFileContent('_postsFile')
-    def _updatePostImpl(self, post, currentPosts = None):
-        updatedPosts = [*currentPosts]
-        try:
-            postIdxToUpdate = [
-                idx for idx, p in enumerate(currentPosts)
-                if p['postId'] == post['postId']
-            ][0]
-        except:
-            raise RecordNotFoundError(f'Post by id of {post["postId"]} was not found')
+        return dict(
+            matchedCount=len(postIdxToUpdate),
+            updatedCount=len(postIdxToUpdate),
+        )
 
-        for field in UpdatePost.getUpdatableFields():
-            updatedPosts[postIdxToUpdate][field] = post[field]
-        
-        return updatedPosts
+    @updateJSONFileContent('_threadsFile')
+    def _createThreadImpl(self, thread_attrs, currentThreads=None):
+        currentThreads.append(thread_attrs)
+
+    @updateJSONFileContent('_threadsFile')
+    def _updateThreadImpl(self, searchFilter, update_attrs, currentThreads=None):
+        threadIdxToUpdate = [
+            idx for idx, t in enumerate(currentThreads)
+            if searchFilter.matches(t)
+        ]
+
+        fieldUpdate = update_attrs.copy()
+        incrementFieldToUpdate = update_attrs.pop('increment', None)
+
+        for idx in threadIdxToUpdate:
+            for field in fieldUpdate.keys():
+                currentThreads[idx][field] = fieldUpdate[field]
+            if incrementFieldToUpdate is not None:
+                currentThreads[idx][incrementFieldToUpdate] += 1
+
+        return dict(
+            matchedCount=len(threadIdxToUpdate),
+            updatedCount=len(threadIdxToUpdate),
+        )
+
+    @updateJSONFileContent('_threadsFile')
+    def _deleteThreadImpl(self, searchFilter, currentThreads=None):
+        deleteCount = 0
+
+        def matches(thread):
+            isMatched = searchFilter.matches(thread)
+            if isMatched:
+                nonlocal deleteCount
+                deleteCount += 1
+            return isMatched
+
+        currentThreads[:] = [
+            thread for thread in currentThreads
+            if not matches(thread)
+        ]
+
+        return dict(deleteCount=deleteCount)
 
     def _getCounter(self, fieldname):
         with self._countersFile.open('r', encoding='utf-8') as f:
@@ -214,9 +347,13 @@ class FileCrudManager(CrudManager):
                     return counter['value']
 
     @updateJSONFileContent('_countersFile')
-    def _incrementCounter(self, fieldname, currentCounters = None):
-        counters = [*currentCounters]
-        for counter in counters:
+    def _incrementCounter(self, fieldname, currentCounters=None):
+        for counter in currentCounters:
             if counter['fieldname'] == fieldname:
                 counter['value'] += 1
-        return counters
+
+    def _setDefaultSearchOptions(self, options):
+        if 'paging' not in options:
+            options['paging'] = Paging()
+        if 'sorter' not in options:
+            options['sorter'] = NullSorter()

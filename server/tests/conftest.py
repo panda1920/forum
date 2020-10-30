@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-This file defines common test fixtures used across the project
+This file defines common test fixtures and hooks used across the project
 """
 import pytest
 
 from server import server
+
 
 @pytest.fixture(scope='module')
 def app():

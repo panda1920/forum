@@ -1,4 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses a class to declare paging options for database requests
+"""
+
 from cerberus import Validator
+
 
 class Paging:
     """
@@ -26,12 +32,20 @@ class Paging:
         }
     }
 
-    def __init__(self, keyValues = {}):
-        parsed = self.parseKeyValues(keyValues)
-        self.offset = parsed['offset']
-        self.limit = parsed['limit']
+    def __init__(self, keyValues=None):
+        if keyValues is None:
+            keyValues = {}
+        parsed = self._parseKeyValues(keyValues)
+        self._offset = parsed['offset']
+        self._limit = parsed['limit']
 
-    def parseKeyValues(self, keyValues):
+    def slice(self, list):
+        start = self._offset
+        end = start + self._limit
+
+        return list[start:end]
+
+    def _parseKeyValues(self, keyValues):
         copy = keyValues.copy()
         v = Validator(schema=self._schema, allow_unknown=True)
         if v.validate(copy):
@@ -42,11 +56,15 @@ class Paging:
             parsedKeyValues[attribute] = self._schema[attribute]['default']
         return parsedKeyValues
 
+
 class PagingNoLimit(Paging):
     """
     No limit to how many records shown in 1 page
     """
-    def __init__(self, keyValues = {}):
+    def __init__(self, keyValues=None):
         super().__init__(keyValues)
 
-        self.limit = None
+        self._limit = None
+
+    def slice(self, list):
+        return list[self._offset:]

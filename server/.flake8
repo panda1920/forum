@@ -1,0 +1,23 @@
+[flake8]
+max-line-length = 100
+
+exclude =
+    conftest.py
+    ./pytest_cache,
+    *.json,
+    __pycache__,
+    server/playground/*,
+
+ignore = 
+    # suppress spaces between square brackets
+    E201,E202,
+    # suppress blank line contains whitespace warning
+    W293,
+    # suppress warnings on number of #s used for comment
+    E266,
+
+per-file-ignores =
+    # ignores max-line constraint in test related files
+    ./server/tests/*:E501
+    # ignores importing restrictions
+    ./server/**/__init__.py:F401, F403

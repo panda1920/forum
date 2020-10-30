@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-This file houses aggregate search filters like 
+This file houses aggregate search filters like
 AND, OR, NOT
 """
 
 from server.database.filter import Filter
+
 
 class AggregateFilter(Filter):
     """
@@ -14,7 +15,7 @@ class AggregateFilter(Filter):
     """
 
     @staticmethod
-    def createFilter(opstring, filters = []):
+    def createFilter(opstring, filters=[]):
         """
         A factory method to create aggregate filters.
         The motivation was to avoid having to call individual constructors
@@ -53,12 +54,12 @@ class AggregateFilter(Filter):
         """
         raise NotImplementedError
 
-    def matches(self, record):
+    def matches(self, entity):
         """
-        Determines if target record matches the filter
+        Determines if target entity matches the filter
         
         Args:
-            record: record of some entity
+            entity: entity of some entity
         Returns:
             Boolean
         """
@@ -84,6 +85,24 @@ class AggregateFilter(Filter):
         """
         raise NotImplementedError
 
+    def __eq__(self, other):
+        """
+        Compares logical equality of self with other
+        
+        Args:
+            other: other object
+        Returns:
+            Boolean
+        """
+        if not isinstance(other, AggregateFilter):
+            return NotImplemented
+
+        return all([
+            self.getOpString() == other.getOpString(),
+            self._filters == other._filters
+        ])
+
+
 class AndFilter(AggregateFilter):
     """
     Relates filters by AND
@@ -100,9 +119,9 @@ class AndFilter(AggregateFilter):
     def appendFilter(self, filter):
         self._filters.append(filter)
 
-    def matches(self, record):
+    def matches(self, entity):
         return all([
-            f.matches(record) for f in self._filters
+            f.matches(entity) for f in self._filters
         ])
 
     def getMongoFilter(self):
@@ -115,6 +134,7 @@ class AndFilter(AggregateFilter):
 
     def __len__(self):
         return len(self._filters)
+
 
 class OrFilter(AggregateFilter):
     """
@@ -132,9 +152,15 @@ class OrFilter(AggregateFilter):
     def appendFilter(self, filter):
         self._filters.append(filter)
 
-    def matches(self, record):
+    def matches(self, entity):
+        if len(self) == 0:
+            # any of empty list returns False in python
+            # found it more convenient if or filters does not block search
+            # when it is empty
+            return True
+            
         return any([
-            f.matches(record) for f in self._filters
+            f.matches(entity) for f in self._filters
         ])
 
     def getMongoFilter(self):

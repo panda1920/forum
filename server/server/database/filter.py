@@ -2,12 +2,13 @@ from cerberus import Validator
 
 from server.exceptions import FilterParseError, InvalidFilterOperatorError
 
+
 class Filter:
     """
     An object that defines search filter
-    Passed to database object when querying for records
+    Passed to repository object when querying for entities
     Conceptuatlly it does the following 2 things:
-        - determine if record matches the defined filter
+        - determine if entity matches the defined filter
         - pump out mongo expression of filter as dict
     """
     def getOpString(self):
@@ -19,24 +20,35 @@ class Filter:
 
     def getMongoFilter(self):
         """
-        forumlates a mongo filter that can be used for searching documents
+        formulates a mongo filter that can be used for searching documents
         """
         raise NotImplementedError
     
-    def matches(self, record):
+    def matches(self, entity):
         """
-        Determines if target record matches the filter
+        Determines if target entity matches the filter
         """
         raise NotImplementedError
+
+    @staticmethod
+    def createNullFilter():
+        """
+        Creates a null filter
+        
+        Returns:
+            NullFilter object
+        """
+        return NullFilter()
+
 
 class PrimitiveFilter(Filter):
     """
     Base class for filters that are not aggregates.
-    Defines search filter against a record.
+    Defines search filter against a entity.
     Conceptually a primitive filter consists of the following 3 elements:
         - target field
         - value(s) of the field to look for
-        - operator used to compare the above field value against records in db
+        - operator used to compare the above field value against entitys in db
     """
     @staticmethod
     def createFilter(keyValues):
@@ -78,7 +90,7 @@ class PrimitiveFilter(Filter):
             'required': True,
             'type': 'string'
         },
-        'operator' : {
+        'operator': {
             'required': True,
             'type': 'string'
         },
@@ -93,7 +105,7 @@ class PrimitiveFilter(Filter):
         self._values = keyValues['value']
 
     def __eq__(self, other):
-        if not isinstance(other, Filter):
+        if not isinstance(other, PrimitiveFilter):
             return NotImplemented
 
         return all([
@@ -102,8 +114,9 @@ class PrimitiveFilter(Filter):
             self._values == other._values,
         ])
 
-    def isFieldInRecord(self, record):
-        return self._field in record.keys()
+    def isFieldInEntity(self, entity):
+        return self._field in entity
+
 
 class FuzzyStringFilter(PrimitiveFilter):
     """
@@ -115,18 +128,19 @@ class FuzzyStringFilter(PrimitiveFilter):
     def getMongoFilter(self):
         concattedWithPipe = '|'.join(self._values)
         return {
-            self._field: { '$regex': f'{concattedWithPipe}', '$options': 'i'} 
+            self._field: { '$regex': f'{concattedWithPipe}', '$options': 'i'}
         }
 
-    def matches(self, record):
-        if not self.isFieldInRecord(record):
+    def matches(self, entity):
+        if not self.isFieldInEntity(entity):
             return False
         
         for fieldValue in self._values:
-            if record[self._field].find(fieldValue) != -1:
+            if entity[self._field].find(fieldValue) != -1:
                 return True
 
         return False
+
 
 class GTFilter(PrimitiveFilter):
     """
@@ -135,16 +149,17 @@ class GTFilter(PrimitiveFilter):
     def getOpString(self):
         return 'gt'
 
-    def matches(self, record):
-        if not self.isFieldInRecord(record):
+    def matches(self, entity):
+        if not self.isFieldInEntity(entity):
             return False
         
         # only use the first value
-        # the reasoning is that I felt it makes no sense to OR together 
+        # the reasoning is that I felt it makes no sense to OR together
         # greater than comparison filters
         # same goes with gte, lt, lte
         fieldValue = self._values[0]
-        return record[self._field] > fieldValue
+        return entity[self._field] > fieldValue
+
 
 class GTEFilter(PrimitiveFilter):
     """
@@ -153,12 +168,13 @@ class GTEFilter(PrimitiveFilter):
     def getOpString(self):
         return 'gte'
 
-    def matches(self, record):
-        if not self.isFieldInRecord(record):
+    def matches(self, entity):
+        if not self.isFieldInEntity(entity):
             return False
         
         fieldValue = self._values[0]
-        return record[self._field] >= fieldValue
+        return entity[self._field] >= fieldValue
+
 
 class LTFilter(PrimitiveFilter):
     """
@@ -167,12 +183,13 @@ class LTFilter(PrimitiveFilter):
     def getOpString(self):
         return 'lt'
 
-    def matches(self, record):
-        if not self.isFieldInRecord(record):
+    def matches(self, entity):
+        if not self.isFieldInEntity(entity):
             return False
         
         fieldValue = self._values[0]
-        return record[self._field] < fieldValue
+        return entity[self._field] < fieldValue
+
 
 class LTEFilter(PrimitiveFilter):
     """
@@ -181,13 +198,14 @@ class LTEFilter(PrimitiveFilter):
     def getOpString(self):
         return 'lte'
 
-    def matches(self, record):
-        if not self.isFieldInRecord(record):
+    def matches(self, entity):
+        if not self.isFieldInEntity(entity):
             return False
         
         fieldValue = self._values[0]
-        return record[self._field] <= fieldValue
+        return entity[self._field] <= fieldValue
     
+
 class EQFilter(PrimitiveFilter):
     """
     Exact match filter
@@ -197,20 +215,45 @@ class EQFilter(PrimitiveFilter):
 
     def getMongoFilter(self):
         return {
-            self._field: { '$in': self._values } 
+            self._field: { '$in': self._values }
         }
 
-    def matches(self, record):
-        if not self.isFieldInRecord(record):
+    def matches(self, entity):
+        if not self.isFieldInEntity(entity):
             return False
 
         for fieldValue in self._values:
-            if record[self._field] == fieldValue:
+            if entity[self._field] == fieldValue:
                 return True
 
         return False
     
+
 class RegexFilter(PrimitiveFilter):
     """
     Regular expression filter
     """
+
+
+class NullFilter(Filter):
+    """
+    A filter that does not filter anything.
+    Null object pattern
+    """
+    def __init__(self):
+        pass
+
+    def getOpString(self):
+        return 'null'
+
+    def getMongoFilter(self):
+        return {}
+    
+    def matches(self, entity):
+        return True
+
+    def __eq__(self, other):
+        if isinstance(other, NullFilter):
+            return True
+        else:
+            return NotImplemented

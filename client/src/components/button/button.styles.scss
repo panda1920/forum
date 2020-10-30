@@ -1,0 +1,14 @@
+.button {
+    display: inline-block;
+    
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+.button-disabled {
+    pointer-events: none;
+    &:hover {
+        cursor: default;
+    }
+}

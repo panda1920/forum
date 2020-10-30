@@ -1,0 +1,28 @@
+@import '../../base-style';
+
+$width: map-get($dimensions, 'main-content-width');
+$height: 600px;
+
+.modal {
+    position: fixed;
+    top: calc(50vh - #{$height} / 2);
+    left: calc(50vw - #{$width} / 2);
+
+    background-color: map-get($colors, '01');
+    width: $width;
+    height: $height;
+
+    padding: 20px 20px 40px 40px;
+
+    .modal-close-button {
+        position: absolute;
+        right: 20px;
+        top : 20px;
+
+        color: map-get($colors, '00');
+    }
+}
+
+// .ReactModalPortal-Login {
+
+// }

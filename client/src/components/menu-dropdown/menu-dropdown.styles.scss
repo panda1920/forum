@@ -1,0 +1,57 @@
+@import '../../base-style';
+
+$dropdown-padding: 5px 0;
+$dropdown-item-padding: 5px 20px 5px 15px;
+$dropdown-border-left: 5px solid map-get($colors, '00');
+
+.menu-dropdown {
+    position: absolute;
+    line-height: none;
+    background-color: map-get($colors, '00');
+    padding: $dropdown-padding;
+    z-index: 1;
+
+    ul {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        font-size: map-get($font-size, 'medium');
+
+        li {
+            color: map-get($colors, '01');
+            list-style: none;
+        }
+
+        .dropdown-userinfo {
+            padding: $dropdown-item-padding;
+            border-left: $dropdown-border-left;
+
+            .dropdown-username {
+                font-weight: 600;
+            }
+            .dropdown-email {
+                font-size: map-get($font-size, 'small');
+            }
+        }
+
+        .separator {
+            margin: 5px 0;
+            border-top: 1px solid lighten(map-get($colors, '00'), 10%);
+        }
+
+        .button {
+            padding: $dropdown-item-padding;
+            border-left: $dropdown-border-left;
+
+            &:hover {
+                border-color: map-get($colors, '02');
+                color: map-get($colors, '02');
+            }
+        }
+    }
+
+    &:focus {
+        outline: none;
+    }
+}

@@ -1,0 +1,51 @@
+@import '../../base-style';
+
+.thread-card {
+    display: flex;
+    flex-direction: row;
+
+    > div {
+        padding: 5px 20px;
+        color: map-get($colors, '01');
+        font-size: map-get($font-size, 'small');
+    }
+
+    .thread-card-title-userinfo {
+        flex: 1 1 auto;
+
+        .thread-card-title {
+            font-size: map-get($font-size, 'medium');
+            font-weight: 600;
+        }
+    }
+    .thread-card-views-posts {
+        flex: 0 0 map-get($dimensions, 'thread-card-views-width');
+        display: flex;
+        flex-direction: row;
+
+        .views-posts {
+            flex: 1 0 auto;
+            text-align: right;
+        }
+        .views-posts-values {
+            flex: 1 0 auto;
+            text-align: right;
+        }
+    }
+    .thread-card-lastpost {
+        flex: 0 0 map-get($dimensions, 'thread-card-lastpost-width');
+        display: flex;
+        flex-direction: row;
+
+        .portrait {
+            flex: 0 0 auto;
+            width: 32px;
+            height: 32px;
+
+            margin: auto 1em auto 0;
+        }
+        > div {
+            flex: 1 0 auto;
+        }
+    }
+}

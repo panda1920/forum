@@ -1,63 +1,107 @@
 # -*- coding: utf-8 -*-
 """
-This file houses routes for user related api
+This file houses routes for user related API
 """
+from flask import Blueprint, request, current_app
 
-import urllib.parse
-
-from flask import Blueprint, request, current_app, make_response
-
-import server.app_utils as app_utils
-import server.routes.route_utils  as route_utils
-from server.database.filter import Filter
-from server.database.paging import Paging
+from server.config import Config
+import server.routes.route_utils as route_utils
+from server.routes.route_utils import cors_wrapped_route
 from server.exceptions import MyAppException
+from server.entity import User
 
 routes = Blueprint('userRoutes', __name__)
 
-@routes.route('/v1/users', methods=['GET'])
+
+@cors_wrapped_route(routes.route, '/v1/users', methods=['GET'])
 def searchUserv1():
     try:
-        search = app_utils.getSearchService(current_app)
+        search = Config.getSearchService(current_app)
         result = search.searchUsersByKeyValues( request.args.to_dict(flat=True) )
-        return route_utils.createSearchResultResponse(result)
+        result['users'] = [ user.to_serialize() for user in result['users'] ]
+        return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
 
-@routes.route('/v1/users/<userId>', methods=['GET'])
+
+@cors_wrapped_route(routes.route, '/v1/users/<userId>', methods=['GET'])
 def searchUserByIDv1(userId):
     try:
-        search = app_utils.getSearchService(current_app)
+        search = Config.getSearchService(current_app)
         result = search.searchUsersByKeyValues( dict(userId=userId) )
-        return route_utils.createSearchResultResponse(result)
+        result['users'] = [ user.to_serialize() for user in result['users'] ]
+        return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
 
-@routes.route('/v1/users/create', methods=['POST'])
+
+@cors_wrapped_route(routes.route, '/v1/users/create', methods=['POST'])
 def createUserv1():
     try:
-        create = app_utils.getCreationService(current_app)
-        create.signup (request.form.to_dict(flat=True) )
-        return route_utils.createJSONResponse([], 201)
+        create = Config.getCreationService(current_app)
+        result = create.signup( User(route_utils.getJsonFromRequest(request)) )
+        return route_utils.createResultResponse(result, 201)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
 
-@routes.route('/v1/users/<userId>/update', methods=['PATCH'])
+
+@cors_wrapped_route(routes.route, '/v1/users/<userId>/update', methods=['PATCH'])
 def updateUserv1(userId):
     try:
-        userData = route_utils.getJsonFromRequest(request)
-        userData.update({ 'userId': userId })
-        app_utils.getDB(current_app).updateUser(userData)
+        update = Config.getUpdateService(current_app)
+        user_to_update = User(route_utils.getJsonFromRequest(request))
+        user_to_update.userId = userId
+        result = update.updateUser(user_to_update)
+        return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
 
-    return route_utils.createJSONResponse([], 200)
 
-@routes.route('/v1/users/<userId>/delete', methods=['DELETE'])
-def deleteUserv1(userId):
+@cors_wrapped_route(routes.route, '/v1/users/<userId>/delete', methods=['DELETE'])
+def deleteUserByIdv1(userId):
     try:
-        app_utils.getDB(current_app).deleteUser([userId])
+        delete = Config.getDeleteService(current_app)
+        result = delete.deleteUserById(userId)
+        return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
 
+
+@cors_wrapped_route(routes.route, '/v1/users/login', methods=['POST'])
+def loginUserv1():
+    try:
+        userauth = Config.getAuthService(current_app)
+        authenticatedUser = userauth.login( route_utils.getJsonFromRequest(request) )
+        return route_utils.createResultResponse(authenticatedUser)
+    except MyAppException as e:
+        return route_utils.createJSONErrorResponse(e)
+
+
+@cors_wrapped_route(routes.route, '/v1/users/logout', methods=['POST'])
+def logoutUserv1():
+    try:
+        userauth = Config.getAuthService(current_app)
+        result = userauth.logout()
+        return route_utils.createResultResponse(result)
+    except MyAppException as e:
+        return route_utils.createJSONErrorResponse(e)
+
+
+@cors_wrapped_route(routes.route, '/v1/users/session', methods=['GET'])
+def getSessionUserv1():
     return route_utils.createJSONResponse([], 200)
+
+
+@routes.before_request
+def apply_middlewares_before():
+    Config.getRequestUserManager(current_app).setCurrentUser()
+
+
+@routes.after_request
+def apply_middleware_after(response):
+    try:
+        requestuser_manager = Config.getRequestUserManager(current_app)
+        updated_response = requestuser_manager.addCurrentUserToResponse(response)
+        return updated_response
+    except MyAppException as e:
+        return route_utils.createJSONErrorResponse(e)

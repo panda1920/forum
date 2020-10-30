@@ -1,57 +1,112 @@
 # -*- coding: utf-8 -*-
 """
-This file houses business logic for entity creation made by apis
+This file houses business logic for entity creation
 """
+import logging
 
 import server.exceptions as exceptions
-from server.entity.post import NewPost
+from server.entity import Thread
+
+logger = logging.getLogger(__name__)
+
 
 class EntityCreationService:
-    def __init__(self, repo, filterClass):
+    GENERIC_PORTRAIT_IMAGE_URL = 'https://www.seekpng.com/png/detail/365-3651600_default-portrait-image-generic-profile.png'
+
+    def __init__(self, repo, filterClass, session):
         self._repo = repo
         self._filter = filterClass
+        self._session = session
 
-    def signup(self, keyValues):
-        self._checkUserExists(keyValues)
-        self._createUser(keyValues)
+    def signup(self, user):
+        """
+        Create new user entity
+        
+        Args:
+            user: User entity object
+        Returns:
+            dictionary that reports result of operation
+        """
+        self._checkUserExists(user)
+        return self._createUser(user)
 
-    def createNewPost(self, keyValues):
-        postProps = self._generateNewPostProps(keyValues)
-        self._repo.createPost(postProps)
+    def createNewPost(self, post):
+        """
+        Create new post entity
+        
+        Args:
+            post: Post entity object
+        Returns:
+            dictionary that reports result of operation
+        """
+        result = self._createPost(post)
+        self._updateThreadForNewPost(post, result['createdId'])
+        return result
 
-    def _checkUserExists(self, keyValues):
-        if 'userName' not in keyValues:
-            print('Failed to create user: key "userName" was not found')
-            raise exceptions.EntityValidationError('Failed to create user')
+    def createNewThread(self, thread):
+        """
+        Create new thread entity
+        
+        Args:
+            thead: Thread entity object
+        Returns:
+            dictionary that reports result of operation
+        """
+        return self._createThread(thread)
+
+    def _checkUserExists(self, user):
+        try:
+            username = user.userName
+        except AttributeError:
+            logger.error('User is missing username')
+            raise exceptions.EntityValidationError('User is missing username')
 
         searchFilter = self._filter.createFilter(dict(
             field='userName',
             operator='eq',
-            value=[ keyValues['userName'] ]
+            value=[ username ]
         ))
         result = self._repo.searchUser(searchFilter)
 
         if result['returnCount'] > 0:
-            print(f'Failed to create user: username { keyValues["userName"] } already exist')
+            logger.error(
+                f'Failed to create user: username { username } already exist'
+            )
             raise exceptions.DuplicateUserError('Username already exist')
 
+    def _checkOwnerMatchesSession(self, entity):
+        resource_owner = entity.userId
+        session_user = self._session.get_user().userId
 
-    def _createUser(self, keyValues):
-        atIdx = keyValues['userName'].find('@')
-        defaultName = keyValues['userName'][:atIdx]
+        if resource_owner != session_user:
+            logger.error(f'Failed to authorize user: {session_user} to create thread')
+            raise exceptions.UnauthorizedError('Failed to authorize user')
 
-        self._repo.createUser(dict(
-            **keyValues,
-            displayName=defaultName,
+    def _createUser(self, user):
+        atIdx = user.userName.find('@')
+        defaultName = user.userName[:atIdx]
+
+        user.displayName = defaultName
+        user.imageUrl = self.GENERIC_PORTRAIT_IMAGE_URL
+
+        return self._repo.createUser(user)
+
+    def _createPost(self, post):
+        post.userId = self._session.get_user().userId
+
+        return self._repo.createPost(post)
+
+    def _createThread(self, thread):
+        thread.lastPostId = None
+        thread.views = 0
+        thread.postCount = 0
+        thread.userId = self._session.get_user().userId
+
+        return self._repo.createThread(thread)
+
+    def _updateThreadForNewPost(self, post, newId):
+        searchFilter = self._filter.createFilter(dict(
+            field='threadId', operator='eq', value=[ post.threadId ]
         ))
-
-    def _generateNewPostProps(self, keyValues):
-        postProps = {}
-        # need to retrieve user from credentials
-        postProps['userId'] = '0'
-        postFields = NewPost.getFields()
-        for field in keyValues:
-            if field in postFields:
-                postProps[field] = keyValues[field]
-
-        return postProps
+        update = Thread(increment='postCount', lastPostId=newId)
+        self._repo.updateThread(searchFilter, update)

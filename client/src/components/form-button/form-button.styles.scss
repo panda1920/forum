@@ -1,0 +1,10 @@
+@import '../../base-style';
+
+.form-button {
+    width: map-get($dimensions, 'form-button-width');
+    line-height: map-get($dimensions, 'form-button-height');
+    padding: 0 5px;
+    border-radius: map-get($general-styling, 'border-radius-button');
+    
+    background-color: white;
+}
