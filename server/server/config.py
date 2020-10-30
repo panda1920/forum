@@ -126,5 +126,5 @@ class Config:
         return app.config['IMAGE_SCALER']
 
     @staticmethod
-    def getSessionMiddleware(app):
+    def getRequestUserManager(app):
         return app.config['REQUESTUSER_MIDDLEWARE']

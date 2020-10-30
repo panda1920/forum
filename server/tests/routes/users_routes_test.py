@@ -1,3 +1,45 @@
+# -*- coding: utf-8 -*-
+"""
+This file houses tests for User related routes available for this app
+"""
+import json
+import pytest
+
+from server.config import Config
+from server.entity import User
+from tests.helpers import create_mock_entities
+import server.exceptions as exceptions
+
+
+DEFAULT_RETURN_SEARCHUSER_ATTRSET = [
+    dict(userId='test_userid1', userName='user1@example.com', displayName='alice'),
+    dict(userId='test_userid2', userName='user2@example.com', displayName='bobby'),
+    dict(userId='test_userid3', userName='user3@example.com', displayName='charlie'),
+]
+DEFAULT_RETURN_SIGNUP = dict(created='user')
+DEFAULT_RETURN_UPDATEUSER = 'some_value_updateuser'
+DEFAULT_RETURN_DELETEUSER = dict(deleteCount=1)
+DEFAULT_RETURN_LOGIN = dict()
+DEFAULT_RETURN_LOGOUT = dict()
+
+
+@pytest.fixture(scope='function', autouse=True)
+def set_mock_returnvalues(mockApp):
+    Config.getCreationService(mockApp).signup.return_value = DEFAULT_RETURN_SIGNUP
+    
+    mock_returned_users = create_mock_entities(DEFAULT_RETURN_SEARCHUSER_ATTRSET)
+    for user, attrs in zip(mock_returned_users, DEFAULT_RETURN_SEARCHUSER_ATTRSET):
+        user.to_serialize.return_value = attrs
+    Config.getSearchService(mockApp).searchUsersByKeyValues.return_value = dict(users=mock_returned_users)
+
+    Config.getUpdateService(mockApp).updateUser.return_value = DEFAULT_RETURN_UPDATEUSER
+
+    Config.getDeleteService(mockApp).deleteUserById.return_value = DEFAULT_RETURN_DELETEUSER
+
+    Config.getAuthService(mockApp).login.return_value = DEFAULT_RETURN_LOGIN
+    Config.getAuthService(mockApp).logout.return_value = DEFAULT_RETURN_LOGOUT
+
+
 class TestUserAPIs:
     USERAPI_BASE_URL = '/v1/users'
 
@@ -12,18 +54,31 @@ class TestUserAPIs:
 
             mockSearch.searchUsersByKeyValues.assert_called_with(keyValues)
 
-    def test_searchUsersReturns200AearchResultFromService(self, mockApp):
-        Config.getSearchService(mockApp)
+    def test_searchUsersAPICalls_to_serializeOnReturnedEntities(self, mockApp):
+        mockSearch = Config.getSearchService(mockApp)
+        mock_users = mockSearch.searchUsersByKeyValues.return_value['users']
         keyValues = dict(
-            search='username'
+            search='1 2 3 4',
+        )
+
+        with mockApp.test_client() as client:
+            client.get(self.USERAPI_BASE_URL, query_string=keyValues)
+
+            for user in mock_users:
+                assert (user.to_serialize.call_count) == 1
+
+    def test_searchUsersAPIReturns200AndWhatsReturnedFromService(self, mockApp):
+        keyValues = dict(
+            search='1 2 3 4',
         )
 
         with mockApp.test_client() as client:
             response = client.get(self.USERAPI_BASE_URL, query_string=keyValues)
-            jsonResponse = response.get_json()
 
             assert response.status_code == 200
-            assert jsonResponse['result'] == DEFAULT_RETURN_SEARCHUSERS
+            users = response.get_json()['result']['users']
+            for user in users:
+                assert user in DEFAULT_RETURN_SEARCHUSER_ATTRSET
         
     def test_searchUsersReturnsErrorWhenServiceRaisesException(self, mockApp):
         mockSearch = Config.getSearchService(mockApp)
@@ -64,16 +119,29 @@ class TestUserAPIs:
 
             mockSearch.searchUsersByKeyValues.assert_called_with(dict(userId=userId))
 
-    def test_searchUserByExplicitIDReturns200AndresultFromService(self, mockApp):
+    def test_searchUserByExplicitIDCalls_to_serializeOnReturnedEntities(self, mockApp):
+        mockSearch = Config.getSearchService(mockApp)
+        mock_users = mockSearch.searchUsersByKeyValues.return_value['users']
+        userId = '11111111'
+        url = f'{self.USERAPI_BASE_URL}/{userId}'
+
+        with mockApp.test_client() as client:
+            client.get(url)
+
+            for user in mock_users:
+                assert (user.to_serialize.call_count) == 1
+
+    def test_searchUserByExplicitIDReturns200AndWhatsReturnedFromService(self, mockApp):
         userId = '11111111'
         url = f'{self.USERAPI_BASE_URL}/{userId}'
 
         with mockApp.test_client() as client:
             response = client.get(url)
-            jsonResponse = response.get_json()
 
             assert response.status_code == 200
-            assert jsonResponse['result'] == DEFAULT_RETURN_SEARCHUSERS
+            users = response.get_json()['result']['users']
+            for user in users:
+                assert user in DEFAULT_RETURN_SEARCHUSER_ATTRSET
 
     def test_searchUserByExplicitIDReturnsErrorWhenServiceRaisesException(self, mockApp):
         mockSearch = Config.getSearchService(mockApp)
@@ -92,7 +160,7 @@ class TestUserAPIs:
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_createUserPassesFormDataToService(self, mockApp):
+    def test_createUserPassesUserEntityaToService(self, mockApp):
         mockCreate = Config.getCreationService(mockApp)
         userProperties = {
             'userName': 'joe@myforumwebapp.com',
@@ -104,7 +172,10 @@ class TestUserAPIs:
         with mockApp.test_client() as client:
             client.post(url, json=userProperties)
 
-            mockCreate.signup.assert_called_with(userProperties)
+            passed_user, *_ = mockCreate.signup.call_args_list[0][0]
+            assert isinstance(passed_user, User)
+            for k, v in userProperties.items():
+                assert getattr(passed_user, k) == v
 
     def test_createUserReturns201AndResultFromServiceWhenSuccess(self, mockApp):
         userProperties = {
@@ -142,7 +213,7 @@ class TestUserAPIs:
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_updateUserShouldPassDataToServiceAndReturn200(self, client, mockApp):
+    def test_updateUserShouldPassUserEntityToServiceAndReturn200(self, client, mockApp):
         mockUpdate = Config.getUpdateService(mockApp)
         userProperties = {
             'displayName': 'Jimmy',
@@ -153,10 +224,10 @@ class TestUserAPIs:
         response = client.patch(url, json=userProperties)
 
         assert response.status_code == 200
-        mockUpdate.updateUserByKeyValues.assert_called_with(dict(
-            userId=userIdToUpdate,
-            **userProperties
-        ))
+        passed_user, *_ = mockUpdate.updateUser.call_args_list[0][0]
+        assert isinstance(passed_user, User)
+        for k, v in userProperties.items():
+            assert getattr(passed_user, k) == v
         assert response.get_json()['result'] == DEFAULT_RETURN_UPDATEUSER
 
     def test_updateUserReturnsErrorWhenNonJsonPassed(self, client, mockApp):
@@ -183,7 +254,7 @@ class TestUserAPIs:
         ]
 
         for e in exceptionsToTest:
-            mockUpdate.updateUserByKeyValues.side_effect = e
+            mockUpdate.updateUser.side_effect = e
             with mockApp.test_client() as client:
                 response = client.patch(url, json=userProperties)
 
@@ -197,9 +268,7 @@ class TestUserAPIs:
         with mockApp.test_client() as client:
             client.delete(url)
 
-            mockDelete.deleteUserByKeyValues.assert_called_with(dict(
-                userId=userIdToDelete
-            ))
+            mockDelete.deleteUserById.assert_called_with(userIdToDelete)
 
     def test_deleteUserByIdShouldReturn200AndReturnValueFromService(self, mockApp):
         userIdToDelete = '1'
@@ -222,7 +291,7 @@ class TestUserAPIs:
         mockDelete = Config.getDeleteService(mockApp)
 
         for e in exceptionsToTest:
-            mockDelete.deleteUserByKeyValues.side_effect = e
+            mockDelete.deleteUserById.side_effect = e
             with mockApp.test_client() as client:
                 response = client.delete(url)
 
@@ -253,7 +322,7 @@ class TestUserAPIs:
 
         assert response.status_code == 200
         data = response.get_json()
-        assert data['result'] == DEFAULT_USER_RETURNED
+        assert data['result'] == DEFAULT_RETURN_LOGIN
 
     def test_loginShouldReturnErrorWhenLoginRaisesException(self, mockApp):
         userCredentials = dict(
@@ -307,21 +376,21 @@ class TestUserAPIs:
                 assert response.status_code == e.getStatusCode()
 
     def test_sessionShouldReturnResultFromSessionMiddlewareAsData(self, mockApp):
-        expectedData = { 'sessionUser': DEFAULT_USER_RETURNED }
+        expectedData = { 'sessionUser': DEFAULT_RETURN_LOGIN }
 
         def mockAddCurrentUser(response):
             response.set_data( json.dumps(expectedData) )
             return response
 
-        mockSessionUser = Config.getSessionMiddleware(mockApp)
-        mockSessionUser.addCurrentUserToResponse.side_effect = mockAddCurrentUser
+        mockRequestUser = Config.getRequestUserManager(mockApp)
+        mockRequestUser.addCurrentUserToResponse.side_effect = mockAddCurrentUser
 
         url = f'{self.USERAPI_BASE_URL}/session'
         with mockApp.test_client() as client:
             response = client.get(url)
 
             assert response.status_code == 200
-            mockSessionUser.addCurrentUserToResponse.assert_called_once()
+            mockRequestUser.addCurrentUserToResponse.assert_called_once()
             assert response.get_json() == expectedData
 
     def test_sessionShouldNotCallSearchService(self, mockApp):
@@ -339,12 +408,34 @@ class TestUserAPIs:
             exceptions.FailedMongoOperation,
             exceptions.ServerMiscError
         ]
-        mockSessionUser = Config.getSessionMiddleware(mockApp)
+        mockRequestUser = Config.getRequestUserManager(mockApp)
         url = f'{self.USERAPI_BASE_URL}/session'
 
         for e in exceptionsToTest:
-            mockSessionUser.addCurrentUserToResponse.side_effect = e('some error')
+            mockRequestUser.addCurrentUserToResponse.side_effect = e('some error')
             with mockApp.test_client() as client:
                 response = client.get(url)
 
                 assert response.status_code == e.getStatusCode()
+
+
+class TestCORS:
+    URL_TO_TEST = [
+        TestUserAPIs.USERAPI_BASE_URL,
+    ]
+    
+    def test_apiConnectionWithOptionMethodShouldReturnCORSHeaders(self, client):
+        for url in self.URL_TO_TEST:
+            response = client.options(url)
+
+            headers = response.headers
+            assert headers.get('Access-Control-Allow-Origin') == '*'
+            assert headers.get('Access-Control-Allow-Headers') == '*'
+            assert headers.get('Access-Control-Allow-Methods') == '*'
+
+    def test_apiConnectionShouldReturnCORSHeaders(self, client):
+        for url in self.URL_TO_TEST:
+            response = client.get(url)
+
+            headers = response.headers
+            assert headers.get('Access-Control-Allow-Origin') == '*'

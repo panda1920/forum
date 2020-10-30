@@ -16,7 +16,7 @@ class Entity:
 
     def to_serialize(self):
         """
-        Creates a dictionary of attributes so that it could be sent over the wire.
+        Creates a dictionary of attributes so that self could be sent over the wire.
         
         Args:
             None
@@ -131,7 +131,8 @@ def extract_schema(attribute_description):
     Helper function to extract a valid cerberus schema
     
     Args:
-        attribute_description(dict): description of allowed attributes predefined in concrete entity class
+        attribute_description(dict):
+            description of allowed attributes predefined in each concrete entity class
     Returns:
         a valid cerberus schema
     """

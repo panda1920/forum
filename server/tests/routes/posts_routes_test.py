@@ -1,68 +1,36 @@
 # -*- coding: utf-8 -*-
 """
-This file houses tests for post related routes available for this app
+This file houses tests for Post related routes available for this app
 """
-import json
-
 import pytest
 
-import tests.mocks as mocks
 from server.config import Config
-import server.exceptions as exceptions
 from server.entity import Post
 from tests.helpers import create_mock_entities
+import server.exceptions as exceptions
 
 DEFAULT_RETURN_SEARCHPOST_ATTRSET = [
     dict(postId='test_postid1', userId='owner1', content='test_content'),
     dict(postId='test_postid2', userId='owner1', content='test_content'),
     dict(postId='test_postid3', userId='owner1', content='test_content'),
 ]
-DEFAULT_RETURN_SIGNUP = dict(created='user')
 DEFAULT_RETURN_CREATENEWPOST = dict(created='post')
-DEFAULT_RETURN_CREATENEWTHREAD = dict(created='thread')
 DEFAULT_RETURN_UPDATEPOST = 'some_value_updatepost'
 DEFAULT_RETURN_DELETEPOST = dict(deleteCount=1)
 
 
-@pytest.fixture(scope='function')
-def mockApp(app):
-    # replace with mock
-    mockDB = mocks.createMockRepo()
-    app.config['DATABASE_REPOSITORY'] = mockDB
-
-    mockCreate = mocks.createMockEntityCreationService()
-    mockCreate.createNewPost.return_value = DEFAULT_RETURN_CREATENEWPOST
-    app.config['CREATION_SERVICE'] = mockCreate
+@pytest.fixture(scope='function', autouse=True)
+def set_mock_returnvalues(mockApp):
+    Config.getCreationService(mockApp).createNewPost.return_value = DEFAULT_RETURN_CREATENEWPOST
     
-    mockSearch = mocks.createMockSearchService()
     mock_returned_posts = create_mock_entities(DEFAULT_RETURN_SEARCHPOST_ATTRSET)
     for post, attrs in zip(mock_returned_posts, DEFAULT_RETURN_SEARCHPOST_ATTRSET):
         post.to_serialize.return_value = attrs
-    mockSearch.searchPostsByKeyValues.return_value = dict(posts=mock_returned_posts)
-    app.config['SEARCH_SERVICE'] = mockSearch
+    Config.getSearchService(mockApp).searchPostsByKeyValues.return_value = dict(posts=mock_returned_posts)
 
-    mockUpdate = mocks.createMockUpdateService()
-    mockUpdate.updatePost.return_value = DEFAULT_RETURN_UPDATEPOST
-    app.config['UPDATE_SERVICE'] = mockUpdate
+    Config.getUpdateService(mockApp).updatePost.return_value = DEFAULT_RETURN_UPDATEPOST
 
-    mockDelete = mocks.createMockDeleteService()
-    mockDelete.deletePostById.return_value = DEFAULT_RETURN_DELETEPOST
-    app.config['DELETE_SERVICE'] = mockDelete
-
-    mockUserAuth = mocks.createMockUserAuth()
-    app.config['AUTHENTICATION_SERVICE'] = mockUserAuth
-
-    mockSessionUser = mocks.createMockRequestUserManager()
-    mockSessionUser.addCurrentUserToResponse.side_effect = lambda response: response
-    app.config['REQUESTUSER_MIDDLEWARE'] = mockSessionUser
-
-    yield app
-
-
-@pytest.fixture(scope='function')
-def client(mockApp):
-    with mockApp.test_client() as client:
-        yield client
+    Config.getDeleteService(mockApp).deletePostById.return_value = DEFAULT_RETURN_DELETEPOST
 
 
 class TestPostAPIs:
@@ -319,3 +287,25 @@ class TestPostAPIs:
                 response = client.delete(url)
 
                 assert response.status_code == e.getStatusCode()
+
+
+class TestCORS:
+    URL_TO_TEST = [
+        TestPostAPIs.POSTSAPI_BASE_URL,
+    ]
+    
+    def test_apiConnectionWithOptionMethodShouldReturnCORSHeaders(self, client):
+        for url in self.URL_TO_TEST:
+            response = client.options(url)
+
+            headers = response.headers
+            assert headers.get('Access-Control-Allow-Origin') == '*'
+            assert headers.get('Access-Control-Allow-Headers') == '*'
+            assert headers.get('Access-Control-Allow-Methods') == '*'
+
+    def test_apiConnectionShouldReturnCORSHeaders(self, client):
+        for url in self.URL_TO_TEST:
+            response = client.get(url)
+
+            headers = response.headers
+            assert headers.get('Access-Control-Allow-Origin') == '*'

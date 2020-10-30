@@ -8,6 +8,7 @@ import server.routes.route_utils as route_utils
 from server.routes.route_utils import cors_wrapped_route
 from server.config import Config
 from server.exceptions import MyAppException
+from server.entity import Thread
 
 routes = Blueprint('threadRoutes', __name__)
 
@@ -18,6 +19,7 @@ def searchThreadsv1():
         search = Config.getSearchService(current_app)
         keyValues = request.args.to_dict(flat=True)
         result = search.searchThreadsByKeyValues(keyValues)
+        result['threads'] = [ thread.to_serialize() for thread in result['threads'] ]
         return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
@@ -28,6 +30,7 @@ def searchThreadByIdv1(threadId):
     try:
         search = Config.getSearchService(current_app)
         result = search.searchThreadByExplicitId(threadId)
+        result['threads'] = [ thread.to_serialize() for thread in result['threads'] ]
         return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
@@ -37,8 +40,8 @@ def searchThreadByIdv1(threadId):
 def createThreadv1():
     try:
         create = Config.getCreationService(current_app)
-        keyValues = route_utils.getJsonFromRequest(request)
-        result = create.createNewThread(keyValues)
+        thread_to_create = Thread(route_utils.getJsonFromRequest(request))
+        result = create.createNewThread(thread_to_create)
         return route_utils.createResultResponse(result, 201)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
@@ -48,9 +51,9 @@ def createThreadv1():
 def updateThreadByIdv1(threadId):
     try:
         update = Config.getUpdateService(current_app)
-        keyValues = route_utils.getJsonFromRequest(request)
-        keyValues.update({ 'threadId': threadId })
-        result = update.updateThreadByKeyValues(keyValues)
+        thread_to_update = Thread(route_utils.getJsonFromRequest(request))
+        thread_to_update.threadId = threadId
+        result = update.updateThread(thread_to_update)
         return route_utils.createResultResponse(result, 200)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
@@ -60,8 +63,7 @@ def updateThreadByIdv1(threadId):
 def deleteThreadByIdv1(threadId):
     try:
         delete = Config.getDeleteService(current_app)
-        keyValues = { 'threadId': threadId }
-        result = delete.deleteThreadByKeyValues(keyValues)
+        result = delete.deleteThreadById(threadId)
         return route_utils.createResultResponse(result, 202)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
@@ -69,14 +71,14 @@ def deleteThreadByIdv1(threadId):
 
 @routes.before_request
 def apply_middlewares_before():
-    Config.getSessionMiddleware(current_app).setCurrentUser()
+    Config.getRequestUserManager(current_app).setCurrentUser()
 
 
 @routes.after_request
 def apply_middleware_after(response):
     try:
-        session_middleware = Config.getSessionMiddleware(current_app)
-        updated_response = session_middleware.addCurrentUserToResponse(response)
+        requestuser_manager = Config.getRequestUserManager(current_app)
+        updated_response = requestuser_manager.addCurrentUserToResponse(response)
         return updated_response
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)

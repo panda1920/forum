@@ -1,74 +1,37 @@
 # -*- coding: utf-8 -*-
 """
-This file houses tests for all routes available for this app
+This file houses tests for Post related routes available for this app
 """
-import json
-
 import pytest
 
-import tests.mocks as mocks
 from server.config import Config
+from server.entity import Thread
+from tests.helpers import create_mock_entities
 import server.exceptions as exceptions
 
-DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES = 'some_users'
-DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES = 'some_posts'
-DEFAULT_RETURN_SEARCHTHREADSBYKEYVALUES = 'some_threads'
-DEFAULT_RETURN_SEARCHTHREADSBYEXPLICITID = 'some_threads_id'
-DEFAULT_RETURN_SIGNUP = dict(created='user')
-DEFAULT_RETURN_CREATENEWPOST = dict(created='post')
+DEFAULT_RETURN_SEARCHTHREAD_ATTRSET = [
+    dict(threadId='test_thread_1', userId='owner1', title='title_1'),
+    dict(threadId='test_thread_2', userId='owner1', title='title_2'),
+    dict(threadId='test_thread_3', userId='owner1', title='title_3'),
+]
 DEFAULT_RETURN_CREATENEWTHREAD = dict(created='thread')
-DEFAULT_RETURN_UPDATEUSER = 'some_value_updateuser'
-DEFAULT_RETURN_UPDATEPOST = 'some_value_updatepost'
 DEFAULT_RETURN_UPDATETHREAD = 'some_value_updatethread'
-DEFAULT_RETURN_DELETEUSER = dict(deleteCount=1)
-DEFAULT_RETURN_DELETEPOST = dict(deleteCount=1)
 DEFAULT_RETURN_DELETETHREAD = dict(deleteCount=1)
-DEFAULT_RETURN_LOGOUT = dict(logout=True)
-DEFAULT_USER_RETURNED = dict(
-    userId='1',
-    displayName='Bobby',
-    userName='Bobby@myforumwebapp.com',
-    imageUrl='http://some-random-website/myforumwebapp.com',
-)
 
 
-@pytest.fixture(scope='function')
-def mockApp(app):
-    # replace with mock
-    mockDB = mocks.createMockRepo()
-    app.config['DATABASE_REPOSITORY'] = mockDB
-
-    mockCreate = mocks.createMockEntityCreationService()
-    mockCreate.signup.return_value = DEFAULT_RETURN_SIGNUP
-    mockCreate.createNewPost.return_value = DEFAULT_RETURN_CREATENEWPOST
-    mockCreate.createNewThread.return_value = DEFAULT_RETURN_CREATENEWTHREAD
-    app.config['CREATION_SERVICE'] = mockCreate
+@pytest.fixture(scope='function', autouse=True)
+def set_mock_returnvalues(mockApp):
+    Config.getCreationService(mockApp).createNewThread.return_value = DEFAULT_RETURN_CREATENEWTHREAD
     
-    mockSearch = mocks.createMockSearchService()
-    mockSearch.searchPostsByKeyValues.return_value = DEFAULT_RETURN_SEARCHPOSTSBYKEYVALUES
-    mockSearch.searchUsersByKeyValues.return_value = DEFAULT_RETURN_SEARCHUSERSBYKEYVALUES
-    app.config['SEARCH_SERVICE'] = mockSearch
+    mock_returned_threads = create_mock_entities(DEFAULT_RETURN_SEARCHTHREAD_ATTRSET)
+    for thread, attrs in zip(mock_returned_threads, DEFAULT_RETURN_SEARCHTHREAD_ATTRSET):
+        thread.to_serialize.return_value = attrs
+    Config.getSearchService(mockApp).searchThreadsByKeyValues.return_value = dict(threads=mock_returned_threads)
+    Config.getSearchService(mockApp).searchThreadByExplicitId.return_value = dict(threads=mock_returned_threads)
 
-    mockUpdate = mocks.createMockUpdateService()
-    mockUpdate.updateUserByKeyValues.return_value = DEFAULT_RETURN_UPDATEUSER
-    mockUpdate.updatePostByKeyValues.return_value = DEFAULT_RETURN_UPDATEPOST
-    app.config['UPDATE_SERVICE'] = mockUpdate
+    Config.getUpdateService(mockApp).updateThread.return_value = DEFAULT_RETURN_UPDATETHREAD
 
-    mockDelete = mocks.createMockDeleteService()
-    mockDelete.deleteUserByKeyValues.return_value = DEFAULT_RETURN_DELETEUSER
-    mockDelete.deletePostByKeyValues.return_value = DEFAULT_RETURN_DELETEPOST
-    app.config['DELETE_SERVICE'] = mockDelete
-
-    mockUserAuth = mocks.createMockUserAuth()
-    mockUserAuth.login.return_value = DEFAULT_USER_RETURNED
-    mockUserAuth.logout.return_value = DEFAULT_RETURN_LOGOUT
-    app.config['AUTHENTICATION_SERVICE'] = mockUserAuth
-
-    mockSessionUser = mocks.createMockRequestUserManager()
-    mockSessionUser.addCurrentUserToResponse.side_effect = lambda response: response
-    app.config['REQUESTUSER_MIDDLEWARE'] = mockSessionUser
-
-    yield app
+    Config.getDeleteService(mockApp).deleteThreadById.return_value = DEFAULT_RETURN_DELETETHREAD
 
 
 @pytest.fixture(scope='function')
@@ -80,18 +43,6 @@ def client(mockApp):
 class TestThreadAPIs:
     THREAD_API_BASE = '/v1/threads'
 
-    @pytest.fixture(scope='function', autouse=True)
-    def setup_mock(self, mockApp):
-        search = Config.getSearchService(mockApp)
-        search.searchThreadsByKeyValues.return_value = DEFAULT_RETURN_SEARCHTHREADSBYKEYVALUES
-        search.searchThreadByExplicitId.return_value = DEFAULT_RETURN_SEARCHTHREADSBYEXPLICITID
-        create = Config.getCreationService(mockApp)
-        create.createNewThread.return_value = DEFAULT_RETURN_CREATENEWTHREAD
-        update = Config.getUpdateService(mockApp)
-        update.updateThreadByKeyValues.return_value = DEFAULT_RETURN_UPDATETHREAD
-        delete = Config.getDeleteService(mockApp)
-        delete.deleteThreadByKeyValues.return_value = DEFAULT_RETURN_DELETETHREAD
-
     def test_searchThreadShouldPassPostedDataToService(self, mockApp, client):
         url = f'{self.THREAD_API_BASE}'
         search_service = Config.getSearchService(mockApp)
@@ -101,6 +52,17 @@ class TestThreadAPIs:
 
         search_service.searchThreadsByKeyValues.assert_called_with(data)
 
+    def test_searchThreadShouldCall_to_serializeOnReturnedThreads(self, mockApp, client):
+        search_service = Config.getSearchService(mockApp)
+        threads = search_service.searchThreadsByKeyValues.return_value['threads']
+        url = f'{self.THREAD_API_BASE}'
+        data = dict(search='some title')
+
+        client.get(url, query_string=data)
+
+        for thread in threads:
+            assert thread.to_serialize.call_count == 1
+
     def test_searchThreadShouldReturn200AndResultFromService(self, client):
         url = f'{self.THREAD_API_BASE}'
         data = dict(search='some title')
@@ -108,7 +70,9 @@ class TestThreadAPIs:
         response = client.get(url, query_string=data)
 
         assert response.status_code == 200
-        assert response.get_json()['result'] == DEFAULT_RETURN_SEARCHTHREADSBYKEYVALUES
+        threads_returned = response.get_json()['result']['threads']
+        for thread in threads_returned:
+            assert thread in DEFAULT_RETURN_SEARCHTHREAD_ATTRSET
 
     def test_searchThreadShouldReturnErrorWhenServiceRaiseException(self, mockApp):
         url = f'{self.THREAD_API_BASE}'
@@ -136,14 +100,16 @@ class TestThreadAPIs:
 
         search_service.searchThreadByExplicitId.assert_called_with(threadId)
 
-    def test_searchThreadByExplicitIdShouldReturn200AndResultFromService(self, client):
+    def test_searchThreadByExplicitIdShouldCall_to_serializeOnReturnedThreads(self, mockApp, client):
         threadId = '1'
         url = f'{self.THREAD_API_BASE }/{threadId}'
+        search_service = Config.getSearchService(mockApp)
+        threads = search_service.searchThreadsByKeyValues.return_value['threads']
         
-        response = client.get(url)
+        client.get(url)
 
-        assert response.status_code == 200
-        assert response.get_json()['result'] == DEFAULT_RETURN_SEARCHTHREADSBYEXPLICITID
+        for thread in threads:
+            assert thread.to_serialize.call_count == 1
 
     def test_searchThreadByExplicitIdShouldReturnErrorWhenServiceRaiseException(self, mockApp):
         threadId = '1'
@@ -162,14 +128,17 @@ class TestThreadAPIs:
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_createThreadShouldPassPostedDataToService(self, mockApp, client):
+    def test_createThreadShouldPassThreadEntityToService(self, mockApp, client):
         url = f'{self.THREAD_API_BASE}/create'
         creation_service = Config.getCreationService(mockApp)
         data = dict(title='test_title', subject='hello world')
 
         client.post(url, json=data)
 
-        creation_service.createNewThread.assert_called_with(data)
+        passed_thread, *_ = creation_service.createNewThread.call_args_list[0][0]
+        assert isinstance(passed_thread, Thread)
+        for k, v in data.items():
+            assert getattr(passed_thread, k) == v
 
     def test_createThreadShouldReturn201AndResultFromService(self, client):
         url = f'{self.THREAD_API_BASE}/create'
@@ -197,7 +166,7 @@ class TestThreadAPIs:
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_updateThreadByExplicitIdShouldPassPostedDataAndIdToService(self, mockApp, client):
+    def test_updateThreadByExplicitIdShouldThreadEntityToService(self, mockApp, client):
         threadId = '1'
         url = f'{self.THREAD_API_BASE}/{threadId}/update'
         update_service = Config.getUpdateService(mockApp)
@@ -205,9 +174,11 @@ class TestThreadAPIs:
 
         client.patch(url, json=data)
 
-        expectedArg = data.copy()
-        expectedArg.update( dict(threadId=threadId) )
-        update_service.updateThreadByKeyValues.assert_called_with(expectedArg)
+        passed_thread, *_ = update_service.updateThread.call_args_list[0][0]
+        assert isinstance(passed_thread, Thread)
+        for k, v in data.items():
+            assert getattr(passed_thread, k) == v
+        assert getattr(passed_thread, 'threadId') == threadId
 
     def test_updateThreadByExplicitIdShouldReturn200AndResultFromService(self, client):
         threadId = '1'
@@ -231,21 +202,20 @@ class TestThreadAPIs:
         data = dict(title='test_title', subject='hello world')
         
         for e in exceptionsToTest:
-            update_service.updateThreadByKeyValues.side_effect = e('some-error')
+            update_service.updateThread.side_effect = e('some-error')
             with mockApp.test_client() as client:
                 response = client.patch(url, json=data)
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_deleteThreadByExplicitIdShouldIdToService(self, mockApp, client):
+    def test_deleteThreadByExplicitIdShouldPassIdToService(self, mockApp, client):
         threadId = '1'
         url = f'{self.THREAD_API_BASE}/{threadId}/delete'
         delete_service = Config.getDeleteService(mockApp)
 
         client.delete(url)
 
-        expectedArg = dict(threadId=threadId)
-        delete_service.deleteThreadByKeyValues.assert_called_with(expectedArg)
+        delete_service.deleteThreadById.assert_called_with(threadId)
 
     def test_deleteThreadByExplicitIdShouldReturn202AndResultFromService(self, client):
         threadId = '1'
@@ -267,7 +237,7 @@ class TestThreadAPIs:
         ]
         
         for e in exceptionsToTest:
-            delete_service.deleteThreadByKeyValues.side_effect = e('some-error')
+            delete_service.deleteThreadById.side_effect = e('some-error')
             with mockApp.test_client() as client:
                 response = client.delete(url)
 
@@ -276,8 +246,7 @@ class TestThreadAPIs:
 
 class TestCORS:
     URL_TO_TEST = [
-        '/v1/users',
-        '/v1/posts',
+        TestThreadAPIs.THREAD_API_BASE,
     ]
     
     def test_apiConnectionWithOptionMethodShouldReturnCORSHeaders(self, client):

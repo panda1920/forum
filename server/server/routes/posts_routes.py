@@ -2,7 +2,6 @@
 """
 This file defines routes for post related API
 """
-import pdb
 from flask import Blueprint, request, current_app
 
 from server.config import Config
@@ -70,14 +69,14 @@ def deletePostByIdv1(postId):
 
 @routes.before_request
 def apply_middlewares_before():
-    Config.getSessionMiddleware(current_app).setCurrentUser()
+    Config.getRequestUserManager(current_app).setCurrentUser()
 
 
 @routes.after_request
 def apply_middleware_after(response):
     try:
-        session_middleware = Config.getSessionMiddleware(current_app)
-        updated_response = session_middleware.addCurrentUserToResponse(response)
+        requestuser_manager = Config.getRequestUserManager(current_app)
+        updated_response = requestuser_manager.addCurrentUserToResponse(response)
         return updated_response
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
