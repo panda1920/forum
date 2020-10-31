@@ -195,7 +195,7 @@ class Post(Entity):
             },
             'conversion_rules': {
                 'to_serialize': {
-                    'required': True,
+                    'required': False,
                     'hide': False,
                 },
                 'to_create': {

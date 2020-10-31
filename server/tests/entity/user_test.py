@@ -99,7 +99,6 @@ class TestConversionMethods:
             'displayName',
             'imageUrl',
             'createdAt',
-            'updatedAt',
         ]
         for required_attribute in required_attributes:
             args = DEFAULT_ARGS.copy()
@@ -108,6 +107,26 @@ class TestConversionMethods:
 
             with pytest.raises(EntityValidationError):
                 user.to_serialize()
+
+    def test_to_serializeRaisesNoExceptionWhenMissingOptionalAttributes(self):
+        optional_attributes = [
+            'updatedAt',
+        ]
+
+        for optional_attribute in optional_attributes:
+            args = DEFAULT_ARGS.copy()
+            args.pop(optional_attribute)
+            user = User(args)
+
+            user.to_serialize()
+
+    def test_to_serializeContainsOptionalAttributes(self, user):
+        optional_attributes = [
+            'updatedAt',
+        ]
+
+        for optional_attribute in optional_attributes:
+            assert hasattr(user, optional_attribute)
 
     def test_to_createGeneratesDictForCreation(self, user):
         create_dict = user.to_create()

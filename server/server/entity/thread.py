@@ -225,6 +225,7 @@ class Thread(Entity):
                 'to_serialize': {
                     'required': True,
                     'hide': False,
+                    'entity': True,
                 },
                 'to_create': {
                     'required': False,
@@ -244,6 +245,7 @@ class Thread(Entity):
                 'to_serialize': {
                     'required': True,
                     'hide': False,
+                    'entity': True,
                 },
                 'to_create': {
                     'required': False,
@@ -384,7 +386,7 @@ class Thread(Entity):
             },
             'conversion_rules': {
                 'to_serialize': {
-                    'required': True,
+                    'required': False,
                     'hide': False,
                 },
                 'to_create': {

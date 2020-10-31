@@ -77,12 +77,14 @@ class DataCreator:
             threads.append(dict(
                 boardId='0',
                 threadId=str(idx),
+                lastPostId=None,
                 userId=user['userId'],
                 title=f'{user["displayName"]}\'s thread',
                 subject='Subject of this thread',
                 views=0,
                 posts=self.POSTCOUNT_PER_THREAD,
                 createdAt=now,
+                postCount=self.POSTCOUNT_PER_THREAD,
             ))
 
         return threads

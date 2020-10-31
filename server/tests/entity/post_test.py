@@ -7,14 +7,18 @@ import pytest
 
 from server.entity import Post
 from server.exceptions import EntityValidationError
-from tests.mocks import createMockEntity
+from tests.helpers import create_mock_entities
+
+DEFAULT_OWNER_ATTRS = [
+    dict(userId='test_id')
+]
 
 DEFAULT_ARGS = {
     '_id': 'test_id',
     'userId': 'test_post',
     'postId': 'test_id',
     'content': 'test_value',
-    'owner': [],
+    'owner': create_mock_entities(DEFAULT_OWNER_ATTRS),
     'createdAt': 123123.12,
     'updatedAt': 123123.12,
 }
@@ -66,14 +70,12 @@ class TestUserCreation:
 
 
 class TestConversionMethods:
-    MOCK_USER_ATTRS = { 'userID': 'test_user_id' }
-
     @pytest.fixture(scope='function')
     def post(self):
         post = Post(DEFAULT_ARGS)
-        mock_user = createMockEntity()
-        mock_user._convert_dict_for.return_value = self.MOCK_USER_ATTRS
-        post.owner = [ mock_user ]
+        
+        for owner in post.owner:
+            owner.reset_mock()
 
         return post
 
@@ -82,7 +84,7 @@ class TestConversionMethods:
 
         for attr, value in serialized.items():
             if attr == 'owner':
-                assert [ self.MOCK_USER_ATTRS ] == value
+                assert DEFAULT_OWNER_ATTRS == value
             else:
                 assert DEFAULT_ARGS[attr] == value
 
@@ -104,18 +106,17 @@ class TestConversionMethods:
             pass
 
         for owner in owners:
-            assert len(owner._convert_dict_for.call_args_list) > 0
+            assert owner._convert_dict_for.call_count == 1
             arg1, *_ = owner._convert_dict_for.call_args_list[0][0]
             assert arg1 == 'to_serialize'
 
-    def test_to_serializeValidatesRequiredAttributes(self, post):
+    def test_to_serializeValidatesRequiredAttributes(self):
         required_attributes = [
             'postId',
             'userId',
             'content',
             'owner',
             'createdAt',
-            'updatedAt',
         ]
         for required_attribute in required_attributes:
             args = DEFAULT_ARGS.copy()
@@ -124,6 +125,26 @@ class TestConversionMethods:
 
             with pytest.raises(EntityValidationError):
                 post.to_serialize()
+
+    def test_to_serializeRaisesNoExceptionWhenMissingOptionalAttributes(self):
+        optional_attributes = [
+            'updatedAt',
+        ]
+
+        for optional_attribute in optional_attributes:
+            args = DEFAULT_ARGS.copy()
+            args.pop(optional_attribute)
+            post = Post(args)
+
+            post.to_serialize()
+
+    def test_to_serializeContainsOptionalAttributes(self, post):
+        optional_attributes = [
+            'updatedAt',
+        ]
+
+        for optional_attribute in optional_attributes:
+            assert hasattr(post, optional_attribute)
 
     def test_to_createGeneratesDictForCreation(self, post):
         create_dict = post.to_create()

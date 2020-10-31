@@ -18,6 +18,8 @@ def create_mock_entity_fromattrs(attrs):
     entity = createMockEntity()
     for k, v in attrs.items():
         setattr(entity, k, v)
+    entity.to_serialize.return_value = attrs
+    entity._convert_dict_for.return_value = attrs
 
     return entity
 

@@ -7,15 +7,23 @@ import pytest
 
 from server.entity import Thread
 from server.exceptions import EntityValidationError
+from tests.helpers import create_mock_entities
 
+DEFAULT_OWNER_ATTRS = [
+    dict(userId='test_userid'),
+]
+
+DEFAULT_LASTPOST_ATTRS = [
+    dict(postId='test_postid'),
+]
 
 DEFAULT_ARGS = {
     'userId': 'test_thread',
     'boardId': 'test_id',
     'threadId': 'test_id',
     'lastPostId': 'test_id',
-    'owner': [],
-    'lastPost': [],
+    'owner': create_mock_entities(DEFAULT_OWNER_ATTRS),
+    'lastPost': create_mock_entities(DEFAULT_LASTPOST_ATTRS),
     'title': 'Anonymous\'s thread',
     'subject': 'test_subject',
     'increment': 'views',
@@ -131,13 +139,52 @@ class TestThreadCreation:
 class TestConversionMethods:
     @pytest.fixture(scope='function')
     def thread(self):
-        return Thread(DEFAULT_ARGS)
+        thread = Thread(DEFAULT_ARGS)
+
+        for owner in thread.owner:
+            owner.reset_mock()
+        for lastpost in thread.lastPost:
+            lastpost.reset_mock()
+
+        return thread
 
     def test_to_serialize(self, thread):
         serialized = thread.to_serialize()
 
         for attr, value in serialized.items():
-            assert DEFAULT_ARGS[attr] == value
+            if attr == 'owner':
+                assert DEFAULT_OWNER_ATTRS == value
+            elif attr == 'lastPost':
+                assert DEFAULT_LASTPOST_ATTRS == value
+            else:
+                assert DEFAULT_ARGS[attr] == value
+
+    def test_to_serializeCallsConvertDictForEachOwners(self, thread):
+        owners = thread.owner
+
+        try:
+            thread.to_serialize()
+        except Exception:
+            # ignore failed serialization during tests
+            pass
+
+        for owner in owners:
+            assert owner._convert_dict_for.call_count == 1
+            arg1, *_ = owner._convert_dict_for.call_args_list[0][0]
+            assert arg1 == 'to_serialize'
+
+    def test_to_serializeCallsConvertDictForEachLastPost(self, thread):
+        lastpost = thread.lastPost[0]
+
+        try:
+            thread.to_serialize()
+        except Exception:
+            # ignore failed serialization during tests
+            pass
+
+        assert lastpost._convert_dict_for.call_count == 1
+        arg1, *_ = lastpost._convert_dict_for.call_args_list[0][0]
+        assert arg1 == 'to_serialize'
 
     def test_to_serializeIgnoresUnnecessaryAttributes(self, thread):
         private_attrs = ['_id', 'increment', ]
@@ -158,7 +205,6 @@ class TestConversionMethods:
             'views',
             'postCount',
             'createdAt',
-            'updatedAt',
         ]
         for required_attribute in required_attributes:
             args = DEFAULT_ARGS.copy()
@@ -167,6 +213,26 @@ class TestConversionMethods:
 
             with pytest.raises(EntityValidationError):
                 thread.to_serialize()
+
+    def test_to_serializeRaisesNoExceptionWhenMissingOptionalAttributes(self):
+        optional_attributes = [
+            'updatedAt',
+        ]
+
+        for optional_attribute in optional_attributes:
+            args = DEFAULT_ARGS.copy()
+            args.pop(optional_attribute)
+            thread = Thread(args)
+
+            thread.to_serialize()
+
+    def test_to_serializeContainsOptionalAttributes(self, thread):
+        optional_attributes = [
+            'updatedAt',
+        ]
+
+        for optional_attribute in optional_attributes:
+            assert hasattr(thread, optional_attribute)
 
     def test_to_createGeneratesDictForCreation(self, thread):
         create_dict = thread.to_create()
