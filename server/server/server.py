@@ -1,5 +1,7 @@
 from flask import Flask
+
 from server.config import Config
+from server.log_setup import setup
 
 
 def setupApp():
@@ -15,5 +17,8 @@ def setupApp():
     app.register_blueprint(server.routes.thread_routes.routes)
 
     app.config.from_object(Config)
+
+    # setup logger
+    setup()
 
     return app
