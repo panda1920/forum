@@ -8,14 +8,13 @@ The goal I set for myself building this app is as follows:
 
 ## Technologies
 ### Implemented
-- Backend web app framework: Flask
-- Dependency management / task runner: pipenv, npm
+- Backend web app framework: Flask + Gunicorn
 - Backend testing: pytest
+- Frontend framework: React
+- Frontend testing: Jest + testing-library
 - CI/CD: CircleCI
 - Persistent storage: mongoDB, Amazon S3
-- Frontend framework: React
-- Frontend testing: node.js + Jest + testing-library
-- HTTP server/proxy: Gunicorn, Nginx
+- HTTP server/proxy: Nginx
 
 ### Planning to implement
 - Hosting: AWS/docker

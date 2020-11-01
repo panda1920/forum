@@ -17,6 +17,7 @@ pymongo = "*"
 boto3 = "*"
 pillow = "*"
 flask-session = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.7"
@@ -25,7 +26,6 @@ python_version = "3.7"
 start = "python -m flask run"
 createdata = "python -m tests.database.datacreator"
 insertmongo = "python -m tests.database.mongo_testdata_insertor"
-
 random = "python -m server.randomcode"
 test = "python -m pytest -ra -m \"not integration\""
 testl = "python -m pytest -ra -m \"not slow\""

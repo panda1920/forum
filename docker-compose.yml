@@ -17,7 +17,7 @@ services:
     image: panda1920/forumapp-server:latest
     container_name: myforumwebapp-server
     ports:
-      - "5000:5000"
+      - "8000:8000"
     env_file:
       - ./server/.env
     # docker specific env overrides the default .env

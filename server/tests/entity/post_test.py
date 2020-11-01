@@ -73,7 +73,7 @@ class TestConversionMethods:
     @pytest.fixture(scope='function')
     def post(self):
         post = Post(DEFAULT_ARGS)
-        
+
         for owner in post.owner:
             owner.reset_mock()
 
@@ -88,14 +88,6 @@ class TestConversionMethods:
             else:
                 assert DEFAULT_ARGS[attr] == value
 
-    def test_to_serializeIgnoresPrivateInformation(self, post):
-        private_attrs = ['_id', ]
-
-        serialized = post.to_serialize()
-
-        for attr in serialized.keys():
-            assert attr not in private_attrs
-
     def test_to_serializeCallsConvertDictForEachOwners(self, post):
         owners = post.owner
 
@@ -109,6 +101,14 @@ class TestConversionMethods:
             assert owner._convert_dict_for.call_count == 1
             arg1, *_ = owner._convert_dict_for.call_args_list[0][0]
             assert arg1 == 'to_serialize'
+
+    def test_to_serializeIgnoresPrivateInformation(self, post):
+        private_attrs = ['_id', ]
+
+        serialized = post.to_serialize()
+
+        for attr in serialized.keys():
+            assert attr not in private_attrs
 
     def test_to_serializeValidatesRequiredAttributes(self):
         required_attributes = [

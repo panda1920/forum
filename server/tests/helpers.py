@@ -8,7 +8,8 @@ from tests.mocks import createMockEntity
 
 def create_mock_entity_fromattrs(attrs):
     """
-    Creates a mock entity from a dictionary of attributes
+    Creates a mock entity from a dictionary of attributes.
+    All attributes passed can be accessed by the form entity.<attr_name>.
     
     Args:
         attrs(dict): dictionary of attributes
@@ -18,6 +19,9 @@ def create_mock_entity_fromattrs(attrs):
     entity = createMockEntity()
     for k, v in attrs.items():
         setattr(entity, k, v)
+
+    # need these code so that entities can be serialized
+    # without these code, MagicMock cannot be JSONified
     entity.to_serialize.return_value = attrs
     entity._convert_dict_for.return_value = attrs
 

@@ -11,6 +11,7 @@ class Entity:
     """
 
     def __init__(self, object=None, **kwargs):
+        self._logger.info('Constructing %s entity', self.__class__.__name__)
         sanitized = self._sanitize_attributes(object, **kwargs)
         self.__dict__.update(sanitized)
 
@@ -23,6 +24,7 @@ class Entity:
         Returns:
             Dict of attributes
         """
+        self._logger.info('Converting entity for serialization')
         return self._convert_dict_for('to_serialize')
 
     def to_create(self):
@@ -35,6 +37,7 @@ class Entity:
         Returns:
             Dict of attributes
         """
+        self._logger.info('Converting entity for DB create')
         return self._convert_dict_for('to_create')
 
     def to_update(self):
@@ -47,6 +50,7 @@ class Entity:
         Returns:
             Dict of attributes
         """
+        self._logger.info('Converting entity for DB update')
         return self._convert_dict_for('to_update')
 
     def _sanitize_attributes(self, object, **kwargs):
@@ -63,7 +67,7 @@ class Entity:
         normalized = self._validator.normalized(to_add)
 
         if not self._validator.validate(normalized):
-            self._logger.error('Failed validation in %s creation', self.__class__.__name__)
+            self._logger.error('Failed validation of %s entity', self.__class__.__name__)
             for attr, reason in self._validator.errors.items():
                 self._logger.error(
                     '{ attribute: %s,  value: %s, reason: %s }',
