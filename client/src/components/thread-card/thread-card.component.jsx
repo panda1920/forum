@@ -6,12 +6,14 @@ import Portrait from '../portrait/portrait.component';
 import './thread-card.styles.scss';
 
 const ThreadCard = ({ thread }) => {
+  const owner = thread.owner[0];
+
   return (
     <div title='thread card' className='thread-card'>
       <div className='thread-card-title-userinfo'>
         <BlockText className='thread-card-title'>{thread.title}</BlockText>
         <BlockText className='thread-card-userinfo'>
-          Created by {thread.owner.displayName},&nbsp;
+          Created by {owner.displayName},&nbsp;
           {convertEpochToString(thread.createdAt)}
         </BlockText>
       </div>
@@ -25,19 +27,28 @@ const ThreadCard = ({ thread }) => {
           <BlockText>{thread.posts}</BlockText>
         </div>
       </div>
-      <div className='thread-card-lastpost'>
-        <Portrait
-          imageUrl={thread.lastPost.owner.imageUrl}
-          title='last post portrait'
-        />
-        <div>
-          <BlockText>{convertEpochToString(thread.lastPost.createdAt)}</BlockText>
-          <BlockText>{thread.lastPost.owner.displayName}</BlockText>
-        </div>
-      </div>
+      { displayLastPost(thread) }
     </div>
   );
 };
+
+const displayLastPost = (thread) => {
+  const lastPost = thread.lastPost[0];
+  const lastOwner = lastPost.owner[0];
+
+  return (
+    <div className='thread-card-lastpost'>
+      <Portrait
+        imageUrl={lastOwner.imageUrl}
+        title='last post portrait'
+      />
+      <div>
+        <BlockText>{convertEpochToString(lastPost.createdAt)}</BlockText>
+        <BlockText>{lastOwner.displayName}</BlockText>
+      </div>
+    </div>
+  );
+}
 
 const convertEpochToString = (epochTime) => {
   const date = new Date(epochTime * 1000);

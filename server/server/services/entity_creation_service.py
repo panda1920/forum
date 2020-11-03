@@ -27,6 +27,8 @@ class EntityCreationService:
         Returns:
             dictionary that reports result of operation
         """
+        logger.info('User signup')
+
         self._checkUserExists(user)
         return self._createUser(user)
 
@@ -39,6 +41,8 @@ class EntityCreationService:
         Returns:
             dictionary that reports result of operation
         """
+        logger.info('Creating new Post')
+
         result = self._createPost(post)
         self._updateThreadForNewPost(post, result['createdId'])
         return result
@@ -52,14 +56,18 @@ class EntityCreationService:
         Returns:
             dictionary that reports result of operation
         """
+        logger.info('Creating new Thread')
+
         return self._createThread(thread)
 
     def _checkUserExists(self, user):
         try:
             username = user.userName
         except AttributeError:
-            logger.error('User is missing username')
+            logger.warning('User is missing username')
             raise exceptions.EntityValidationError('User is missing username')
+
+        logger.debug('Checking user %s exists', username)
 
         searchFilter = self._filter.createFilter(dict(
             field='userName',
@@ -69,18 +77,10 @@ class EntityCreationService:
         result = self._repo.searchUser(searchFilter)
 
         if result['returnCount'] > 0:
-            logger.error(
+            logger.warning(
                 f'Failed to create user: username { username } already exist'
             )
             raise exceptions.DuplicateUserError('Username already exist')
-
-    def _checkOwnerMatchesSession(self, entity):
-        resource_owner = entity.userId
-        session_user = self._session.get_user().userId
-
-        if resource_owner != session_user:
-            logger.error(f'Failed to authorize user: {session_user} to create thread')
-            raise exceptions.UnauthorizedError('Failed to authorize user')
 
     def _createUser(self, user):
         atIdx = user.userName.find('@')

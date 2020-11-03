@@ -8,8 +8,18 @@ import os
 import sys
 from pathlib import Path
 
+DEFAULT_LOGFILE_SAVECOUNT = '7'
+
 
 def setup():
+    """
+    Setup logger for the backend.
+    
+    Args:
+        None
+    Returns:
+        None
+    """
     logger = logging.getLogger( os.getenv('ROOT_MODULE_NAME') )
     logger.propagate = False
     logger.setLevel(logging.DEBUG)
@@ -32,15 +42,15 @@ def create_loghandler():
     Returns:
         return value
     """
-    is_test = os.getenv('IS_PROD', 'False') != 'True'
-    if is_test:
+    is_prod = os.getenv('IS_PROD', 'False') == 'True'
+    if not is_prod:
         return logging.StreamHandler(sys.stdout)
 
     filepath = Path(
         os.getenv('LOG_OUTPUT_LOCATION'),
         os.getenv('LOG_FILENAME')
     )
-    backup_count = int( os.getenv('BACKUP_COUNT', '7') )
+    backup_count = int( os.getenv('BACKUP_COUNT', DEFAULT_LOGFILE_SAVECOUNT) )
     handler = TimedRotatingFileHandler(
         filepath,
         when='midnight',

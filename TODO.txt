@@ -4,22 +4,27 @@ FORUM
             Password authentication necessary?
             
     [Flask]
-        - Implement user authentication system to operations that need it
-        - Impement user authorizaiton
-            Operations yields differing result depending on the current logged in user
-            Some operation may require additional login despite already logged in, e.g. password reset.
         - Implement sanitization mechanism for incoming data
-        - Consider using Flask-Session for server-side session management
         - Fix issue where searches return nothing when no search criteria is given
+        - Find a way to send backend log entry to an external monitoring service like cloudwatch/s3
+            https://aws.amazon.com/blogs/devops/send-ecs-container-logs-to-cloudwatch-logs-for-centralized-monitoring/
+        - Better logging: place logging output for each files
+        - Implement Board entity and its related services/repo
+        - Sanitize content of user posts
+        - Setup better validation for other user inputs (max length of string etc.)
+        - Setup /health route
+        - Setup route to upload images
     
     [Frontend]
-        - Figure out routing of SPA that utilizes HTML5 history
-            https://github.com/ReactTraining/react-router/blob/master/FAQ.md#how-do-i-access-the-history-object-outside-of-components
-            https://codeburst.io/full-stack-single-page-application-with-vue-js-and-flask-b1e036315532
         - Create user profile page
         - Create thread page
+        - Separate dockerfile for prod/dev in client
+            Create separate nginx conf for each
+            Make sure docker-compose uses the dev dockerfile
+        - Implement post functionality
+        - Implement image upload functionality
+        - Change the way search filters are passed to querystring
+            want to specify operators like gt and lte in querystring
 
     [Deployment]
         - Deploy on amazon
-            Figure out how to import secrets in the app.
-            Consider using ECR, ECS

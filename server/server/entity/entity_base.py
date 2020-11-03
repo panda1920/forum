@@ -11,7 +11,7 @@ class Entity:
     """
 
     def __init__(self, object=None, **kwargs):
-        self._logger.info('Constructing %s entity', self.__class__.__name__)
+        self._logger.debug('Constructing %s entity', self.__class__.__name__)
         sanitized = self._sanitize_attributes(object, **kwargs)
         self.__dict__.update(sanitized)
 
@@ -24,7 +24,7 @@ class Entity:
         Returns:
             Dict of attributes
         """
-        self._logger.info('Converting entity for serialization')
+        self._logger.debug('Converting entity for serialization')
         return self._convert_dict_for('to_serialize')
 
     def to_create(self):
@@ -37,7 +37,7 @@ class Entity:
         Returns:
             Dict of attributes
         """
-        self._logger.info('Converting entity for DB create')
+        self._logger.debug('Converting entity for DB create')
         return self._convert_dict_for('to_create')
 
     def to_update(self):
@@ -50,7 +50,7 @@ class Entity:
         Returns:
             Dict of attributes
         """
-        self._logger.info('Converting entity for DB update')
+        self._logger.debug('Converting entity for DB update')
         return self._convert_dict_for('to_update')
 
     def _sanitize_attributes(self, object, **kwargs):

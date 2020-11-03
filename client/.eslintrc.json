@@ -33,6 +33,7 @@
         "semi": [1, "always"],
         "quotes": [1, "single", { "allowTemplateLiterals": true }],
         "no-trailing-spaces": [1, { "skipBlankLines": true, "ignoreComments": true }],
+        "no-unused-vars": [1, { "varsIgnorePattern": "^_$" }],
 
         "react/prop-types": 0,
         "react-hooks/rules-of-hooks": 2,

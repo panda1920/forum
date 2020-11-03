@@ -2,6 +2,8 @@
 """
 This file houses business logic for searches made by apis
 """
+import logging
+
 from server.database.sorter import AscendingSorter, DescendingSorter, NullSorter
 from server.entity import Thread
 
@@ -11,10 +13,6 @@ class SearchService:
     Provides methods to search for entities.
     Contains most of the search related business logic.
     """
-
-    # TODO
-    # sanitization of args
-
     def __init__(self, repo, searchFilterCreator, filterClass, aggregateFilterClass, pagingClass):
         self._repo = repo
         self._searchFilterCreator = searchFilterCreator
@@ -23,6 +21,16 @@ class SearchService:
         self._paging = pagingClass
 
     def searchUsersByKeyValues(self, keyValues):
+        """
+        Searches for Users based on criterias in keyValues
+        
+        Args:
+            keyValues(dict): criterias to search
+        Returns:
+            dict: result of search operation
+        """
+        logging.info('Searching for User entities')
+
         searchFilter = self._searchFilterCreator.create_usersearch(keyValues)
         paging = self._paging(keyValues)
         sorter = self._createSorterFromKeyValues(keyValues)
@@ -36,6 +44,16 @@ class SearchService:
         )
 
     def searchPostsByKeyValues(self, keyValues):
+        """
+        Searches for Posts based on criterias in keyValues
+        
+        Args:
+            keyValues(dict): criterias to search
+        Returns:
+            dict: result of search operation
+        """
+        logging.info('Searching for Post entities')
+
         searchFilter = self._searchFilterCreator.create_postsearch(keyValues)
         paging = self._paging(keyValues)
         sorter = self._createSorterFromKeyValues(keyValues)
@@ -51,13 +69,15 @@ class SearchService:
 
     def searchThreadsByKeyValues(self, keyValues):
         """
-        Searches for threads based on criterias in keyValues
+        Searches for Threads based on criterias in keyValues
         
         Args:
             keyValues(dict): criterias to search
         Returns:
             dict: result of search operation
         """
+        logging.info('Searching for Thread entities')
+
         searchFilter = self._searchFilterCreator.create_threadsearch(keyValues)
         paging = self._paging(keyValues)
         sorter = self._createSorterFromKeyValues(keyValues)
@@ -81,6 +101,8 @@ class SearchService:
         Returns:
             dict: result of search operation
         """
+        logging.info('Searching for a Thread entity by Id')
+
         searchFilter = self._searchFilterCreator.create_threadsearch(
             dict(threadId=threadId)
         )

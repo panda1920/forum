@@ -18,6 +18,6 @@ const Portrait = ({ imageUrl, className, ...otherProps }) => {
     >
     </div>
   );
-}
+};
 
 export default Portrait;

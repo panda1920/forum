@@ -14,7 +14,7 @@ class SessionService:
     Provides methods that interacts with current session user.
     """
     SESSION_USER_KEY = 'sessionUserId'
-    REQUEST_USER_KEY = 'currentUser'
+    REQUEST_USER_KEY = 'sessionUser'
     ANONYMOUS_USERID = '0'
 
     def __init__(self, repo, flask_context):

@@ -15,7 +15,7 @@ export const createUpdateApiPath = (apiPath, id) => {
     return `${apiPath}/${id}/update`;
 };
 
-export const apiBasePath = '/v1';
+export const apiBasePath = '/api';
 
 export const userApi = apiBasePath + '/users';
 
