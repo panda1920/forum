@@ -11,7 +11,6 @@ from tests.database.datacreator import DataCreator
 from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
-from server.entity.post import UpdatePost
 from server.exceptions import EntityValidationError
 from server.services.entity_creation_service import EntityCreationService
 from server.entity import User, Post, Thread
@@ -648,8 +647,8 @@ class TestPostCRUD:
             'postId', 'eq', postIdsToUpdate
         ))
         for post in postsInDB:
-            for field in UpdatePost.getUpdatableFields():
-                assert post[field] == update[field]
+            for k, v in self.DEFAULT_UPDATE_POST.items():
+                assert post.get(k) == v
 
     def test_updatePostShouldReturnUpdateResult(self, setupDB):
         postIdsToUpdate = [ post['postId'] for post in setupDB.getOriginalPosts()[:2] ]

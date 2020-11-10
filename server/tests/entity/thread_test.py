@@ -13,6 +13,10 @@ DEFAULT_OWNER_ATTRS = [
     dict(userId='test_userid'),
 ]
 
+DEFAULT_OWNERBOARD_ATTRS = [
+    dict(boardId='test_boardid')
+]
+
 DEFAULT_LASTPOST_ATTRS = [
     dict(postId='test_postid'),
 ]
@@ -23,6 +27,7 @@ DEFAULT_ARGS = {
     'threadId': 'test_id',
     'lastPostId': 'test_id',
     'owner': create_mock_entities(DEFAULT_OWNER_ATTRS),
+    'ownerBoard': create_mock_entities(DEFAULT_OWNERBOARD_ATTRS),
     'lastPost': create_mock_entities(DEFAULT_LASTPOST_ATTRS),
     'title': 'Anonymous\'s thread',
     'subject': 'test_subject',
@@ -71,6 +76,7 @@ class TestThreadCreation:
             threadId=9999,
             lastPostId=9999,
             owner=9999,
+            ownerBoard=9999,
             lastPost=9999,
             title=9999,
             subject=9999,
@@ -145,6 +151,8 @@ class TestConversionMethods:
             owner.reset_mock()
         for lastpost in thread.lastPost:
             lastpost.reset_mock()
+        for ownerBoard in thread.ownerBoard:
+            ownerBoard.reset_mock()
 
         return thread
 
@@ -156,6 +164,8 @@ class TestConversionMethods:
                 assert DEFAULT_OWNER_ATTRS == value
             elif attr == 'lastPost':
                 assert DEFAULT_LASTPOST_ATTRS == value
+            elif attr == 'ownerBoard':
+                assert DEFAULT_OWNERBOARD_ATTRS == value
             else:
                 assert DEFAULT_ARGS[attr] == value
 
@@ -172,6 +182,19 @@ class TestConversionMethods:
             assert owner._convert_dict_for.call_count == 1
             arg1, *_ = owner._convert_dict_for.call_args_list[0][0]
             assert arg1 == 'to_serialize'
+
+    def test_to_serializeCallsConvertDictForEachOwnerBoard(self, thread):
+        ownerBoard = thread.ownerBoard[0]
+
+        try:
+            thread.to_serialize()
+        except Exception:
+            # ignore failed serialization during tests
+            pass
+
+        assert ownerBoard._convert_dict_for.call_count == 1
+        arg1, *_ = ownerBoard._convert_dict_for.call_args_list[0][0]
+        assert arg1 == 'to_serialize'
 
     def test_to_serializeCallsConvertDictForEachLastPost(self, thread):
         lastpost = thread.lastPost[0]
@@ -199,6 +222,7 @@ class TestConversionMethods:
             'threadId',
             'boardId',
             'owner',
+            'ownerBoard',
             'lastPost',
             'title',
             'subject',
@@ -264,6 +288,7 @@ class TestConversionMethods:
             '_id',
             'increment',
             'owner',
+            'ownerBoard',
             'lastPost',
             'createdAt',
             'updatedAt',
@@ -287,6 +312,7 @@ class TestConversionMethods:
             'userId',
             'boardId',
             'owner',
+            'ownerBoard',
             'lastPost',
             'createdAt',
             'updatedAt',

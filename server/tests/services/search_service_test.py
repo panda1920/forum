@@ -14,7 +14,6 @@ from tests.mocks import createMockEntity
 from tests.helpers import create_mock_entities
 
 
-
 @pytest.fixture(scope='function')
 def service():
     mockRepo = mocks.createMockRepo()
@@ -265,11 +264,15 @@ class TestSearchThreadsByKeyValues:
         search='test_search',
     )
     MOCK_THREAD_ATTRSET = [
-        dict(threadId='2222', userId='11111111', _id='some_random_id', lastPostId='1234')
+        dict(threadId='2222', userId='11111111', boardid='123123', _id='some_random_id', lastPostId='1234')
     ]
     MOCK_USER_ATTRSET = [
         dict(userId='11111111', name='Alan', _id='some_random_id'),
         dict(userId='33333333', name='Bobby', _id='some_random_id'),
+    ]
+    MOCK_BOARD_ATTRSET = [
+        dict(boardId='123123'),
+        dict(boardId='234234'),
     ]
     MOCK_POST_ATTRSET = [
         dict(postId='1234', userId='33333333'),
@@ -285,6 +288,8 @@ class TestSearchThreadsByKeyValues:
         threads_from_repo = create_return_from_repo(mock_threads, 'threads')
         mock_users = create_mock_entities(self.MOCK_USER_ATTRSET)
         users_from_repo = create_return_from_repo(mock_users, 'users')
+        mock_boards = create_mock_entities(self.MOCK_BOARD_ATTRSET)
+        boards_from_repo = create_return_from_repo(mock_boards, 'boards')
         mock_posts = create_mock_entities(self.MOCK_POST_ATTRSET)
         posts_from_repo = create_return_from_repo(mock_posts, 'posts')
 
@@ -353,7 +358,6 @@ class TestSearchThreadsByKeyValues:
 
         service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
 
-        # _, update = mockRepo.updateThread.call_args[0]
         assert mockRepo.updateThread.call_count == 0
 
     def test_searchThreadsByKeyValuesShouldGenerateSearchForOwnerUser(self, service):
