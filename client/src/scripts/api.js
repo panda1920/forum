@@ -42,6 +42,14 @@ export function searchThreads(criteria) {
     );
 }
 
+export function searchPosts(criteria) {
+    const url = `${paths.postApi}?${createQueryString(criteria)}`;
+    return apiCall(
+        url,
+        'GET',
+    );
+}
+
 async function apiCall(url, method, headers, body) {
     try {
         let response = await fetch(url, { method, headers, body, credentials: 'same-origin' });

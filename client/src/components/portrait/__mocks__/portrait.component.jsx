@@ -1,7 +1,7 @@
 import React from 'react';
 
 const mockPortrait = () => {
-  return <div></div>;
+  return <div />;
 };
 
 const Portrait = jest.fn()

@@ -11,7 +11,7 @@ FORUM
         - Better logging: place logging output for each files
         - Implement Board entity and its related services/repo
         - Sanitize content of user posts
-        - Setup better validation for other user inputs (max length of string etc.)
+        - Setup better validation for other user inputs (max length of displayName etc.)
         - Setup /health route
         - Setup route to upload images
     

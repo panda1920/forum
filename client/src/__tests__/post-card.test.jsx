@@ -20,10 +20,6 @@ const TEST_DATA = {
   },
 };
 
-const IDENTIFIERS = {
-  POST_OWNERIMAGE_TITLE: 'portrait image of owner user',
-};
-
 function createPostCard() {
   return render(
     <PostCard postnum={TEST_DATA.POST_NUM} post={TEST_DATA.POST_DATA} />
@@ -52,7 +48,17 @@ describe('Testing behavior of PostCard component', () => {
     createPostCard();
 
     const passedProps = Portrait.mock.calls[0][0];
-    expect(passedProps).toHaveProperty('title', IDENTIFIERS.POST_OWNERIMAGE_TITLE);
-    expect(passedProps).toHaveProperty('imageUrl', TEST_DATA.POST_DATA.owner[0].imageUrl);
+    expect(passedProps)
+      .toHaveProperty('title');
+    expect(passedProps)
+      .toHaveProperty('imageUrl', TEST_DATA.POST_DATA.owner[0].imageUrl);
+  });
+
+  test('Should transition to user page when owner portrait is clicked', async () => {
+
+  });
+
+  test('Should transition to user page when owner name is clicked', async () => {
+
   });
 });
