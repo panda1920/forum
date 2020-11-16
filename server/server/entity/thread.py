@@ -133,7 +133,7 @@ class Thread(Entity):
             },
             'conversion_rules': {
                 'to_serialize': {
-                    'required': True,
+                    'required': False,
                     'hide': False,
                     'entity': True,
                 },
@@ -153,7 +153,7 @@ class Thread(Entity):
             },
             'conversion_rules': {
                 'to_serialize': {
-                    'required': True,
+                    'required': False,
                     'hide': False,
                     'entity': True,
                 },

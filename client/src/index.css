@@ -18,4 +18,6 @@ code {
     box-sizing: border-box;
     margin: none;
     padding: none;
+    margin-block-start: 0px;
+    margin-block-end: 0px;
 }

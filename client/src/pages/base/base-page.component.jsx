@@ -2,6 +2,7 @@ import React, { useReducer, useEffect, useContext, useCallback } from 'react';
 import { Switch, Route } from 'react-router-dom';
 
 import BoardPage from '../board/board-page.component';
+import ThreadPage from '../thread/thread-page';
 import Header from  '../../components/header/header.component';
 import Footer from  '../../components/footer/footer.component';
 import ModalLogin from '../../components/modal-login/modal-login.component';
@@ -53,6 +54,7 @@ const BasePage = () => {
             <Route path='/sample'>
               <h1>SAMPLE</h1>
             </Route>
+            <Route path='/thread/:threadId' component={ThreadPage} />
             <Route path='/'>
               <BoardPage boardId='0' />
             </Route>

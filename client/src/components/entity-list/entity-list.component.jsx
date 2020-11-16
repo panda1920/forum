@@ -3,6 +3,8 @@ import React, { useEffect, useReducer, useContext } from 'react';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
 import PaginationBar from '../pagination-bar/pagination-bar.component';
 
+import './entity-list.styles.scss';
+
 const EntityList = ({ searchEntity, renderChildEntity }) => {
   const [ searchState, dispatch ] = useReducer(reducer, {
     entities: [],
@@ -15,11 +17,11 @@ const EntityList = ({ searchEntity, renderChildEntity }) => {
   // search and store entities everytime offset/limit has changed
   useEffect(() => {
     const searchAndStore = async () => {
-      const { result, currentUser } = await searchEntity({
+      const { result, sessionUser } = await searchEntity({
         offset: searchState.offset, limit: searchState.limit,
       });
       dispatch({ type: 'searchResult', result });
-      setCurrentUser(currentUser);
+      setCurrentUser(sessionUser);
     };
     searchAndStore();
   }, [ searchState.offset, searchState.limit, searchEntity, setCurrentUser ]);
@@ -32,7 +34,7 @@ const EntityList = ({ searchEntity, renderChildEntity }) => {
   };
 
   return (
-    <div title='Entity list'>
+    <div title='Entity list' className='entity-list'>
       <PaginationBar
         displayInfo={displayInfo}
         dispatch={dispatch}
@@ -40,9 +42,13 @@ const EntityList = ({ searchEntity, renderChildEntity }) => {
         disableNext={isLastPage(searchState)}
       />
 
-      {
-        searchState.entities.map((entity, idx) => renderChildEntity(entity, idx + 1))
-      }
+      <div className='entity-list-entities'>
+        {
+          searchState.entities.map(
+            (entity, idx) => renderChildEntity(entity, idx + 1 + searchState.offset)
+          )
+        }
+      </div>
 
       <PaginationBar
         displayInfo={displayInfo}
@@ -73,7 +79,7 @@ const reducer = (searchState, action) => {
     case 'lastPage':
       return {
         ...searchState,
-        offset: getLastOffset(searchState),
+        offset: getLastPageOffset(searchState),
       };
     case 'firstPage':
       return {
@@ -92,15 +98,15 @@ const reducer = (searchState, action) => {
 
 // helpers
 
-function getLastOffset(searchState) {
+function getLastPageOffset(searchState) {
   const { limit, totalCount } = searchState;
   const entityCountInLastPage = totalCount % limit;
-  const pageCount = totalCount / limit;
+  const pageNum = totalCount / limit;
 
   if (entityCountInLastPage == 0)
-    return (pageCount - 1) * limit;
+    return (pageNum - 1) * limit;
   else
-    return pageCount * limit;
+    return pageNum * limit;
 }
 
 function isFirstPage(searchState) {

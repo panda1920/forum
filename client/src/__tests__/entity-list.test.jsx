@@ -26,7 +26,7 @@ const TEST_DATA = {
       returnCount: 10,
       matchedCount: 50,
     },
-    currentUser: {
+    sessionUser: {
       userId: 'test_userid'
     },
   }
@@ -98,7 +98,7 @@ describe('Testing onmount behavior of EntityList', () => {
 
     expect(mockSetCurrentUser).toHaveBeenCalledTimes(1);
     const [ passedUser ] = mockSetCurrentUser.mock.calls[0];
-    expect(passedUser).toMatchObject(TEST_DATA.SEARCH_RESULT.currentUser);
+    expect(passedUser).toMatchObject(TEST_DATA.SEARCH_RESULT.sessionUser);
   });
 
   test('Should call render callback for each entity retured from search', async () => {
@@ -285,5 +285,27 @@ describe('Testing behavior when dispatch is called', () => {
       expect(props.disableNext).toBe(false);
       expect(props.disableBack).toBe(false);
     }
+  });
+
+  test('Should update num passed to renderChildEntity when back/next is dispatched', async () => {
+    const { mockRenderChildEntity } = await renderEntityList();
+    const dispatch = PaginationBar.mock.calls[0][0].dispatch;
+    const getLastCallToRenderEntity = () => mockRenderChildEntity.mock.calls.slice(-1)[0];
+
+    await act(async() => dispatch({ type: 'nextPage' }) );
+    let [ _, num ] = getLastCallToRenderEntity();
+    expect(num).toBe(TEST_DATA.SEARCH_RESULT.result.entities.length + 10);
+
+    await act(async() => dispatch({ type: 'lastPage' }) );
+    [ _, num ] = getLastCallToRenderEntity();
+    expect(num).toBe(TEST_DATA.SEARCH_RESULT.result.entities.length + 40);
+
+    await act(async() => dispatch({ type: 'prevPage' }) );
+    [ _, num ] = getLastCallToRenderEntity();
+    expect(num).toBe(TEST_DATA.SEARCH_RESULT.result.entities.length + 30);
+
+    await act(async() => dispatch({ type: 'firstPage' }) );
+    [ _, num ] = getLastCallToRenderEntity();
+    expect(num).toBe(TEST_DATA.SEARCH_RESULT.result.entities.length);
   });
 });

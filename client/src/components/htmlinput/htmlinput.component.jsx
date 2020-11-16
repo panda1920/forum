@@ -1,15 +1,15 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 
 import 'tinymce';
 import 'tinymce/themes/silver';
 import 'tinymce/plugins/help';
 import { Editor } from '@tinymce/tinymce-react';
 
-import {
-  createInputHandler,
-  createPostHandler,
-} from './htmlinput.logic';
-import PostsContext from '../../contexts/posts/posts.context';
+// import {
+//   createInputHandler,
+//   createPostHandler,
+// } from './htmlinput.logic';
+// import PostsContext from '../../contexts/posts/posts.context';
 
 import './htmlinput.style.scss';
 
@@ -21,7 +21,7 @@ const tinymceInitParams = {
   fixed_toolbar_container: '.htmlinput-menubar',
   skin_url: `${process.env.PUBLIC_URL}/assets/tinymce/skins/ui/oxide`,
   plugins: [
-    'help'  
+    'help',
   ],
   toolbar:
     `undo redo | bold italic underline |
@@ -39,15 +39,14 @@ const tinymceInitParams = {
   },
 }
 
-const HtmlInput = (props) => {
+const HtmlInput = ({ postEntity }) => {
   const [ content, setContent ] = useState('');
-  const { fetchPosts } = useContext(PostsContext);
-  const inputHandler = createInputHandler(setContent);
-  const postHandler = createPostHandler(content, fetchPosts);
+  // const inputHandler = createInputHandler(setContent);
+  // const postHandler = createPostHandler(content, postEntity);
 
   return (
     <div className='htmlinput'>
-      <Editor
+      {/* <Editor
         initialValue="<p>This is the initial content of the editor</p>"
         init={tinymceInitParams}
         value={content}
@@ -61,7 +60,7 @@ const HtmlInput = (props) => {
         onClick={postHandler}
       >
         Post!
-      </button>
+      </button> */}
     </div>
   );
 };

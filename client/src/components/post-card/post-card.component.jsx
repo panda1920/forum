@@ -16,14 +16,18 @@ const PostCard = ({ postnum, post }) => {
         />
         <p>{ owner.displayName }</p>
       </div>
-      <div className='post-card-header'>
-        <p>{ `#${postnum}` }</p>
-      </div>
       <div className='post-card-content'>
-        { post.content }
-      </div>
-      <div className='post-card-footer'>
-        
+        <div className='post-card-header'>
+          <p>{ `#${postnum}` }</p>
+        </div>
+        <hr />
+        <div className='post-card-content'>
+          { post.content }
+        </div>
+        <hr />
+        <div className='post-card-footer'>
+          <p>Placeholder footer</p>
+        </div>
       </div>
     </div>
   );

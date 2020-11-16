@@ -2,15 +2,17 @@ import React from 'react';
 import { render, cleanup, act } from '@testing-library/react';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
 
-import { threadApi, postApi } from '../paths';
+import { threadApi, postApi, createCreateApiPath } from '../paths';
 import { createMockFetch } from '../scripts/test-utilities';
 import EntityList from '../components/entity-list/entity-list.component';
 import PostCard from '../components/post-card/post-card.component';
+import HtmlInput from '../components/htmlinput/htmlinput.component';
 import ThreadPage from '../pages/thread/thread-page';
 
 // mock out child components
 jest.mock('../components/entity-list/entity-list.component');
 jest.mock('../components/post-card/post-card.component');
+jest.mock('../components/htmlinput/htmlinput.component');
 
 const TEST_DATA = {
   THREAD_ID: '1',
@@ -52,9 +54,11 @@ async function renderThreadPage(locations = null) {
 
 function createApiReturn(entities, entitiesName) {
   return {
-    [entitiesName]: entities,
-    returnCount: entities.length,
-    matchedCount: entities.length,
+    result: {
+      [entitiesName]: entities,
+      returnCount: entities.length,
+      matchedCount: entities.length,
+    },
   };
 }
 
@@ -69,6 +73,7 @@ afterEach(() => {
   cleanup();
   EntityList.mockClear();
   PostCard.mockClear();
+  HtmlInput.mockClear();
   window.fetch = originalFetch;
 });
 
@@ -86,6 +91,16 @@ describe('Testing ThreadPage renders the component properly', () => {
     await renderThreadPage();
 
     expect(EntityList).toHaveBeenCalled();
+  });
+
+  test('Should render HtmlInput', async () => {
+    await renderThreadPage();
+
+    expect(HtmlInput).toHaveBeenCalled();
+  });
+
+  test.skip('Should render spinner when initial fetch fails', async () => {
+
   });
 });
 
@@ -133,9 +148,9 @@ describe('Testing behavior of ThreadPage', () => {
       return createApiReturn(TEST_DATA.POSTS_RETURN, 'posts');
     });
     
-    const searchResult = await searchEntity({ offset: 10, limit: 20 });
+    const { result } = await searchEntity({ offset: 10, limit: 20 });
 
-    expect(searchResult).toHaveProperty('entities', TEST_DATA.POSTS_RETURN);
+    expect(result).toHaveProperty('entities', TEST_DATA.POSTS_RETURN);
   });
 
   test('renderChildEntity callback should render PostCard ', async () => {
@@ -156,6 +171,31 @@ describe('Testing behavior of ThreadPage', () => {
     expect(props).toHaveProperty('postnum', 1);
   });
 
+  test('postEntity callback should send create post request to posts api', async () => {
+    await renderThreadPage();
+    const latestHtmlInputCall = HtmlInput.mock.calls.slice(-1)[0];
+    const { postEntity } = latestHtmlInputCall[0];
+
+    window.fetch = createMockFetch(true, 200, async () => {});
+    const newPostMsg = 'This is a new post by test test test';
+    const expectedUrl = `${createCreateApiPath(postApi)}`;
+    const expectedOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    };
+    
+    await postEntity(newPostMsg);
+
+    expect(window.fetch).toHaveBeenCalled();
+    const [url, options] = window.fetch.mock.calls[0];
+    expect(url).toBe(expectedUrl);
+    expect(options).toMatchObject(expectedOptions);
+    const post = JSON.parse(options.body);
+    expect(post).toHaveProperty('content', newPostMsg);
+    expect(post).toHaveProperty('threadId', TEST_DATA.THREAD_ID);
+  });
   
   test('Should search for thread with path id on mount', async () => {
     const expectedPath = `${threadApi}/${TEST_DATA.THREAD_DATA.threadId}`;

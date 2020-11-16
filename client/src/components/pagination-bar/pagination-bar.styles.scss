@@ -6,7 +6,6 @@
     align-items: center;
 
     color: map-get($colors, '01');
-    width: map-get($dimensions, 'main-content-width');
 
     .pagination-space {
         flex: 1 1 auto;
@@ -17,7 +16,7 @@
         font-size: map-get($font-size, 'small');
     }
     .pagination-buttons {
-        flex: 0 1 map-get($dimensions, 'pagination-buttons-width');
+        flex: 0 1 auto;
 
         font-weight: 600;
         font-size: map-get($font-size, 'medium');

@@ -18,6 +18,7 @@ FORUM
     [Frontend]
         - Create user profile page
         - Create thread page
+            Create new post
         - Separate dockerfile for prod/dev in client
             Create separate nginx conf for each
             Make sure docker-compose uses the dev dockerfile
@@ -28,3 +29,7 @@ FORUM
 
     [Deployment]
         - Deploy on amazon
+
+    [Small things I need to work on]
+        - test data creation logic seem broken: check postCount and lastPostId.
+        - PostCard portrait and name should be horizontally centered

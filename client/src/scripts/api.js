@@ -50,6 +50,13 @@ export function searchPosts(criteria) {
     );
 }
 
+export function createPost(newPost) {
+    const url = `${paths.createCreateApiPath(paths.postApi)}`;
+    return apiCall(
+        url, 'POST', { 'Content-Type': 'application/json' }, JSON.stringify(newPost)
+    );
+}
+
 async function apiCall(url, method, headers, body) {
     try {
         let response = await fetch(url, { method, headers, body, credentials: 'same-origin' });

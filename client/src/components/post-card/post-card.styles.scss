@@ -1,0 +1,39 @@
+@import '../../base-style';
+
+.post-card {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: map-get($dimensions, post-card-min-height);
+
+    border-radius: map-get($general-styling, border-radius-card);
+    background-color: map-get($colors, '01');
+
+    .post-card-ownerinfo {
+        flex: 0 0 auto;
+        padding: 10px;
+
+        .portrait {
+            height: 64px;
+            width: 64px;
+        };
+    };
+
+    .post-card-content {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        align-items: stretch;
+        
+        div {
+            padding: 5px 10px;
+        };
+        hr {
+            flex: 0 0 auto;
+            margin: 0px 10px;
+        };
+        .post-card-header, .post-card-footer {
+            flex: 0 0 auto;
+        };
+    };
+};

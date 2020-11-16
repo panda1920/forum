@@ -34,15 +34,16 @@ $dimensions: (
     'form-button-width': 195px,
 
     'pagination-text-width': 300px,
-    'pagination-buttons-width': 200px,
     'thread-card-views-width': 150px,
     'thread-card-lastpost-width': 300px,
     
+    'post-card-min-height': 200px,
 );
 
 $general-styling: (
     'border-radius-form': 3px,
     'border-radius-button': 3px,
+    'border-radius-card': 3px,
 );
 
 /* Rules for sizing the icon. */
