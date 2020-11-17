@@ -11,13 +11,18 @@
 
     .post-card-ownerinfo {
         flex: 0 0 auto;
-        padding: 10px;
+
+        padding: map-get($spaces, medium);
 
         .portrait {
-            height: 64px;
-            width: 64px;
-        };
-    };
+            height: map-get($dimensions, post-card-portrait-size);
+            width: map-get($dimensions, post-card-portrait-size);
+            margin: 0 auto;
+        }
+        p {
+            text-align: center;
+        }
+    }
 
     .post-card-content {
         display: flex;
@@ -27,13 +32,13 @@
         
         div {
             padding: 5px 10px;
-        };
+        }
         hr {
             flex: 0 0 auto;
             margin: 0px 10px;
-        };
+        }
         .post-card-header, .post-card-footer {
             flex: 0 0 auto;
-        };
-    };
-};
+        }
+    }
+}

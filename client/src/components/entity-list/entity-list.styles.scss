@@ -1,19 +1,7 @@
 @import '../../base-style';
 
 .entity-list {
-    margin: auto;
-    width: 80%;
-
     .pagination-bar {
       margin: map-get($spaces, small) 0px;
-    };
-
-    .entity-list-entities {
-        .post-card {
-            margin-bottom: map-get($spaces, medium);
-        };
-        .post-card:last-of-type {
-            margin-bottom: 0px;
-        };
-    };
-};
+    }
+}

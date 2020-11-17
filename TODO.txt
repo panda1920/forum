@@ -4,7 +4,6 @@ FORUM
             Password authentication necessary?
             
     [Flask]
-        - Implement sanitization mechanism for incoming data
         - Fix issue where searches return nothing when no search criteria is given
         - Find a way to send backend log entry to an external monitoring service like cloudwatch/s3
             https://aws.amazon.com/blogs/devops/send-ecs-container-logs-to-cloudwatch-logs-for-centralized-monitoring/
@@ -31,5 +30,3 @@ FORUM
         - Deploy on amazon
 
     [Small things I need to work on]
-        - test data creation logic seem broken: check postCount and lastPostId.
-        - PostCard portrait and name should be horizontally centered

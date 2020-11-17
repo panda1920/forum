@@ -82,9 +82,7 @@ class DataCreator:
                 title=f'{user["displayName"]}\'s thread',
                 subject='Subject of this thread',
                 views=0,
-                posts=self.POSTCOUNT_PER_THREAD,
                 createdAt=now,
-                postCount=self.POSTCOUNT_PER_THREAD,
             ))
 
         return threads
@@ -117,6 +115,7 @@ class DataCreator:
                     postNum += 1
 
                 thread['lastPostId'] = posts[-1]['postId']
+                thread['postCount'] = self.POSTCOUNT_PER_THREAD * len(self.USERS)
         return posts
 
     def _createEnglishPost(self, user, thread, postNum, postId, createdAt):
