@@ -17,8 +17,8 @@ const tinymceInitParams = {
   height: 500,
   inline: true,
   menubar: false,
-  selector: '.htmlinput-input',
-  fixed_toolbar_container: '.htmlinput-menubar',
+  selector: '.html-input-input',
+  fixed_toolbar_container: '.html-input-menubar',
   skin_url: `${process.env.PUBLIC_URL}/assets/tinymce/skins/ui/oxide`,
   plugins: [
     'help',
@@ -43,24 +43,31 @@ const HtmlInput = ({ postEntity }) => {
   const [ content, setContent ] = useState('');
   // const inputHandler = createInputHandler(setContent);
   // const postHandler = createPostHandler(content, postEntity);
+  const inputHandler = (content) => setContent(content);
+  const postHandler = async (event) => {
+    event.preventDefault();
+    const response = await postEntity(content);
+    if (response.ok)
+      setContent('');
+  };
 
   return (
-    <div className='htmlinput'>
-      {/* <Editor
+    <div className='html-input'>
+      <Editor
         initialValue="<p>This is the initial content of the editor</p>"
         init={tinymceInitParams}
         value={content}
         onEditorChange={inputHandler}
       />
-      <div className='htmlinput-menubar'></div>
-      <div className='htmlinput-input'></div>
+      <div className='html-input-menubar'></div>
+      <div className='html-input-input'></div>
       <button
-        className='htmlinput-postbutton'
+        className='html-input-postbutton'
         name='postbutton'
         onClick={postHandler}
       >
         Post!
-      </button> */}
+      </button>
     </div>
   );
 };

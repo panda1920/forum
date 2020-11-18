@@ -86,6 +86,16 @@ class TestUserCRUD:
         assert setupDB.getCounter('userId') == nextUserId + 1
         assert createdUser['userId'] == str(nextUserId)
 
+    def test_createUserShouldGenerateFieldCreatedAt(self, setupDB):
+        userProps = self.createNewUserProps()
+        user = User(userProps)
+        searchFilter = createSearchFilter('userName', 'eq', [ userProps['userName'] ])
+
+        setupDB.getRepo().createUser(user)
+
+        createdUser = setupDB.findUsers(searchFilter)[0]
+        assert 'createdAt' in createdUser
+
     def test_createUserShouldReturnCreatedCountAndCreatedId(self, setupDB):
         userProps = self.createNewUserProps()
         user = User(userProps)
@@ -371,7 +381,8 @@ class TestUserCRUD:
 @pytest.mark.parametrize('createDB', [Setup_FileCrudManager, Setup_MongoCrudManager], indirect=True)
 class TestPostCRUD:
     DEFAULT_NEW_POST = {
-        'userId': '1',
+        'userId': 'test_user',
+        'threadId': 'test_thread',
         'content': 'This is a new post!'
     }
     DEFAULT_UPDATE_POST = {
@@ -397,6 +408,17 @@ class TestPostCRUD:
         assert len(createdPost) == 1
         for field, value in postProps.items():
             assert createdPost[0][field] == value
+
+    def test_createPostShouldGenerateFieldCreatedAt(self, setupDB):
+        postProps = self.createNewPostProps()
+        post = Post(postProps)
+
+        setupDB.getRepo().createPost(post)
+
+        createdPost = setupDB.findPosts(createSearchFilter(
+            'content', 'eq', [ postProps['content'] ]
+        ))[0]
+        assert 'createdAt' in createdPost
 
     def test_createPostShouldHavePostIdAndIncrementedCounter(self, setupDB):
         postProps = self.createNewPostProps()

@@ -101,7 +101,7 @@ const reducer = (searchState, action) => {
 function getLastPageOffset(searchState) {
   const { limit, totalCount } = searchState;
   const entityCountInLastPage = totalCount % limit;
-  const pageNum = totalCount / limit;
+  const pageNum = Math.floor(totalCount / limit);
 
   if (entityCountInLastPage == 0)
     return (pageNum - 1) * limit;

@@ -16,6 +16,7 @@ DEFAULT_OWNER_ATTRS = [
 DEFAULT_ARGS = {
     '_id': 'test_id',
     'userId': 'test_post',
+    'threadId': 'test_thread',
     'postId': 'test_id',
     'content': 'test_value',
     'owner': create_mock_entities(DEFAULT_OWNER_ATTRS),
@@ -114,6 +115,7 @@ class TestConversionMethods:
         required_attributes = [
             'postId',
             'userId',
+            'threadId',
             'content',
             'owner',
             'createdAt',
@@ -153,7 +155,7 @@ class TestConversionMethods:
             assert DEFAULT_ARGS[attr] == value
 
     def test_to_createValidatesForRequiredAttributes(self):
-        required_attributes = ['userId', 'content', ]
+        required_attributes = ['userId', 'content', 'threadId', ]
         for required_attribute in required_attributes:
             args = DEFAULT_ARGS.copy()
             args.pop(required_attribute)
@@ -187,6 +189,7 @@ class TestConversionMethods:
             '_id',
             'postId',
             'userId',
+            'threadId',
             'owner',
             'createdAt',
             'updatedAt',

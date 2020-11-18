@@ -41,6 +41,7 @@ class MongoCrudManager(CrudManager):
         with self._mongoOperationHandling('Failed to create attrs'):
             nextUserId = str( self._getCounterAndIncrement('userId') )
             attrs['userId'] = nextUserId
+            attrs['createdAt'] = time.time()
             self._db['users'].insert_one(attrs)
 
         return dict(
@@ -96,6 +97,7 @@ class MongoCrudManager(CrudManager):
         with self._mongoOperationHandling('Failed to create post'):
             nextPostId = str( self._getCounterAndIncrement('postId') )
             attrs['postId'] = nextPostId
+            attrs['createdAt'] = time.time()
             self._db['posts'].insert_one(attrs)
 
         return dict(

@@ -72,6 +72,25 @@ class Post(Entity):
                 },
             },
         },
+        'threadId': {
+            'validation_rules': {
+                'type': 'string',
+            },
+            'conversion_rules': {
+                'to_serialize': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_create': {
+                    'required': True,
+                    'hide': False,
+                },
+                'to_update': {
+                    'required': False,
+                    'hide': True,
+                },
+            },
+        },
         'content': {
             'validation_rules': {
                 'type': 'string',

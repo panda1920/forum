@@ -21,9 +21,10 @@ const PostCard = ({ postnum, post }) => {
           <p>{ `#${postnum}` }</p>
         </div>
         <hr />
-        <div className='post-card-content'>
-          { post.content }
-        </div>
+        <div
+          className='post-card-content'
+          dangerouslySetInnerHTML={{ __html: post.content}}
+        />
         <hr />
         <div className='post-card-footer'>
           <p>Placeholder footer</p>

@@ -26,7 +26,7 @@
 //     formdata.set('postId', randomId);
     
 //     return formdata;
-};
+// };
 
 // const postContent = async (formdata, refresh) => {
 //     const method = 'POST';

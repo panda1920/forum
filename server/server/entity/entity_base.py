@@ -63,7 +63,7 @@ class Entity:
         if object:
             to_add.update(object)
         to_add.update(kwargs)
-        
+
         normalized = self._validator.normalized(to_add)
 
         if not self._validator.validate(normalized):

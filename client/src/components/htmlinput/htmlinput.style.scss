@@ -1,22 +1,26 @@
 $border-settings: 1px solid gray;
 
-.htmlinput {
+.html-input {
     position: relative;
     box-sizing: border-box;
     background-color: lightblue;
     border: $border-settings;
 
-    .htmlinput-menubar {
-        height: 2em;
-        background-color:gray;
+    .html-input-menubar {
+        // height: 2em;
+        // background-color:gray;
         border: $border-settings;
         border-top: 0px;
     }
-    .htmlinput-input {
+    .html-input-input {
         min-height: 150px;
         padding: 5px 10px;
+
+        &:focus {
+            outline: 0;
+        }
     }
-    .htmlinput-postbutton {
+    .html-input-postbutton {
         outline: inherit;
         background: white;
         border: none;
