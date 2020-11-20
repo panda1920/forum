@@ -56,6 +56,12 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
+    def validateCreatedBoards(self):
+        """
+        validates boards created in the database
+        """
+        raise NotImplementedError
+
     def getAllUsers(self):
         """
         returns a list of objects
@@ -134,6 +140,32 @@ class SetupCrudManager:
         """
         raise NotImplementedError
 
+    def getAllBoards(self):
+        """
+        returns a list of objects
+        retrieves all boards in database
+        """
+        raise NotImplementedError
+
+    def getBoardCount(self):
+        """
+        returns the number of boards in the current db
+        """
+        raise NotImplementedError
+
+    def findBoards(self, searchFilter):
+        """
+        returns all boards that match the criteria
+        """
+        raise NotImplementedError
+
+    def getOriginalBoards(self):
+        """
+        returns a list of objects
+        retrieves all boards that were in testdata file
+        """
+        raise NotImplementedError
+
     def getMockPassword(self):
         """
         returns a mock instance of user authentication class
@@ -166,6 +198,7 @@ class Setup_FileCrudManager(SetupCrudManager):
         self._usersFile = self._saveLocation / FileCrudManager.USERS_FILENAME
         self._postsFile = self._saveLocation / FileCrudManager.POSTS_FILENAME
         self._threadsFile = self._saveLocation / FileCrudManager.THREADS_FILENAME
+        self._boardsFile = self._saveLocation / FileCrudManager.BOARDS_FILENAME
         self._countersFile = self._saveLocation / FileCrudManager.COUNTERS_FILENAME
         self._testdata = self._readTestData()
         self._password = mocks.createMockPassword()
@@ -176,6 +209,7 @@ class Setup_FileCrudManager(SetupCrudManager):
         self._writeObjToFile(self._testdata['users'], self._usersFile)
         self._writeObjToFile(self._testdata['posts'], self._postsFile)
         self._writeObjToFile(self._testdata['threads'], self._threadsFile)
+        self._writeObjToFile(self._testdata['boards'], self._boardsFile)
         self._writeObjToFile(self._testdata['counters'], self._countersFile)
 
     def cleanup(self):
@@ -196,6 +230,10 @@ class Setup_FileCrudManager(SetupCrudManager):
     def validateCreatedThreads(self):
         assert self._threadsFile.exists()
         assert len( self.getAllThreads() ) == len( self.getOriginalThreads() )
+
+    def validateCreatedBoards(self):
+        assert self._boardsFile.exists()
+        assert len( self.getAllBoards() ) == len( self.getOriginalBoards() )
 
     def getAllUsers(self):
         return self._readJson( self._usersFile )
@@ -241,6 +279,21 @@ class Setup_FileCrudManager(SetupCrudManager):
 
     def getOriginalThreads(self):
         return self._testdata['threads']
+
+    def getAllBoards(self):
+        return self._readJson(self._boardsFile)
+
+    def getBoardCount(self):
+        return len( self.getAllBoards() )
+
+    def findBoards(self, searchFilter):
+        return [
+            board for board in self.getAllBoards()
+            if searchFilter.matches(board)
+        ]
+
+    def getOriginalBoards(self):
+        return self._testdata['boards']
 
     def getRepo(self):
         return self._repo
@@ -289,6 +342,7 @@ class Setup_MongoCrudManager(SetupCrudManager):
         db['users'].insert_many(self._testdata['users'])
         db['posts'].insert_many(self._testdata['posts'])
         db['threads'].insert_many(self._testdata['threads'])
+        db['boards'].insert_many(self._testdata['boards'])
         db['counters'].insert_many(self._testdata['counters'])
 
     def cleanup(self):
@@ -296,6 +350,7 @@ class Setup_MongoCrudManager(SetupCrudManager):
         db['users'].delete_many({})
         db['posts'].delete_many({})
         db['threads'].delete_many({})
+        db['boards'].delete_many({})
         db['counters'].delete_many({})
 
     def teardown(self):
@@ -310,6 +365,9 @@ class Setup_MongoCrudManager(SetupCrudManager):
 
     def validateCreatedThreads(self):
         assert len( self.getAllThreads() ) == len( self.getOriginalThreads() )
+
+    def validateCreatedBoards(self):
+        assert len( self.getAllBoards() ) == len( self.getOriginalBoards() )
 
     def getAllUsers(self):
         return list( self._getDB()['users'].find() )
@@ -349,6 +407,19 @@ class Setup_MongoCrudManager(SetupCrudManager):
 
     def getOriginalThreads(self):
         return self._testdata['threads']
+
+    def getAllBoards(self):
+        return list( self._getDB()['boards'].find() )
+
+    def getBoardCount(self):
+        return self._getDB()['boards'].count_documents({})
+
+    def findBoards(self, searchFilter):
+        query = searchFilter.getMongoFilter()
+        return list( self._getDB()['boards'].find(query) )
+
+    def getOriginalBoards(self):
+        return self._testdata['boards']
 
     def getRepo(self):
         return self._repo

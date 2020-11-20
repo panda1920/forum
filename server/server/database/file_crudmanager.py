@@ -54,6 +54,7 @@ class FileCrudManager(CrudManager):
     USERS_FILENAME = 'users.json'
     POSTS_FILENAME = 'posts.json'
     THREADS_FILENAME = 'threads.json'
+    BOARDS_FILENAME = 'boards.json'
     COUNTERS_FILENAME = 'counters.json'
 
     def __init__(self, filePath, passwordService):

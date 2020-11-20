@@ -29,11 +29,11 @@ class DataCreator:
     ]
     EMAIL_DOMAIN = '@myforumwebapp.com'
     PLACEHOLDER_IMG_URL = 'https://upload.wikimedia.org/wikipedia/en/b/b1/Portrait_placeholder.png'
-    THREAD_COUNT = len(USERS)
+    BOARD_COUNT = 3
+    THREADCOUNT_PER_BOARD = 5
     POSTCOUNT_PER_THREAD_ENG = 2
     POSTCOUNT_PER_THREAD_JPN = 1
-    POSTCOUNT_PER_THREAD = POSTCOUNT_PER_THREAD_ENG + POSTCOUNT_PER_THREAD_JPN
-    POSTCOUNT_PER_USER = POSTCOUNT_PER_THREAD * THREAD_COUNT
+    POSTCOUNT_PER_USERTHREAD = POSTCOUNT_PER_THREAD_ENG + POSTCOUNT_PER_THREAD_JPN
 
     def __init__(self, testDataPath):
         self._testDataPath = testDataPath
@@ -43,7 +43,8 @@ class DataCreator:
         self._testDataPath.touch()
 
         users = self._createUsers()
-        threads = self._createThreads(users)
+        boards = self._createBoards(users)
+        threads = self._createThreads(users, boards)
         posts = self._createPosts(users, threads)
         counters = self._createCounters()
 
@@ -52,6 +53,7 @@ class DataCreator:
                 'users': users,
                 'posts': posts,
                 'threads': threads,
+                'boards': boards,
                 'counters': counters,
             }, f)
 
@@ -70,20 +72,39 @@ class DataCreator:
         
         return users
 
-    def _createThreads(self, users):
-        threads = []
+    def _createBoards(self, users):
+        boards = []
         now = time()
-        for idx, user in enumerate(users):
-            threads.append(dict(
-                boardId='0',
-                threadId=str(idx),
-                lastPostId=None,
+
+        for idx in range(self.BOARD_COUNT):
+            user = users[idx]
+            boards.append(dict(
+                boardId=str(idx),
                 userId=user['userId'],
-                title=f'{user["displayName"]}\'s thread',
-                subject='Subject of this thread',
-                views=0,
+                title=f'{user["displayName"]}\'s Board',
                 createdAt=now,
             ))
+
+        return boards
+
+    def _createThreads(self, users, boards):
+        threads = []
+        now = time()
+        
+        for board_idx, board in enumerate(boards):
+            for idx in range(self.THREADCOUNT_PER_BOARD):
+                user = users[idx]
+                threads.append(dict(
+                    boardId=board['boardId'],
+                    threadId=str(idx + board_idx * self.THREADCOUNT_PER_BOARD),
+                    lastPostId=None,
+                    userId=user['userId'],
+                    title=f'{user["displayName"]}\'s thread',
+                    subject='Subject of this thread',
+                    views=0,
+                    createdAt=now,
+                ))
+            board['threadCount'] = self.THREADCOUNT_PER_BOARD
 
         return threads
 
@@ -99,7 +120,7 @@ class DataCreator:
 
         for userCount, user in enumerate(users):
             for threadCount, thread in enumerate(threads):
-                postNum = threadCount * self.POSTCOUNT_PER_THREAD
+                postNum = threadCount * self.POSTCOUNT_PER_USERTHREAD
                 for engCount in range(self.POSTCOUNT_PER_THREAD_ENG):
                     posts.append(
                         self._createEnglishPost(user, thread, postNum, postCreatedCount, now)
@@ -115,7 +136,7 @@ class DataCreator:
                     postNum += 1
 
                 thread['lastPostId'] = posts[-1]['postId']
-                thread['postCount'] = self.POSTCOUNT_PER_THREAD * len(self.USERS)
+                thread['postCount'] = self.POSTCOUNT_PER_USERTHREAD * len(self.USERS)
         return posts
 
     def _createEnglishPost(self, user, thread, postNum, postId, createdAt):
@@ -141,6 +162,7 @@ class DataCreator:
             dict( fieldname='userId', value=len( self.USERS ) ),
             dict( fieldname='postId', value=self.getTotalPostCount() ),
             dict( fieldname='threadId', value=self.getTotalThreadCount() ),
+            dict( fieldname='boardId', value=self.getTotalBoardCount() ),
         ]
 
     @classmethod
@@ -148,16 +170,16 @@ class DataCreator:
         return cls.USERS
 
     @classmethod
-    def getPostCountPerUser(cls):
-        return cls.POSTCOUNT_PER_USER
-
-    @classmethod
     def getTotalPostCount(cls):
-        return len(cls.USERS) * cls.POSTCOUNT_PER_USER
+        return len(cls.USERS) * cls.POSTCOUNT_PER_USERTHREAD * cls.getTotalThreadCount()
 
     @classmethod
     def getTotalThreadCount(cls):
-        return cls.THREAD_COUNT
+        return cls.THREADCOUNT_PER_BOARD * cls.getTotalBoardCount()
+
+    @classmethod
+    def getTotalBoardCount(cls):
+        return cls.BOARD_COUNT
 
 
 if __name__ == '__main__':
