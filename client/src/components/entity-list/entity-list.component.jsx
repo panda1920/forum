@@ -1,11 +1,11 @@
-import React, { useEffect, useReducer, useContext } from 'react';
+import React, { useEffect, useReducer, useContext, useCallback } from 'react';
 
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
 import PaginationBar from '../pagination-bar/pagination-bar.component';
 
 import './entity-list.styles.scss';
 
-const EntityList = ({ searchEntity, renderChildEntity }) => {
+const EntityList = ({ searchEntity, renderChildEntity, needRefresh }) => {
   const [ searchState, dispatch ] = useReducer(reducer, {
     entities: [],
     offset: 0,
@@ -14,17 +14,34 @@ const EntityList = ({ searchEntity, renderChildEntity }) => {
   });
   const { setCurrentUser } = useContext(CurrentUserContext);
 
-  // search and store entities everytime offset/limit has changed
+  // search and store entity in local state
+  // triggered when offset or limit changes
+  const searchAndStoreEntity = useCallback(async () => {
+    const { result, sessionUser } = await searchEntity({
+      offset: searchState.offset, limit: searchState.limit,
+    });
+    dispatch({ type: 'searchResult', result });
+    setCurrentUser(sessionUser);
+  }, [
+    searchEntity,
+    setCurrentUser,
+    searchState.offset,
+    searchState.limit
+  ]);
+
   useEffect(() => {
-    const searchAndStore = async () => {
-      const { result, sessionUser } = await searchEntity({
-        offset: searchState.offset, limit: searchState.limit,
-      });
-      dispatch({ type: 'searchResult', result });
-      setCurrentUser(sessionUser);
-    };
-    searchAndStore();
-  }, [ searchState.offset, searchState.limit, searchEntity, setCurrentUser ]);
+    console.log('#######First effect!');
+    searchAndStoreEntity();
+  }, [ searchAndStoreEntity ]);
+
+  // search and store must be triggered
+  // when external component notifies that refresh is needed through props
+  // this happens independantly from offset or limit
+  // which is why a separate useEffect is needed
+  useEffect(() => {
+    console.log('#######Second effect!');
+    if (needRefresh) searchAndStoreEntity();
+  }, [ searchAndStoreEntity, needRefresh ]);
 
   // calculate data passed to pagination
   const displayInfo = {
@@ -32,6 +49,10 @@ const EntityList = ({ searchEntity, renderChildEntity }) => {
     lastItemIdx: searchState.offset + searchState.entities.length,
     totalCount: searchState.totalCount,
   };
+
+  console.log('#######Rendering EntityList!');
+  console.log(searchState);
+  console.log(`needRefresh: ${needRefresh}`);
 
   return (
     <div title='Entity list' className='entity-list'>

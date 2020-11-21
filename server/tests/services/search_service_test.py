@@ -257,7 +257,6 @@ class TestSearchPostsByKeyValues:
         for k, v in expected_owner.items():
             assert getattr(owner[0], k) == v
 
-
 class TestSearchThreadsByKeyValues:
     DEFAULT_KEYVALUES = dict(
         userId='test_id',
@@ -632,6 +631,33 @@ class TestSearchThreadByExplicitId:
         assert len(owner) == 1
         for k, v in expected_user.items():
             assert getattr(owner[0], k) == v
+
+    def test_searchThreadByExplicitIdShouldContainLastPostInfo(self, service):
+        expected_lastpost_attrs = self.MOCK_POST_ATTRSET[0]
+
+        result = service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
+
+        thread = result['threads'][0]
+        lastposts = getattr(thread, 'lastPost')
+        assert len(lastposts) == 1
+        for k, v in expected_lastpost_attrs.items():
+            assert getattr(lastposts[0], k) == v
+
+    def test_searchThreadByExplicitIdShouldHaveEmptyLastpostsWhenNoMatchingPostFound(self, service):
+        repo = service._repo
+        thread_attrset = [
+            dict(threadId='test_id1', userId='test_user1', lastPostId='nonexistant_id'),
+            dict(threadId='test_id2', userId='test_user1', lastPostId='nonexistant_id'),
+            dict(threadId='test_id3', userId='test_user1', lastPostId='nonexistant_id'),
+        ]
+        mock_threads = create_mock_entities(thread_attrset)
+        repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
+
+        result = service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
+
+        for thread in result['threads']:
+            lastposts = getattr(thread, 'lastPost')
+            assert len(lastposts) == 0
 
 
 # helper functions

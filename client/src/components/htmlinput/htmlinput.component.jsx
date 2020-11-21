@@ -4,6 +4,7 @@ import 'tinymce';
 import 'tinymce/themes/silver';
 import 'tinymce/plugins/help';
 import { Editor } from '@tinymce/tinymce-react';
+import createDOMPurify from 'dompurify';
 
 // import {
 //   createInputHandler,
@@ -41,12 +42,11 @@ const tinymceInitParams = {
 
 const HtmlInput = ({ postEntity }) => {
   const [ content, setContent ] = useState('');
-  // const inputHandler = createInputHandler(setContent);
-  // const postHandler = createPostHandler(content, postEntity);
   const inputHandler = (content) => setContent(content);
   const postHandler = async (event) => {
     event.preventDefault();
-    const response = await postEntity(content);
+    const sanitizedContent = createDOMPurify(window).sanitize(content);
+    const response = await postEntity(sanitizedContent);
     if (response.ok)
       setContent('');
   };

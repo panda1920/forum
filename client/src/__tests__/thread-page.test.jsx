@@ -90,13 +90,13 @@ describe('Testing ThreadPage renders the component properly', () => {
   test('Should render EntityList', async () => {
     await renderThreadPage();
 
-    expect(EntityList).toHaveBeenCalled();
+    expect(EntityList).toHaveBeenCalledTimes(1);
   });
 
   test('Should render HtmlInput', async () => {
     await renderThreadPage();
 
-    expect(HtmlInput).toHaveBeenCalled();
+    expect(HtmlInput).toHaveBeenCalledTimes(1);
   });
 
   test.skip('Should render spinner when initial fetch fails', async () => {
@@ -118,6 +118,16 @@ describe('Testing behavior of ThreadPage', () => {
     }
   });
 
+  test('Should pass needRefresh to EntityList as false', async () => {
+    await renderThreadPage();
+
+    for (const call of EntityList.mock.calls) {
+      const [ props, ..._ ] = call;
+
+      expect(props).toHaveProperty('needRefresh', false);
+    }
+  });
+
   test('searchEntity callback should search for posts', async () => {
     // render component and capture component passed to child
     await renderThreadPage();
@@ -133,7 +143,7 @@ describe('Testing behavior of ThreadPage', () => {
       + `&offset=${options.offset}`
       + `&limit=${options.limit}`;
     
-    await searchEntity(options);
+    await act(async () => { await searchEntity(options); });
 
     expect(window.fetch).toHaveBeenCalledTimes(1);
     const [ url, ..._ ] = window.fetch.mock.calls[0];
@@ -148,9 +158,13 @@ describe('Testing behavior of ThreadPage', () => {
       return createApiReturn(TEST_DATA.POSTS_RETURN, 'posts');
     });
     
-    const { result } = await searchEntity({ offset: 10, limit: 20 });
+    let search;
+    await act(async () => {
+      search = await searchEntity({ offset: 10, limit: 20 });
+    });
 
-    expect(result).toHaveProperty('entities', TEST_DATA.POSTS_RETURN);
+    expect(search).toHaveProperty('result');
+    expect(search.result).toHaveProperty('entities', TEST_DATA.POSTS_RETURN);
   });
 
   test('renderChildEntity callback should render PostCard ', async () => {
@@ -186,7 +200,7 @@ describe('Testing behavior of ThreadPage', () => {
       },
     };
     
-    await postEntity(newPostMsg);
+    await act(async () => { await postEntity(newPostMsg); });
 
     expect(window.fetch).toHaveBeenCalled();
     const [url, options] = window.fetch.mock.calls[0];
@@ -195,6 +209,31 @@ describe('Testing behavior of ThreadPage', () => {
     const post = JSON.parse(options.body);
     expect(post).toHaveProperty('content', newPostMsg);
     expect(post).toHaveProperty('threadId', TEST_DATA.THREAD_ID);
+  });
+
+  test('postEntity callback should update needRefresh passed to EntityList as true', async () => {
+    await renderThreadPage();
+    const latestHtmlInputCall = HtmlInput.mock.calls.slice(-1)[0];
+    const { postEntity } = latestHtmlInputCall[0];
+
+    await act(async () => { await postEntity('some message'); });
+
+    expect(EntityList).toHaveBeenCalledTimes(2);
+    const [ props, ..._ ] = EntityList.mock.calls.slice(-1)[0];
+    expect(props).toHaveProperty('needRefresh', true);
+  });
+
+  test('searchEntity callback should update needRefresh passed to EntityList as false', async () => {
+    await renderThreadPage();
+    const [ { postEntity } ] = HtmlInput.mock.calls.slice(-1)[0];
+    const [ { searchEntity } ] = EntityList.mock.calls.slice(-1)[0];
+
+    await act(async () => { await postEntity('some message'); });
+    await act(async () => { await searchEntity(); });
+
+    expect(EntityList).toHaveBeenCalledTimes(3);
+    const [ props, ..._ ] = EntityList.mock.calls.slice(-1)[0];
+    expect(props).toHaveProperty('needRefresh', false);
   });
   
   test('Should search for thread with path id on mount', async () => {

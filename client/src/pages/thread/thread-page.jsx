@@ -11,6 +11,7 @@ import './thread-page.styles.scss';
 const ThreadPage = ({ match, location }) => {
   const { threadId } = match.params;
   const [ thread, setThread ] = useState(null);
+  const [ needRefresh, setNeedRefresh ] = useState(false);
 
   useEffect(() => {
     const hasThreadInState = () => {
@@ -33,6 +34,8 @@ const ThreadPage = ({ match, location }) => {
     const searchResult = await searchPosts(criteria);
     const resultJson = await searchResult.json();
     resultJson.result.entities = resultJson.result.posts;
+
+    setNeedRefresh(false);
     
     return resultJson;
   }, [threadId]);
@@ -52,28 +55,52 @@ const ThreadPage = ({ match, location }) => {
       threadId,
       content: string,
     };
-    return await createPost(newPost);
+    const result = await createPost(newPost);
+
+    if (result.ok) setNeedRefresh(true);
+
+    return result;
   }, [threadId]);
+
+  const clickHandler = () => {
+    setNeedRefresh((current) => !current);
+    console.log(needRefresh);
+  };
+
+  // console.log('#######Rendering ThreadPage!');
+
+  return render(thread, needRefresh, {
+    clickHandler,
+    searchEntity,
+    renderChildEntity,
+    postPost,
+  });
+};
+
+function render(thread, needRefresh, callbacks) {
+  const { clickHandler, searchEntity, renderChildEntity, postPost } = callbacks;
+
+  // wanted to avoid rendering the page when thread info is not available
+  if (!thread)
+    return <div className='thread-page' />;
 
   return (
     <div className='thread-page'>
-      <div className='breadcrumbs'>
-        { thread ? thread.title : null }
-        {
-          (thread && thread.ownerBoard)
-          ? thread.ownerBoard[0].title
-          : null
-        }
-      </div>
-      <EntityList
-        searchEntity={searchEntity}
-        renderChildEntity={renderChildEntity}
-      />
-      <HtmlInput
-        postEntity={postPost}
-      />
+    <button onClick={clickHandler}>Refresh</button>
+    <div className='breadcrumbs'>
+      { thread.title }
+      { thread.ownerBoard ? thread.ownerBoard[0].title : null }
+    </div>
+    <EntityList
+      searchEntity={searchEntity}
+      renderChildEntity={renderChildEntity}
+      needRefresh={needRefresh}
+    />
+    <HtmlInput
+      postEntity={postPost}
+    />
     </div>
   );
-};
+}
 
 export default ThreadPage;

@@ -32,16 +32,29 @@ const TEST_DATA = {
   }
 };
 
-async function renderEntityList() {
-  const mockSearchEntity = jest.fn()
+async function renderEntityList(mockArguments = {}) {
+  let {
+    mockSearchEntity,
+    mockRenderChildEntity,
+    mockSetCurrentUser,
+    needRefresh,
+    container,
+  } = mockArguments;
+  
+  mockSearchEntity = mockSearchEntity != undefined ? mockSearchEntity :
+    jest.fn()
     .mockName('Mocked searchEntity callback')
     .mockImplementation(async () => TEST_DATA.SEARCH_RESULT);
-  const mockRenderChildEntity = jest.fn()
+  mockRenderChildEntity = mockRenderChildEntity != undefined ? mockRenderChildEntity :
+    jest.fn()
     .mockName('Mocked renderChildEntity callback');
-  const mockSetCurrentUser = jest.fn()
+  mockSetCurrentUser = mockSetCurrentUser != undefined ? mockSetCurrentUser :
+    jest.fn()
     .mockName('Mocked setCurrentUser');
+  needRefresh = needRefresh != undefined ? needRefresh : false;
+  const options = { container };
+  
   let renderResult;
-
   await act(async () => {
     renderResult = render(
       <CurrentUserContext.Provider
@@ -50,8 +63,10 @@ async function renderEntityList() {
         <EntityList
           searchEntity={mockSearchEntity}
           renderChildEntity={mockRenderChildEntity}
+          needRefresh={needRefresh}
         />
       </CurrentUserContext.Provider>
+      , options
     );
   });
 
@@ -160,6 +175,21 @@ describe('Testing onmount behavior of EntityList', () => {
       expect([true, false]).toContain(props.disableBack);
       expect([true, false]).toContain(props.disableNext);
     }
+  });
+
+  test('Should trigger search 2 times when needRefresh prop is updated to true', async () => {
+    const renderResult = await renderEntityList();
+    const { mockSearchEntity } = renderResult;
+
+    expect(mockSearchEntity).toHaveBeenCalledTimes(1);
+
+    // reuse the mock created in the first render and pass it to second
+    await renderEntityList({
+      ...renderResult,
+      needRefresh: true,
+    });
+
+    expect(mockSearchEntity).toHaveBeenCalledTimes(2);
   });
 });
 

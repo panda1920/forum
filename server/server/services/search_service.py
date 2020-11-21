@@ -110,6 +110,7 @@ class SearchService:
 
         result = self._repo.searchThread(searchFilter, paging=paging)
         self._joinOwner(result['threads'])
+        self._joinLastPost(result['threads'])
 
         updateThread = Thread()
         updateThread.increment = 'views'
