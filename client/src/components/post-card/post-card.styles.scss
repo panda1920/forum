@@ -40,5 +40,25 @@
         .post-card-header, .post-card-footer {
             flex: 0 0 auto;
         }
+        .post-card-header {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: baseline;
+
+            .post-card-header-postnum {
+                flex: 0 0 auto;
+                width: map-get($dimensions, post-card-header-postnum-width);
+                font-weight: 600;
+            }
+            .post-card-header-postedat {
+                flex: 1 1 auto;
+                font-size: map-get($font-size, small);
+                color: lighten(map-get($colors, '00'), 30%);
+            }
+        }
+        .post-card-footer {
+            font-size: map-get($font-size, small);
+        }
     }
 }

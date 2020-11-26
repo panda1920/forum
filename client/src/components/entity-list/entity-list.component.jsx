@@ -1,17 +1,13 @@
 import React, { useEffect, useReducer, useContext, useCallback } from 'react';
 
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
+import { reducer, INITIAL_STATE, ACTION_TYPES } from './entity-list.reducer';
 import PaginationBar from '../pagination-bar/pagination-bar.component';
 
 import './entity-list.styles.scss';
 
 const EntityList = ({ searchEntity, renderChildEntity, needRefresh }) => {
-  const [ searchState, dispatch ] = useReducer(reducer, {
-    entities: [],
-    offset: 0,
-    limit: 10,
-    totalCount: 0,
-  });
+  const [ searchState, dispatch ] = useReducer(reducer, INITIAL_STATE);
   const { setCurrentUser } = useContext(CurrentUserContext);
 
   // search and store entity in local state
@@ -20,7 +16,7 @@ const EntityList = ({ searchEntity, renderChildEntity, needRefresh }) => {
     const { result, sessionUser } = await searchEntity({
       offset: searchState.offset, limit: searchState.limit,
     });
-    dispatch({ type: 'searchResult', result });
+    dispatch({ type: ACTION_TYPES.SEARCH_RESULT, result });
     setCurrentUser(sessionUser);
   }, [
     searchEntity,
@@ -30,29 +26,31 @@ const EntityList = ({ searchEntity, renderChildEntity, needRefresh }) => {
   ]);
 
   useEffect(() => {
-    console.log('#######First effect!');
+    // console.log('#######First effect!');
     searchAndStoreEntity();
   }, [ searchAndStoreEntity ]);
 
   // search and store must be triggered
   // when external component notifies that refresh is needed through props
-  // this happens independantly from offset or limit
+  // this happens independantly from changes to offset or limit
   // which is why a separate useEffect is needed
   useEffect(() => {
-    console.log('#######Second effect!');
-    if (needRefresh) searchAndStoreEntity();
+    if (needRefresh) {
+      // console.log('#######Second effect!');
+      searchAndStoreEntity();
+    }
   }, [ searchAndStoreEntity, needRefresh ]);
 
   // calculate data passed to pagination
   const displayInfo = {
     firstItemIdx: searchState.offset + 1,
-    lastItemIdx: searchState.offset + searchState.entities.length,
+    lastItemIdx: calculateLastItemIdx(searchState),
     totalCount: searchState.totalCount,
   };
 
-  console.log('#######Rendering EntityList!');
-  console.log(searchState);
-  console.log(`needRefresh: ${needRefresh}`);
+  // console.log('#######Rendering EntityList!');
+  // console.log(searchState);
+  // console.log(`needRefresh: ${needRefresh}`);
 
   return (
     <div title='Entity list' className='entity-list'>
@@ -83,53 +81,7 @@ const EntityList = ({ searchEntity, renderChildEntity, needRefresh }) => {
 
 export default EntityList;
 
-// reducer
-const reducer = (searchState, action) => {
-  switch (action.type) {
-    case 'searchResult':
-      return {
-        ...searchState,
-        entities: action.result.entities,
-        totalCount: action.result.matchedCount,
-      };
-    case 'nextPage':
-      return {
-        ...searchState,
-        offset: searchState.offset + searchState.limit,
-      };
-    case 'lastPage':
-      return {
-        ...searchState,
-        offset: getLastPageOffset(searchState),
-      };
-    case 'firstPage':
-      return {
-        ...searchState,
-        offset: 0,
-      };
-    case 'prevPage':
-      return {
-        ...searchState,
-        offset: searchState.offset - searchState.limit,
-      };
-    default:
-      return searchState;
-  }
-};
-
 // helpers
-
-function getLastPageOffset(searchState) {
-  const { limit, totalCount } = searchState;
-  const entityCountInLastPage = totalCount % limit;
-  const pageNum = Math.floor(totalCount / limit);
-
-  if (entityCountInLastPage == 0)
-    return (pageNum - 1) * limit;
-  else
-    return pageNum * limit;
-}
-
 function isFirstPage(searchState) {
   return searchState.offset === 0;
 }
@@ -138,4 +90,11 @@ function isLastPage(searchState) {
   const { offset, limit, totalCount } = searchState;
 
   return (totalCount - offset) <= limit;
+}
+
+function calculateLastItemIdx(searchState) {
+  if (isLastPage(searchState))
+    return searchState.totalCount;
+  else
+    return searchState.offset + searchState.limit;
 }

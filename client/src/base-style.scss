@@ -39,6 +39,7 @@ $dimensions: (
     
     'post-card-min-height': 200px,
     'post-card-portrait-size': 64px,
+    'post-card-header-postnum-width': 40px,
 );
 
 $general-styling: (
@@ -61,4 +62,10 @@ $general-styling: (
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+// mixins
+@mixin centralize-in-page {
+    margin: auto;
+    width: 80%;
 }

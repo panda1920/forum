@@ -24,7 +24,7 @@ const TEST_DATA = {
         { entityId: 'test_id10' },
       ],
       returnCount: 10,
-      matchedCount: 50,
+      matchedCount: 45,
     },
     sessionUser: {
       userId: 'test_userid'
@@ -337,5 +337,20 @@ describe('Testing behavior when dispatch is called', () => {
     await act(async() => dispatch({ type: 'firstPage' }) );
     [ _, num ] = getLastCallToRenderEntity();
     expect(num).toBe(TEST_DATA.SEARCH_RESULT.result.entities.length);
+  });
+
+  test('Should calculate and pass last entity idx to PaginationBar when transitioning to lastPage', async () => {
+    await renderEntityList();
+    const dispatch = PaginationBar.mock.calls[0][0].dispatch;
+    PaginationBar.mockClear();
+
+    await act(async() => dispatch({ type: 'lastPage' }) );
+
+    for (const call of PaginationBar.mock.calls) {
+      // extract dislayInfo from props
+      const { displayInfo } = call[0];
+
+      expect(displayInfo).toHaveProperty('lastItemIdx', 45);
+    }
   });
 });

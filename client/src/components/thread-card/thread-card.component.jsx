@@ -2,6 +2,7 @@ import React from 'react';
 
 import BlockText from '../block-text/block-text.component';
 import Portrait from '../portrait/portrait.component';
+import { convertEpochToLocalDateString } from '../../scripts/converter';
 
 import './thread-card.styles.scss';
 
@@ -14,7 +15,7 @@ const ThreadCard = ({ thread }) => {
         <BlockText className='thread-card-title'>{thread.title}</BlockText>
         <BlockText className='thread-card-userinfo'>
           Created by {owner.displayName},&nbsp;
-          {convertEpochToString(thread.createdAt)}
+          {convertEpochToLocalDateString(thread.createdAt)}
         </BlockText>
       </div>
       <div className='thread-card-views-posts'>
@@ -43,23 +44,10 @@ const displayLastPost = (thread) => {
         title='last post portrait'
       />
       <div>
-        <BlockText>{convertEpochToString(lastPost.createdAt)}</BlockText>
+        <BlockText>{convertEpochToLocalDateString(lastPost.createdAt)}</BlockText>
         <BlockText>{lastOwner.displayName}</BlockText>
       </div>
     </div>
   );
 }
-
-const convertEpochToString = (epochTime) => {
-  const date = new Date(epochTime * 1000);
-  const day = date.getUTCDate().toString().padStart(2, '0');
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0'); // utc month is 0-11
-  const year = date.getUTCFullYear().toString();
-  const hour = date.getUTCHours().toString().padStart(2, '0');
-  const minute = date.getUTCMinutes().toString().padStart(2, '0');
-  const second = date.getUTCSeconds().toString().padStart(2, '0');
-
-  return `${day}/${month}/${year}, ${hour}:${minute}:${second}`;
-};
-
 export default ThreadCard;

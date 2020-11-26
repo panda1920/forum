@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, cleanup, act } from '@testing-library/react';
+import { render, cleanup, act, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
 
 import { threadApi, postApi, createCreateApiPath } from '../paths';
@@ -7,12 +7,14 @@ import { createMockFetch } from '../scripts/test-utilities';
 import EntityList from '../components/entity-list/entity-list.component';
 import PostCard from '../components/post-card/post-card.component';
 import HtmlInput from '../components/htmlinput/htmlinput.component';
+import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
 import ThreadPage from '../pages/thread/thread-page';
 
 // mock out child components
 jest.mock('../components/entity-list/entity-list.component');
 jest.mock('../components/post-card/post-card.component');
 jest.mock('../components/htmlinput/htmlinput.component');
+jest.mock('../components/breadcrumbs/breadcrumbs.component');
 
 const TEST_DATA = {
   THREAD_ID: '1',
@@ -21,7 +23,12 @@ const TEST_DATA = {
     userId: 'test_userid',
     boardId: 'test_boardid',
     title: 'test_thread_title',
+    createdAt: 1577836800, // 2020/01/01 00:00:00,
+    owner: [{
+      displayName: 'test_user_name',
+    }],
     ownerBoard: [{
+      boardId: 'test_boardid',
       title: 'test_board_title',
     }],
   },
@@ -74,19 +81,11 @@ afterEach(() => {
   EntityList.mockClear();
   PostCard.mockClear();
   HtmlInput.mockClear();
+  Breadcrumbs.mockClear();
   window.fetch = originalFetch;
 });
 
 describe('Testing ThreadPage renders the component properly', () => {
-  test('Should render breadcrumbs', async () => {
-    const { getByText } = await renderThreadPage();
-
-    const threadTitlePattern = new RegExp(`.*${TEST_DATA.THREAD_DATA.title}.*`);
-    const boardTitlePattern = new RegExp(`.*${TEST_DATA.THREAD_DATA.ownerBoard[0].title}.*`);
-    getByText(threadTitlePattern);
-    getByText(boardTitlePattern);
-  });
-
   test('Should render EntityList', async () => {
     await renderThreadPage();
 
@@ -97,6 +96,27 @@ describe('Testing ThreadPage renders the component properly', () => {
     await renderThreadPage();
 
     expect(HtmlInput).toHaveBeenCalledTimes(1);
+  });
+
+  test('Should render Breadcrumbs', async () => {
+    await renderThreadPage();
+
+    expect(Breadcrumbs).toHaveBeenCalledTimes(1);
+  });
+
+  test('Should render thread info', async () => {
+    await renderThreadPage();
+
+    const threadTitle = TEST_DATA.THREAD_DATA.title;
+    const threadCreatedAt = '2020/01/01, 00:00:00';
+    const threadOwnerName = TEST_DATA.THREAD_DATA.owner[0].displayName;
+
+    expect( screen.getByText(threadTitle, { exact: false }) )
+      .toBeInTheDocument();
+    expect( screen.getByText(threadCreatedAt, { exact: false }) )
+      .toBeInTheDocument();
+    expect( screen.getByText(threadOwnerName, { exact: false }) )
+      .toBeInTheDocument();
   });
 
   test.skip('Should render spinner when initial fetch fails', async () => {
@@ -255,6 +275,25 @@ describe('Testing behavior of ThreadPage', () => {
     await renderThreadPage(locations);
 
     expect(window.fetch).not.toHaveBeenCalled();
+  });
+  
+  test('Should pass link definitions to Breadcrumbs', async () => {
+    const expectedLink = [
+      { displayName: 'Home', path: '/' },
+      {
+        displayName: TEST_DATA.THREAD_DATA.ownerBoard[0].title,
+        path: `/board/${TEST_DATA.THREAD_DATA.boardId}`
+      },
+      { displayName: TEST_DATA.THREAD_DATA.title, path: null },
+    ];
+
+    await renderThreadPage();
+
+    const [ props ] = Breadcrumbs.mock.calls[0];
+    const { links } = props;
+    expect(links[0]).toMatchObject(expectedLink[0]);
+    expect(links[1]).toMatchObject(expectedLink[1]);
+    expect(links[2]).toMatchObject(expectedLink[2]);
   });
 
   test.skip('Should *** if search failed', async () => {

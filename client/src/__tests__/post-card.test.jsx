@@ -3,6 +3,7 @@ import { render, cleanup, screen } from '@testing-library/react';
 
 import Portrait from '../components/portrait/portrait.component';
 import PostCard from '../components/post-card/post-card.component';
+import { createPost } from '../scripts/api';
 
 // mock out child components
 jest.mock('../components/portrait/portrait.component');
@@ -16,7 +17,8 @@ const TEST_DATA = {
     owner: [{
       displayName: 'test_displayname',
       imageUrl: 'www.example.com/image.png',
-    }]
+    }],
+    createdAt: 1605874550, // 2020/11/20, 12:15:50 GMT
   },
 };
 
@@ -52,6 +54,15 @@ describe('Testing behavior of PostCard component', () => {
       .toHaveProperty('title');
     expect(passedProps)
       .toHaveProperty('imageUrl', TEST_DATA.POST_DATA.owner[0].imageUrl);
+  });
+
+  test('Should display createdtime of post as local time string', () => {
+    const expectedString = '2020/11/20, 12:15:50';
+    const pattern = new RegExp(`.*${expectedString}.*`);
+
+    createPostCard();
+
+    screen.getByText(pattern);
   });
 
   test('Should transition to user page when owner portrait is clicked', async () => {

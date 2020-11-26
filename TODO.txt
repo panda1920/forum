@@ -16,12 +16,9 @@ FORUM
     
     [Frontend]
         - Create user profile page
-        - Create thread page
-            Create new post
         - Separate dockerfile for prod/dev in client
             Create separate nginx conf for each
             Make sure docker-compose uses the dev dockerfile
-        - Implement post functionality
         - Implement image upload functionality
         - Change the way search filters are passed to querystring
             want to specify operators like gt and lte in querystring

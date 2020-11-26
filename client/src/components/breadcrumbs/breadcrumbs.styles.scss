@@ -1,0 +1,29 @@
+@import '../../base-style';
+
+.breadcrumbs {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+
+    height: 2.5em;
+
+    * {
+        flex: 0 0 auto;
+        margin-right: map-get($spaces, small);
+        color: map-get($colors, '01');
+    }
+    .breadcrumbs-active-link {
+        text-decoration: none;
+
+        &:link, &:visited {
+            color: map-get($colors, '01');
+        }
+        &:hover {
+            color: map-get($colors, '02');
+        }
+    }
+    .breadcrumbs-inactive-link {
+        font-weight: 600;
+    }
+}

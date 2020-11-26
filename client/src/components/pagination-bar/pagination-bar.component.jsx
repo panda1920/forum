@@ -2,24 +2,25 @@ import React, { useCallback } from 'react';
 
 import BlockText from '../block-text/block-text.component';
 import Button from '../button/button.component';
+import { ACTION_TYPES } from '../entity-list/entity-list.reducer';
 
 import './pagination-bar.styles.scss';
 
 const PaginationBar = ({ displayInfo, disableBack, disableNext, dispatch }) => {
   const firstHandler = useCallback(() => {
-    dispatch({ type: 'firstPage' });
+    dispatch({ type: ACTION_TYPES.FIRST_PAGE });
   }, [dispatch]);
 
   const backHandler = useCallback(() => {
-    dispatch({ type: 'prevPage' });
+    dispatch({ type: ACTION_TYPES.PREV_PAGE });
   }, [dispatch]);
 
   const nextHandler = useCallback(() => {
-    dispatch({ type: 'nextPage' });
+    dispatch({ type: ACTION_TYPES.NEXT_PAGE });
   }, [dispatch]);
 
   const lastHandler = useCallback(() => {
-    dispatch({ type: 'lastPage' });
+    dispatch({ type: ACTION_TYPES.LAST_PAGE });
   }, [dispatch]);
 
   return (

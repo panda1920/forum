@@ -1,9 +1,26 @@
 @import '../../base-style';
 
 .thread-page {
+    padding: map-get($spaces, large) 0;
+
+    .breadcrumbs-container {
+        margin-bottom: map-get($spaces, medium);
+        background-color: lighten(map-get($colors, '00'), 20%);
+        
+        .breadcrumbs {
+            @include centralize-in-page;
+        }
+    }
+
+    .thread-page-threadinfo {
+        @include centralize-in-page;
+
+        margin-bottom: map-get($spaces, medium);
+        color: map-get($colors, '01');
+    }
+
     .entity-list {
-        margin: auto;
-        width: 80%;
+        @include centralize-in-page;
 
         .post-card {
             margin-bottom: map-get($spaces, medium);
@@ -14,7 +31,6 @@
     }
 
     .html-input {
-        margin: auto;
-        width: 80%;
+        @include centralize-in-page;
     }
 }
