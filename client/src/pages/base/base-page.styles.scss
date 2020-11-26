@@ -1,5 +1,8 @@
 @import '../../base-style';
 
+$header-height: map-get($dimensions, 'header-height');
+$footer-height: map-get($dimensions, 'footer-height');
+
 .base-page {
     display: flex;
     flex-direction: column;
@@ -7,16 +10,17 @@
     min-height: 100vh;
 
     header {
-        flex: 0 1 map-get($dimensions, 'header-height');
+        flex: 0 1 $header-height;
     }
     .main-content {
         flex: 1 1 auto;
         width: map-get($dimensions, 'main-content-width');
+        min-height: calc(100vh - #{$header-height} - #{$footer-height});
         margin: 0 auto;
         background-color: lighten( map-get($colors, '00'), 10% );
     }
     footer {
-        flex: 0 1 map-get($dimensions, 'footer-height');
+        flex: 0 1 $footer-height;
     }
 }
 

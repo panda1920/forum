@@ -40,6 +40,8 @@ $dimensions: (
     'post-card-min-height': 200px,
     'post-card-portrait-size': 64px,
     'post-card-header-postnum-width': 40px,
+
+    'spinner-size': 100px,
 );
 
 $general-styling: (
@@ -68,4 +70,11 @@ $general-styling: (
 @mixin centralize-in-page {
     margin: auto;
     width: 80%;
+}
+
+@mixin centerize {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }

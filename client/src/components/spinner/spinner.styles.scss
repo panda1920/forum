@@ -1,0 +1,33 @@
+@import '../../base-style';
+
+.spinner {
+    position: relative;
+    width: inherit;
+    min-height: inherit;
+    
+    .spinner-widget {
+        @include centerize;
+        
+        border: 10px solid darken(map-get($colors, '01'), 20%);
+        border-top: 10px solid map-get($colors, '01');
+        border-radius: 50%;
+        width: map-get($dimensions, spinner-size);
+        height: map-get($dimensions, spinner-size);
+        
+        transform-origin: 0 0;
+        animation: spinner-widget 1.5s linear infinite;
+    }
+}
+
+// need translates because it is being used to center the element
+@keyframes spinner-widget {
+    0% {
+        transform: rotate(0deg) translate(-50%, -50%);
+    }
+    50% {
+        transform: rotate(180deg) translate(-50%, -50%);
+    }
+    100% {
+        transform: rotate(360deg) translate(-50%, -50%);
+    }
+}

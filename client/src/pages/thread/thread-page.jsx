@@ -6,6 +6,7 @@ import EntityList from '../../components/entity-list/entity-list.component';
 import PostCard from '../../components/post-card/post-card.component';
 import HtmlInput from '../../components/htmlinput/htmlinput.component';
 import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
+import Spinner from '../../components/spinner/spinner.component';
 import { convertEpochToLocalDateString } from '../../scripts/converter';
 
 import './thread-page.styles.scss';
@@ -21,6 +22,9 @@ const ThreadPage = ({ match, location }) => {
     };
     const fetchThread = async () => {
       const response = await window.fetch(`${threadApi}/${threadId}`);
+      if (!response.ok)
+        return;
+
       const { result: { threads } } = await response.json();
       setThread( threads[0] );
     };
@@ -33,8 +37,11 @@ const ThreadPage = ({ match, location }) => {
 
   const searchEntity = useCallback(async (options = {}) => {
     const criteria = Object.assign({ threadId }, options);
-    const searchResult = await searchPosts(criteria);
-    const resultJson = await searchResult.json();
+    const response = await searchPosts(criteria);
+    if (!response.ok)
+      return null;
+
+    const resultJson = await response.json();
     resultJson.result.entities = resultJson.result.posts;
 
     setNeedRefresh(false);
@@ -78,8 +85,11 @@ function render(thread, needRefresh, callbacks) {
 
   // wanted to avoid rendering the page when thread info is not available
   if (!thread)
-    return <div className='thread-page' />;
+    return (
+      <Spinner />
+    );
 
+  // create navigation links to other pages
   // const ownerBoard = thread.ownerBoard[0];
   const links = [
     { displayName: 'Home', path: '/' },

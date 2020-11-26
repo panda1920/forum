@@ -8,6 +8,7 @@ import EntityList from '../components/entity-list/entity-list.component';
 import PostCard from '../components/post-card/post-card.component';
 import HtmlInput from '../components/htmlinput/htmlinput.component';
 import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
+import Spinner from '../components/spinner/spinner.component';
 import ThreadPage from '../pages/thread/thread-page';
 
 // mock out child components
@@ -15,6 +16,7 @@ jest.mock('../components/entity-list/entity-list.component');
 jest.mock('../components/post-card/post-card.component');
 jest.mock('../components/htmlinput/htmlinput.component');
 jest.mock('../components/breadcrumbs/breadcrumbs.component');
+jest.mock('../components/spinner/spinner.component');
 
 const TEST_DATA = {
   THREAD_ID: '1',
@@ -82,6 +84,7 @@ afterEach(() => {
   PostCard.mockClear();
   HtmlInput.mockClear();
   Breadcrumbs.mockClear();
+  Spinner.mockClear();
   window.fetch = originalFetch;
 });
 
@@ -119,8 +122,15 @@ describe('Testing ThreadPage renders the component properly', () => {
       .toBeInTheDocument();
   });
 
-  test.skip('Should render spinner when initial fetch fails', async () => {
+  test('Should render spinner and only spinner when initial fetch fails', async () => {
+    window.fetch = createMockFetch(false, 400, async () => {});
 
+    await renderThreadPage();
+
+    expect(EntityList).toHaveBeenCalledTimes(0);
+    expect(HtmlInput).toHaveBeenCalledTimes(0);
+    expect(Breadcrumbs).toHaveBeenCalledTimes(0);
+    expect(Spinner).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -185,6 +195,20 @@ describe('Testing behavior of ThreadPage', () => {
 
     expect(search).toHaveProperty('result');
     expect(search.result).toHaveProperty('entities', TEST_DATA.POSTS_RETURN);
+  });
+
+  test('searchEntity callback should return null when search failed', async () => {
+    await renderThreadPage();
+    const latestEntityListCall = EntityList.mock.calls.slice(-1)[0];
+    const { searchEntity } = latestEntityListCall[0];
+    window.fetch = createMockFetch(false, 400, async () => {});
+
+    let search;
+    await act(async () => {
+      search = await searchEntity({ offset: 10, limit: 20 });
+    });
+
+    expect(search).toBeNull();
   });
 
   test('renderChildEntity callback should render PostCard ', async () => {
@@ -255,7 +279,7 @@ describe('Testing behavior of ThreadPage', () => {
     const [ props, ..._ ] = EntityList.mock.calls.slice(-1)[0];
     expect(props).toHaveProperty('needRefresh', false);
   });
-  
+
   test('Should search for thread with path id on mount', async () => {
     const expectedPath = `${threadApi}/${TEST_DATA.THREAD_DATA.threadId}`;
 
@@ -277,7 +301,7 @@ describe('Testing behavior of ThreadPage', () => {
     expect(window.fetch).not.toHaveBeenCalled();
   });
   
-  test('Should pass link definitions to Breadcrumbs', async () => {
+  test.skip('Should pass link definitions to Breadcrumbs', async () => {
     const expectedLink = [
       { displayName: 'Home', path: '/' },
       {

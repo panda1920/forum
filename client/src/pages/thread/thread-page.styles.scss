@@ -32,5 +32,7 @@
 
     .html-input {
         @include centralize-in-page;
+
+        margin-top: map-get($spaces, medium);
     }
 }
