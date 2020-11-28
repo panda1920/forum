@@ -837,18 +837,17 @@ class TestThreadCRUD:
         assert result['matchedCount'] == DataCreator.getTotalThreadCount()
 
     def test_searchThreadByAggregateAndFilter(self, setupDB):
-        userIdCount = 2
-        expectedReturnCount = userIdCount
         threadIdsToSearch = [
-            thread['threadId'] for thread in setupDB.getOriginalThreads()
+            thread['threadId'] for thread in setupDB.getOriginalThreads()[:1]
         ]
         userIdsToSearch = [
-            user['userId'] for user in setupDB.getOriginalUsers()[:userIdCount]
+            user['userId'] for user in setupDB.getOriginalUsers()[:-1]
         ]
         searchFilter = AggregateFilter.createFilter('and', [
             createSearchFilter('threadId', 'eq', threadIdsToSearch),
             createSearchFilter('userId', 'eq', userIdsToSearch),
         ])
+        expectedReturnCount = 1
 
         result = setupDB.getRepo().searchThread(searchFilter)
 
@@ -953,7 +952,7 @@ class TestThreadCRUD:
     def test_updateThreadShouldUpdateMatchedThreadsWhenUsingAggregateFilters(self, setupDB):
         mock = setupDB.getMockPassword()
         mock.hashPassword.return_value = 'hashed'
-        threadIdsToUpdate = [ thread['threadId'] for thread in setupDB.getOriginalThreads()[:10] ]
+        threadIdsToUpdate = [ thread['threadId'] for thread in setupDB.getOriginalThreads()[:3] ]
         threadTitleToUpdate = [ thread['title'] for thread in setupDB.getOriginalThreads()[:1] ]
         searchFilter = AggregateFilter.createFilter('and', [
             createSearchFilter('threadId', 'eq', threadIdsToUpdate),
@@ -1000,12 +999,14 @@ class TestThreadCRUD:
         threadIdsToDelete = [
             thread['threadId'] for thread in setupDB.getOriginalThreads()[:3]
         ]
-        keywordToDelete = DataCreator.USERS[-1]
+        titlesToDelete = [
+            thread['title'] for thread in setupDB.getOriginalThreads()[:1]
+        ]
         searchFilter = AggregateFilter.createFilter('or', [
             createSearchFilter('threadId', 'eq', threadIdsToDelete),
-            createSearchFilter('title', 'fuzzy', [ keywordToDelete ]),
+            createSearchFilter('title', 'eq', [ titlesToDelete ]),
         ])
-        expectedDeleteCount = len(threadIdsToDelete) + 1
+        expectedDeleteCount = len(threadIdsToDelete)
 
         setupDB.getRepo().deleteThread(searchFilter)
 

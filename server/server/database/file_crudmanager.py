@@ -309,19 +309,14 @@ class FileCrudManager(CrudManager):
 
     @updateJSONFileContent('_postsFile')
     def _deletePostImpl(self, searchFilter, currentPosts=None):
-        deleteCount = 0
-
-        def matches(user):
-            isMatched = searchFilter.matches(user)
-            if isMatched:
-                nonlocal deleteCount
-                deleteCount += 1
-            return isMatched
+        originalPostCount = len(currentPosts)
 
         currentPosts[:] = [
             post for post in currentPosts
-            if not matches(post)
+            if not searchFilter.matches(post)
         ]
+
+        deleteCount = originalPostCount - len(currentPosts)
 
         return dict(deleteCount=deleteCount)
 
@@ -369,19 +364,14 @@ class FileCrudManager(CrudManager):
 
     @updateJSONFileContent('_threadsFile')
     def _deleteThreadImpl(self, searchFilter, currentThreads=None):
-        deleteCount = 0
-
-        def matches(thread):
-            isMatched = searchFilter.matches(thread)
-            if isMatched:
-                nonlocal deleteCount
-                deleteCount += 1
-            return isMatched
+        originalThreadCount = len(currentThreads)
 
         currentThreads[:] = [
             thread for thread in currentThreads
-            if not matches(thread)
+            if not searchFilter.matches(thread)
         ]
+
+        deleteCount = originalThreadCount - len(currentThreads)
 
         return dict(deleteCount=deleteCount)
 
@@ -411,8 +401,8 @@ class FileCrudManager(CrudManager):
         originalBoardCount = len(currentBoards)
 
         currentBoards[:] = [
-            post for post in currentBoards
-            if not searchFilter.matches(post)
+            board for board in currentBoards
+            if not searchFilter.matches(board)
         ]
 
         deleteCount = originalBoardCount - len(currentBoards)
