@@ -44,3 +44,15 @@ class CrudManager:
 
     def deleteThread(self, searchFilter):
         raise NotImplementedError
+
+    def createBoard(self, board):
+        raise NotImplementedError
+
+    def searchBoard(self, searchFilter, **options):
+        raise NotImplementedError
+
+    def updateBoard(self, searchFilter, board):
+        raise NotImplementedError
+
+    def deleteBoard(self, searchFilter):
+        raise NotImplementedError

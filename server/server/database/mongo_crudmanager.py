@@ -15,7 +15,7 @@ from server.database.sorter import NullSorter
 from server.database.crudmanager import CrudManager
 from server.database.paging import Paging
 import server.exceptions as exceptions
-from server.entity import User, Post, Thread
+from server.entity import User, Post, Thread, Board
 
 
 logger = logging.getLogger(__name__)
@@ -199,6 +199,60 @@ class MongoCrudManager(CrudManager):
         return dict(
             deleteCount=result.deleted_count,
         )
+
+    def createBoard(self, board):
+        attrs = board.to_create()
+
+        with self._mongoOperationHandling('Failed to create new thread'):
+            nextId = str( self._getCounterAndIncrement('boardId') )
+            attrs['boardId'] = nextId
+            attrs['createdAt'] = time.time()
+            self._db['boards'].insert_one(attrs)
+
+        return dict(
+            createdCount=1,
+            createdId=nextId,
+        )
+
+    def searchBoard(self, searchFilter, **options):
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
+        query = {} if searchFilter is None else searchFilter.getMongoFilter()
+
+        with self._mongoOperationHandling('Failed to search board'):
+            boards = list( paging.slice( sorter.sortMongoCursor( self._db['boards'].find(query) ) ) )
+            matchedCount = self._db['boards'].count_documents(query)
+
+        self._convertInnerIdToStr(boards)
+        boards = [ Board(board) for board in boards ]
+
+        return {
+            'boards': boards,
+            'returnCount': len(boards),
+            'matchedCount': matchedCount,
+        }
+
+    def updateBoard(self, searchFilter, board):
+        attrs = board.to_update()
+
+        fil = searchFilter.getMongoFilter()
+        update = self._createMongoUpdate(attrs)
+        with self._mongoOperationHandling('Failed to update board'):
+            result = self._db['boards'].update_many(fil, update)
+
+        return dict(
+            matchedCount=result.matched_count,
+            updatedCount=result.modified_count,
+        )
+
+    def deleteBoard(self, searchFilter):
+        query = searchFilter.getMongoFilter()
+
+        with self._mongoOperationHandling('Failed to create post'):
+            result = self._db['boards'].delete_many(query)
+
+        return dict(deleteCount=result.deleted_count)
 
     def _createMongoUpdate(self, updateProps):
         update = defaultdict(lambda: defaultdict(int))

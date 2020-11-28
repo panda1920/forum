@@ -257,6 +257,7 @@ class TestSearchPostsByKeyValues:
         for k, v in expected_owner.items():
             assert getattr(owner[0], k) == v
 
+
 class TestSearchThreadsByKeyValues:
     DEFAULT_KEYVALUES = dict(
         userId='test_id',
@@ -658,6 +659,26 @@ class TestSearchThreadByExplicitId:
         for thread in result['threads']:
             lastposts = getattr(thread, 'lastPost')
             assert len(lastposts) == 0
+
+
+class TestSearchBoardByKeyValues:
+    MOCK_BOARD_ATTRSET = [
+        dict(boardId='test_id', userId='11111111', _id='some_random_id', )
+    ]
+    MOCK_USER_ATTRSET = [
+        dict(userId='11111111', name='Alan', _id='some_random_id'),
+        dict(userId='33333333', name='Bobby', _id='some_random_id'),
+    ]
+
+    @pytest.fixture(scope='function', autouse=True)
+    def setDefaultReturnValues(self, service):
+        mock_boards = create_mock_entities(self.MOCK_BOARD_ATTRSET)
+        boards_from_repo = create_return_from_repo(mock_boards)
+        mock_users = create_mock_entities(self.MOCK_USER_ATTRSET)
+        users_from_repo = create_return_from_repo(mock_users)
+
+        service._repo.searchBoard.return_value = boards_from_repo
+        service._repo.searchUser.return_value = users_from_repo
 
 
 # helper functions

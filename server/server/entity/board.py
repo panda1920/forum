@@ -40,8 +40,8 @@ class Board(Entity):
                     'hide': False,
                 },
                 'to_create': {
-                    'required': True,
-                    'hide': False,
+                    'required': False,
+                    'hide': True,
                 },
                 'to_update': {
                     'required': False,
@@ -117,8 +117,8 @@ class Board(Entity):
                     'hide': False,
                 },
                 'to_create': {
-                    'required': True,
-                    'hide': False,
+                    'required': False,
+                    'hide': True,
                 },
                 'to_update': {
                     'required': False,

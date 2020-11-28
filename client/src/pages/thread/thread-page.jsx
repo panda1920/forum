@@ -2,12 +2,12 @@ import React, { useEffect, useState, useCallback } from 'react';
 
 import { searchPosts, createPost } from '../../scripts/api';
 import { threadApi } from '../../paths';
+import { convertEpochToLocalDateString } from '../../scripts/converter';
 import EntityList from '../../components/entity-list/entity-list.component';
 import PostCard from '../../components/post-card/post-card.component';
 import HtmlInput from '../../components/htmlinput/htmlinput.component';
 import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
 import Spinner from '../../components/spinner/spinner.component';
-import { convertEpochToLocalDateString } from '../../scripts/converter';
 
 import './thread-page.styles.scss';
 
@@ -17,9 +17,7 @@ const ThreadPage = ({ match, location }) => {
   const [ needRefresh, setNeedRefresh ] = useState(false);
 
   useEffect(() => {
-    const hasThreadInState = () => {
-      return location.state && location.state.thread;
-    };
+    const hasThreadInState = () => location.state && location.state.thread;
     const fetchThread = async () => {
       const response = await window.fetch(`${threadApi}/${threadId}`);
       if (!response.ok)
@@ -73,14 +71,14 @@ const ThreadPage = ({ match, location }) => {
 
   // console.log('#######Rendering ThreadPage!');
 
-  return render(thread, needRefresh, {
+  return createThreadPage(thread, needRefresh, {
     searchEntity,
     renderChildEntity,
     postPost,
   });
 };
 
-function render(thread, needRefresh, callbacks) {
+function createThreadPage(thread, needRefresh, callbacks) {
   const { searchEntity, renderChildEntity, postPost } = callbacks;
 
   // wanted to avoid rendering the page when thread info is not available
@@ -89,6 +87,21 @@ function render(thread, needRefresh, callbacks) {
       <Spinner />
     );
 
+  return (
+    <div className='thread-page'>
+      { createBreadcrumbs(thread) }
+      { createThreadInfoSection(thread) }
+      <EntityList
+        searchEntity={searchEntity}
+        renderChildEntity={renderChildEntity}
+        needRefresh={needRefresh}
+      />
+      <HtmlInput postEntity={postPost} />
+    </div>
+  );
+}
+
+function createBreadcrumbs(thread) {
   // create navigation links to other pages
   // const ownerBoard = thread.ownerBoard[0];
   const links = [
@@ -98,17 +111,8 @@ function render(thread, needRefresh, callbacks) {
   ];
 
   return (
-    <div className='thread-page'>
-      <div className='breadcrumbs-container'>
-        <Breadcrumbs links={links} />
-      </div>
-      { createThreadInfoSection(thread) }
-      <EntityList
-        searchEntity={searchEntity}
-        renderChildEntity={renderChildEntity}
-        needRefresh={needRefresh}
-      />
-      <HtmlInput postEntity={postPost} />
+    <div className='breadcrumbs-container'>
+      <Breadcrumbs links={links} />
     </div>
   );
 }

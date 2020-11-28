@@ -10,7 +10,7 @@ import logging
 from server.database.sorter import NullSorter
 from server.database.crudmanager import CrudManager
 from server.database.paging import Paging
-from server.entity import User, Post, Thread
+from server.entity import User, Post, Thread, Board
 
 
 logger = logging.getLogger(__name__)
@@ -62,6 +62,7 @@ class FileCrudManager(CrudManager):
         self._usersFile = self.createIfNotExist(self._saveLocation / self.USERS_FILENAME)
         self._postsFile = self.createIfNotExist(self._saveLocation / self.POSTS_FILENAME)
         self._threadsFile = self.createIfNotExist(self._saveLocation / self.THREADS_FILENAME)
+        self._boardsFile = self.createIfNotExist(self._saveLocation / self.BOARDS_FILENAME)
         self._countersFile = self.createIfNotExist(self._saveLocation / self.COUNTERS_FILENAME)
         self._passwordService = passwordService
 
@@ -202,8 +203,6 @@ class FileCrudManager(CrudManager):
         sortedThreads = sorter.sort(matchedThreads)
         returnThreads = paging.slice(sortedThreads)
 
-        print(returnThreads)
-
         return dict(
             threads=[ Thread(thread) for thread in returnThreads ],
             matchedCount=len(matchedThreads),
@@ -217,6 +216,52 @@ class FileCrudManager(CrudManager):
 
     def deleteThread(self, searchFilter):
         return self._deleteThreadImpl(searchFilter)
+
+    def createBoard(self, board):
+        attrs = board.to_create()
+
+        attrs['createdAt'] = time.time()
+        attrs['boardId'] = str( self._getCounter('boardId') )
+
+        self._createBoardImpl(attrs)
+        self._incrementCounter('boardId')
+        
+        return dict(
+            createdCount=1,
+            createdId=attrs['boardId'],
+        )
+
+    def searchBoard(self, searchFilter, **options):
+        self._setDefaultSearchOptions(options)
+        paging = options.get('paging')
+        sorter = options.get('sorter')
+
+        with self._boardsFile.open('r', encoding='utf-8') as f:
+            boards = json.load(f)
+
+        if searchFilter is None:
+            matchedBoards = boards
+        else:
+            matchedBoards = [
+                board for board in boards
+                if searchFilter.matches(board)
+            ]
+        sortedBoards = sorter.sort(matchedBoards)
+        returnBoards = paging.slice(sortedBoards)
+
+        return dict(
+            boards=[ Board(board) for board in returnBoards ],
+            matchedCount=len(matchedBoards),
+            returnCount=len(returnBoards),
+        )
+
+    def updateBoard(self, searchFilter, board):
+        attrs = board.to_update()
+
+        return self._updateBoardImpl(searchFilter, attrs)
+
+    def deleteBoard(self, searchFilter):
+        return self._deleteBoardImpl(searchFilter)
 
     @updateJSONFileContent('_usersFile')
     def _createUserImpl(self, user, currentUsers=None):
@@ -337,6 +382,40 @@ class FileCrudManager(CrudManager):
             thread for thread in currentThreads
             if not matches(thread)
         ]
+
+        return dict(deleteCount=deleteCount)
+
+    @updateJSONFileContent('_boardsFile')
+    def _createBoardImpl(self, board, currentBoards=None):
+        currentBoards.append(board)
+
+    @updateJSONFileContent('_boardsFile')
+    def _updateBoardImpl(self, searchFilter, update_attrs, currentBoards=None):
+        # determine which element in list needs update
+        boardIdxToUpdate = [
+            idx for idx, p in enumerate(currentBoards)
+            if searchFilter.matches(p)
+        ]
+        # apply update
+        for idx in boardIdxToUpdate:
+            for field, value in update_attrs.items():
+                currentBoards[idx][field] = value
+
+        return dict(
+            matchedCount=len(boardIdxToUpdate),
+            updatedCount=len(boardIdxToUpdate),
+        )
+
+    @updateJSONFileContent('_boardsFile')
+    def _deleteBoardImpl(self, searchFilter, currentBoards=None):
+        originalBoardCount = len(currentBoards)
+
+        currentBoards[:] = [
+            post for post in currentBoards
+            if not searchFilter.matches(post)
+        ]
+
+        deleteCount = originalBoardCount - len(currentBoards)
 
         return dict(deleteCount=deleteCount)
 

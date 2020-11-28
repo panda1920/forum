@@ -155,10 +155,8 @@ class TestConversionMethods:
 
     def test_to_createValidatesForRequiredAttributes(self):
         required_attributes = [
-            'boardId',
             'userId',
             'title',
-            'createdAt',
         ]
         for required_attribute in required_attributes:
             args = DEFAULT_ARGS.copy()
@@ -171,8 +169,10 @@ class TestConversionMethods:
     def test_to_createIgnoresUnnecessaryAttributes(self, board):
         ignored_args = [
             '_id',
+            'boardId',
             'owner',
             'updatedAt',
+            'createdAt',
         ]
 
         create_dict = board.to_create()
