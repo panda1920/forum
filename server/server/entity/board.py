@@ -106,6 +106,9 @@ class Board(Entity):
                     'hide': False,
                 },
             },
+            'search_rules': {
+                'fuzzy': True,
+            }
         },
         'createdAt': {
             'validation_rules': {

@@ -3,8 +3,6 @@
 This file houses tests for searchfilter_creator.py
 """
 
-import pytest
-
 from server.services.searchfilter_creator import SearchFilterCreator
 from server.database.filter import PrimitiveFilter, FuzzyStringFilter
 from server.database.aggregate_filter import AggregateFilter, OrFilter, AndFilter
@@ -315,6 +313,109 @@ class TestThreadSearchFilter:
         keyvalues = { 'search': 'test_value' }
 
         result_filter = SearchFilterCreator.create_threadsearch(keyvalues)
+
+        narrowing_filters = result_filter._filters[1]._filters
+        assert len(narrowing_filters) == 0
+
+
+class TestBoardSearchFilter:
+    DEFAULT_KEYVALUES = {
+        'search': 'test_board',
+        'boardId': 'hello',
+    }
+
+    def test_create_boardsearchShouldCreateOrAndInsideAndFilter(self):
+        result_filter = SearchFilterCreator.create_boardsearch(self.DEFAULT_KEYVALUES)
+
+        assert isinstance(result_filter, AndFilter)
+        assert isinstance(result_filter._filters[0], OrFilter)
+        assert isinstance(result_filter._filters[1], AndFilter)
+
+    def test_create_boardsearchShouldCreateFuzzyFiltersFromSearchKey(self):
+        result_filter = SearchFilterCreator.create_boardsearch(self.DEFAULT_KEYVALUES)
+
+        fuzzy_filters = result_filter._filters[0]._filters
+        assert len(fuzzy_filters) > 0
+        for fuzzy_filter in fuzzy_filters:
+            assert isinstance(fuzzy_filter, FuzzyStringFilter)
+
+    def test_create_boardsearchShouldCreateFuzzyFiltersForCertainFields(self):
+        expected_attributes = SearchFilterCreator.board_fuzzysearchable_attributes
+        expected_filters = [
+            PrimitiveFilter.createFilter(dict(
+                field=attr,
+                operator='fuzzy',
+                value=[ self.DEFAULT_KEYVALUES['search'] ]
+            ))
+            for attr in expected_attributes
+        ]
+
+        result_filter = SearchFilterCreator.create_boardsearch(self.DEFAULT_KEYVALUES)
+        
+        fuzzy_filters = result_filter._filters[0]._filters
+        for f in expected_filters:
+            assert f in fuzzy_filters
+
+    def test_create_boardsearchShouldCreateFuzzyFilterForMultipleValuesWhenSearchIsSpaceDelimited(self):
+        expected_values = ['value1', 'value2', 'value3']
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field=SearchFilterCreator.board_fuzzysearchable_attributes[0],
+            operator='fuzzy',
+            value=expected_values,
+        ))
+        keyvalues = self.DEFAULT_KEYVALUES.copy()
+        keyvalues['search'] = ' '.join(expected_values)
+
+        result_filter = SearchFilterCreator.create_boardsearch(keyvalues)
+
+        fuzzy_filters = result_filter._filters[0]._filters
+        assert expected_filter in fuzzy_filters
+
+    def test_create_boardsearchShouldCreateEmptyFuzzyFilterWhenNoSearch(self):
+        keyvalues = { 'boardId': 'test_id '}
+
+        result_filter = SearchFilterCreator.create_boardsearch(keyvalues)
+
+        fuzzy_filters = result_filter._filters[0]._filters
+        assert len(fuzzy_filters) == 0
+
+    def test_create_boardsearchShouldCreateNarrowingFilterFromFieldsInKeyvalues(self):
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='boardId',
+            operator='eq',
+            value=[ self.DEFAULT_KEYVALUES['boardId'] ],
+        ))
+
+        result_filter = SearchFilterCreator.create_boardsearch(self.DEFAULT_KEYVALUES)
+
+        narrowing_filters = result_filter._filters[1]._filters
+        assert len(narrowing_filters) == 1
+        assert narrowing_filters[0] == expected_filter
+
+    def test_create_boardsearchShouldIgnoreNonUserAttributeInKeyValues(self):
+        ignored_attributes = {
+            'hello': 'some_value',
+            '!@#%!%!@#': 'some_value',
+            '12315123': 'some_value',
+        }
+        keyvalues = self.DEFAULT_KEYVALUES.copy()
+        keyvalues.update(ignored_attributes)
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='boardId',
+            operator='eq',
+            value=[ self.DEFAULT_KEYVALUES['boardId'] ],
+        ))
+
+        result_filter = SearchFilterCreator.create_boardsearch(keyvalues)
+        
+        narrowing_filters = result_filter._filters[1]._filters
+        assert len(narrowing_filters) == 1
+        assert narrowing_filters[0] == expected_filter
+
+    def test_createboardsearchShouldCreateEmptyNarrowingFilterWhenNoFields(self):
+        keyvalues = { 'search': 'test_value' }
+
+        result_filter = SearchFilterCreator.create_boardsearch(keyvalues)
 
         narrowing_filters = result_filter._filters[1]._filters
         assert len(narrowing_filters) == 0

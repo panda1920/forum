@@ -129,6 +129,30 @@ class SearchService:
             value=values
         ))
 
+    def searchBoardsByKeyValues(self, keyValues):
+        """
+        Searches for Boards based on criterias in keyValues
+        
+        Args:
+            keyValues(dict): criterias to search
+        Returns:
+            dict: result of search operation
+        """
+        logging.info('Searching for Board entities')
+
+        searchFilter = self._searchFilterCreator.create_boardsearch(keyValues)
+        paging = self._paging(keyValues)
+        sorter = self._createSorterFromKeyValues(keyValues)
+
+        result = self._repo.searchBoard(searchFilter, paging=paging, sorter=sorter)
+        self._joinOwner(result['boards'])
+        
+        return dict(
+            boards=result['boards'],
+            returnCount=result['returnCount'],
+            matchedCount=result['matchedCount'],
+        )
+
     def _joinOwner(self, entities):
         """
         add owner user information to each entity document

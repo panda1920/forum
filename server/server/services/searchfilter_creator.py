@@ -6,7 +6,7 @@ which will then be passed to repository objects
 
 from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
-from server.entity import User, Post, Thread
+from server.entity import User, Post, Thread, Board
 
 
 def extract_fuzzy_attributes(entity):
@@ -46,6 +46,8 @@ class SearchFilterCreator:
     post_fuzzysearchable_attributes = extract_fuzzy_attributes(Post)
     thread_attributes = Thread._attribute_description.keys()
     thread_fuzzysearchable_attributes = extract_fuzzy_attributes(Thread)
+    board_attributes = Board._attribute_description.keys()
+    board_fuzzysearchable_attributes = extract_fuzzy_attributes(Board)
 
     @classmethod
     def create_usersearch(cls, keyvalues):
@@ -72,9 +74,17 @@ class SearchFilterCreator:
         )
 
     @classmethod
+    def create_boardsearch(cls, keyvalues):
+        return cls.create_searchfilters(
+            keyvalues,
+            cls.board_attributes,
+            cls.board_fuzzysearchable_attributes,
+        )
+
+    @classmethod
     def create_searchfilters(cls, keyvalues, entity_attrs, fuzzy_attrs):
         search_term = cls._extract_search_term(keyvalues)
-        attrs = cls._extract_attrs_from(keyvalues, entity_attrs)
+        attrs = cls._extract_valid_attrs(keyvalues, entity_attrs)
 
         fuzzy_filters = cls._create_fuzzyfilters_for(
             search_term,
@@ -96,13 +106,13 @@ class SearchFilterCreator:
             return []
 
     @classmethod
-    def _extract_attrs_from(cls, keyvalues, attrs):
-        extracted_attrs = []
-        for attr in attrs:
+    def _extract_valid_attrs(cls, keyvalues, entity_attrs):
+        valid_attrs = []
+        for attr in entity_attrs:
             if attr in keyvalues:
-                extracted_attrs.append(attr)
+                valid_attrs.append(attr)
 
-        return extracted_attrs
+        return valid_attrs
 
     @classmethod
     def _create_fuzzyfilters_for(cls, search_term, attrs):

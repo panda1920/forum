@@ -661,7 +661,11 @@ class TestSearchThreadByExplicitId:
             assert len(lastposts) == 0
 
 
-class TestSearchBoardByKeyValues:
+class TestSearchBoardsByKeyValues:
+    DEFAULT_KEYVALUES = dict(
+        search='some board',
+        boardId='some_id'
+    )
     MOCK_BOARD_ATTRSET = [
         dict(boardId='test_id', userId='11111111', _id='some_random_id', )
     ]
@@ -669,16 +673,143 @@ class TestSearchBoardByKeyValues:
         dict(userId='11111111', name='Alan', _id='some_random_id'),
         dict(userId='33333333', name='Bobby', _id='some_random_id'),
     ]
+    MOCK_SEARCHFILTER = 'test_search_filter'
+    MOCKPAGING_DEFAULT_RETURN = 'default_paging'
 
     @pytest.fixture(scope='function', autouse=True)
     def setDefaultReturnValues(self, service):
         mock_boards = create_mock_entities(self.MOCK_BOARD_ATTRSET)
-        boards_from_repo = create_return_from_repo(mock_boards)
+        boards_from_repo = create_return_from_repo(mock_boards, 'boards')
         mock_users = create_mock_entities(self.MOCK_USER_ATTRSET)
-        users_from_repo = create_return_from_repo(mock_users)
+        users_from_repo = create_return_from_repo(mock_users, 'users')
 
         service._repo.searchBoard.return_value = boards_from_repo
         service._repo.searchUser.return_value = users_from_repo
+        service._searchFilterCreator.create_boardsearch.return_value = self.MOCK_SEARCHFILTER
+        service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
+
+    def test_searchBoardsByKeyValuesPassesKeyValuesToSearchFilterCreator(self, service):
+        creator = service._searchFilterCreator
+
+        service.searchBoardsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        assert len(creator.create_boardsearch.call_args_list) > 0
+        passed_arg, *_ = creator.create_boardsearch.call_args_list[0][0]
+        assert passed_arg == self.DEFAULT_KEYVALUES
+
+    def test_searchBoardsByKeyValuesPassesSearchFilterToRepo(self, service):
+        repo = service._repo
+
+        service.searchBoardsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        assert len(repo.searchBoard.call_args_list) > 0
+        passed_filter, *_ = repo.searchBoard.call_args_list[0][0]
+        assert passed_filter == self.MOCK_SEARCHFILTER
+
+    def test_searchBoardsByKeyValuesPassesDefaultPagingToQuery(self, service):
+        mockRepo = service._repo
+
+        service.searchBoardsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        mockRepo.searchBoard.assert_any_call(
+            ANY,
+            paging=self.MOCKPAGING_DEFAULT_RETURN,
+            sorter=NullSorter()
+        )
+
+    def test_searchBoardsByKeyValuesPassesAscSorterToQueryWhenSortInKeyValues(self, service):
+        mockRepo = service._repo
+        keyValues = self.DEFAULT_KEYVALUES.copy()
+        keyValues['sortBy'] = 'createdAt'
+        expectedSorter = AscendingSorter('createdAt')
+
+        service.searchBoardsByKeyValues(keyValues)
+
+        mockRepo.searchBoard.assert_any_call(
+            ANY,
+            paging=ANY,
+            sorter=expectedSorter,
+        )
+
+    def test_searchBoardsByKeyValuessDescSorterToQueryWhenDescOrderWasSpecified(self, service):
+        mockRepo = service._repo
+        keyValues = self.DEFAULT_KEYVALUES.copy()
+        keyValues['sortBy'] = 'createdAt'
+        keyValues['order'] = 'desc'
+        expectedSorter = DescendingSorter('createdAt')
+
+        service.searchBoardsByKeyValues(keyValues)
+
+        mockRepo.searchBoard.assert_any_call(
+            ANY,
+            paging=ANY,
+            sorter=expectedSorter
+        )
+
+    def test_searchBoardsByKeyValuesSearchesForOwnerId(self, service):
+        repo = service._repo
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='userId',
+            operator='eq',
+            value=[ self.MOCK_BOARD_ATTRSET[0]['userId'] ]
+        ))
+
+        service.searchBoardsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        narrowing_filter = repo.searchUser.call_args_list[0][0][0]
+        assert narrowing_filter == expected_filter
+
+    def test_searchBoardsByKeyValuesSearchesOwnerUsersForMultipleBoards(self, service):
+        repo = service._repo
+        mock_attrset = [
+            dict(boardId='test_boardid1', userId='test_userid_1'),
+            dict(boardId='test_boardid2', userId='test_userid_2'),
+            dict(boardId='test_boardid3', userId='test_userid_3'),
+        ]
+        owner_ids = [ attr['userId'] for attr in mock_attrset ]
+        mock_boards = create_mock_entities(mock_attrset)
+        repo.searchBoard.return_value = create_return_from_repo(mock_boards, 'boards')
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='userId',
+            operator='eq',
+            value=owner_ids
+        ))
+
+        service.searchBoardsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        narrowing_filter = repo.searchUser.call_args_list[0][0][0]
+        assert narrowing_filter == expected_filter
+
+    def test_searchBoardsByKeyValuesShouldNotSearchForOwnerWhenNoBoardReturned(self, service):
+        repo = service._repo
+        repo.searchBoard.return_value = create_return_from_repo([], 'boards')
+
+        service.searchBoardsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        assert repo.searchUser.call_count == 0
+
+    def test_searchBoardsByKeyValuesReturnBoards(self, service):
+        expected_board = self.MOCK_BOARD_ATTRSET[0]
+
+        searchResult = service.searchBoardsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        assert len(searchResult['boards']) == len(self.MOCK_BOARD_ATTRSET)
+        assert searchResult['returnCount'] == len(self.MOCK_BOARD_ATTRSET)
+        assert searchResult['matchedCount'] == len(self.MOCK_BOARD_ATTRSET)
+        board = searchResult['boards'][0]
+        for k, v in expected_board.items():
+            assert getattr(board, k) == v
+        
+    def test_searchBoardsByKeyValuesReturnBoardsWithOwner(self, service):
+        expected_owner = self.MOCK_USER_ATTRSET[0]
+
+        searchResult = service.searchBoardsByKeyValues(self.DEFAULT_KEYVALUES)
+        
+        board = searchResult['boards'][0]
+        owner = getattr(board, 'owner')
+        assert len(owner) == 1
+        for k, v in expected_owner.items():
+            assert getattr(owner[0], k) == v
 
 
 # helper functions
