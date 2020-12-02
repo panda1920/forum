@@ -24,7 +24,7 @@ class SessionService:
     def set_user(self, user):
         """
         Change session user to designated user.
-        Change the current user in global context as well.
+        Change the current user in request context as well.
         
         Args:
             user(dict): user entity
@@ -38,7 +38,7 @@ class SessionService:
     def remove_user(self):
         """
         Change session user to anonymous user.
-        CHange the current user in global context as well.
+        CHange the current user in request context as well.
         
         Args:
             None

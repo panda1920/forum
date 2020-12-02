@@ -11,9 +11,6 @@ from server.database.filter import PrimitiveFilter
 from server.services.delete_service import DeleteService
 
 TEST_DEFAULT_USERID = '11223344'
-TEST_DEFAULT_POSTID = '22334455'
-TEST_DEFAULT_THREADID = '22123123'
-
 
 @pytest.fixture(scope='function')
 def delete_service():
@@ -86,6 +83,7 @@ class TestUserDeleteService:
 
 
 class TestPostDeleteService:
+    TEST_DEFAULT_POSTID = '22334455'
     POST_ATTRSET = [
         dict(userId=TEST_DEFAULT_USERID, postId=TEST_DEFAULT_POSTID),
     ]
@@ -99,13 +97,13 @@ class TestPostDeleteService:
             'matchedCountCount': len(mock_posts),
         }
 
-    def test_deletePostByIdShouldPassPostIdToServiceAsFilter(self, delete_service):
+    def test_deletePostByIdShouldDeleteEntityById(self, delete_service):
         mock_repo = delete_service._repo
         expectedFilter = PrimitiveFilter.createFilter(dict(
-            operator='eq', field='postId', value=[ TEST_DEFAULT_POSTID ]
+            operator='eq', field='postId', value=[ self.TEST_DEFAULT_POSTID ]
         ))
 
-        delete_service.deletePostById(TEST_DEFAULT_POSTID)
+        delete_service.deletePostById(self.TEST_DEFAULT_POSTID)
 
         assert mock_repo.deletePost.call_count == 1
         filterPassed, *_ = mock_repo.deletePost.call_args[0]
@@ -121,17 +119,17 @@ class TestPostDeleteService:
     def test_deletePostByIdShouldLookupPostOnRepo(self, delete_service):
         mock_repo = delete_service._repo
         expectedFilter = PrimitiveFilter.createFilter(dict(
-            operator='eq', field='postId', value=[ TEST_DEFAULT_POSTID ]
+            operator='eq', field='postId', value=[ self.TEST_DEFAULT_POSTID ]
         ))
 
-        delete_service.deletePostById(TEST_DEFAULT_POSTID)
+        delete_service.deletePostById(self.TEST_DEFAULT_POSTID)
 
         assert mock_repo.searchPost.call_count == 1
         filterPassed, *_ = mock_repo.searchPost.call_args[0]
         assert filterPassed == expectedFilter
 
-    def test_deletePostByIdShouldRaiseExceptionWhenUserIdFromRepoNotMatchSession(self, delete_service):
-        post_attributes = [ dict(postId=TEST_DEFAULT_POSTID, userId='random_id') ]
+    def test_deletePostByIdShouldRaiseExceptionWhenAuthorizeFail(self, delete_service):
+        post_attributes = [ dict(postId=self.TEST_DEFAULT_POSTID, userId='random_id') ]
         mock_repo = delete_service._repo
         mock_repo.searchPost.return_value = dict(
             posts=create_mock_entities(post_attributes),
@@ -140,10 +138,10 @@ class TestPostDeleteService:
         )
 
         with pytest.raises(exceptions.UnauthorizedError):
-            delete_service.deletePostById(TEST_DEFAULT_POSTID)
+            delete_service.deletePostById(self.TEST_DEFAULT_POSTID)
 
     def test_deletePostByIdShouldNotCallDeleteWhenAuthorizeFail(self, delete_service):
-        post_attributes = [ dict(postId=TEST_DEFAULT_POSTID, userId='random_id') ]
+        post_attributes = [ dict(postId=self.TEST_DEFAULT_POSTID, userId='random_id') ]
         mock_repo = delete_service._repo
         mock_repo.searchPost.return_value = dict(
             posts=create_mock_entities(post_attributes),
@@ -152,7 +150,7 @@ class TestPostDeleteService:
         )
 
         try:
-            delete_service.deletePostById(TEST_DEFAULT_POSTID)
+            delete_service.deletePostById(self.TEST_DEFAULT_POSTID)
         except Exception:
             pass
 
@@ -163,12 +161,13 @@ class TestPostDeleteService:
         service_return = dict( deleteCount=1 )
         mock_repo.deletePost.return_value = service_return
 
-        rv = delete_service.deletePostById(TEST_DEFAULT_POSTID)
+        rv = delete_service.deletePostById(self.TEST_DEFAULT_POSTID)
 
         assert rv == service_return
 
 
 class TestThreadDeleteService:
+    TEST_DEFAULT_THREADID = '22123123'
     THREAD_ATTRSET = [
         dict(userId=TEST_DEFAULT_USERID, threadId=TEST_DEFAULT_THREADID),
     ]
@@ -182,13 +181,13 @@ class TestThreadDeleteService:
             'matchedCountCount': len(mock_threads),
         }
 
-    def test_deleteThreadByIdShouldPassThreadIdToServiceAsFilter(self, delete_service):
+    def test_deleteThreadByIdShouldDeleteEntityById(self, delete_service):
         mock_repo = delete_service._repo
         expectedFilter = PrimitiveFilter.createFilter(dict(
-            operator='eq', field='threadId', value=[ TEST_DEFAULT_THREADID ]
+            operator='eq', field='threadId', value=[ self.TEST_DEFAULT_THREADID ]
         ))
 
-        delete_service.deleteThreadById(TEST_DEFAULT_THREADID)
+        delete_service.deleteThreadById(self.TEST_DEFAULT_THREADID)
 
         assert mock_repo.deleteThread.call_count == 1
         filterPassed, *_ = mock_repo.deleteThread.call_args[0]
@@ -204,17 +203,17 @@ class TestThreadDeleteService:
     def test_deleteThreadByIdShouldLookupThreadOnRepo(self, delete_service):
         mock_repo = delete_service._repo
         expectedFilter = PrimitiveFilter.createFilter(dict(
-            operator='eq', field='threadId', value=[ TEST_DEFAULT_THREADID ]
+            operator='eq', field='threadId', value=[ self.TEST_DEFAULT_THREADID ]
         ))
 
-        delete_service.deleteThreadById(TEST_DEFAULT_THREADID)
+        delete_service.deleteThreadById(self.TEST_DEFAULT_THREADID)
 
         assert mock_repo.searchThread.call_count == 1
         filterPassed, *_ = mock_repo.searchThread.call_args[0]
         assert filterPassed == expectedFilter
 
-    def test_deleteThreadByIdShouldRaiseExceptionWhenUserIdFromRepoNotMatchSession(self, delete_service):
-        thread_attributes = [ dict(threadId=TEST_DEFAULT_THREADID, userId='random_id') ]
+    def test_deleteThreadByIdShouldRaiseExceptionWhenAuthorizeFail(self, delete_service):
+        thread_attributes = [ dict(threadId=self.TEST_DEFAULT_THREADID, userId='random_id') ]
         mock_repo = delete_service._repo
         mock_repo.searchThread.return_value = dict(
             threads=create_mock_entities(thread_attributes),
@@ -223,10 +222,10 @@ class TestThreadDeleteService:
         )
 
         with pytest.raises(exceptions.UnauthorizedError):
-            delete_service.deleteThreadById(TEST_DEFAULT_THREADID)
+            delete_service.deleteThreadById(self.TEST_DEFAULT_THREADID)
 
     def test_deleteThreadByIdShouldNotCallDeleteWhenAuthorizeFail(self, delete_service):
-        thread_attributes = [ dict(threadId=TEST_DEFAULT_THREADID, userId='random_id') ]
+        thread_attributes = [ dict(threadId=self.TEST_DEFAULT_THREADID, userId='random_id') ]
         mock_repo = delete_service._repo
         mock_repo.searchThread.return_value = dict(
             threads=create_mock_entities(thread_attributes),
@@ -235,7 +234,7 @@ class TestThreadDeleteService:
         )
 
         try:
-            delete_service.deleteThreadById(TEST_DEFAULT_THREADID)
+            delete_service.deleteThreadById(self.TEST_DEFAULT_THREADID)
         except Exception:
             pass
 
@@ -246,6 +245,90 @@ class TestThreadDeleteService:
         service_return = dict( deleteCount=1 )
         mock_repo.deleteThread.return_value = service_return
 
-        rv = delete_service.deleteThreadById(TEST_DEFAULT_THREADID)
+        rv = delete_service.deleteThreadById(self.TEST_DEFAULT_THREADID)
+
+        assert rv == service_return
+
+
+class TestBoardDeleteService:
+    TEST_DEFAULT_BOARDID = '22123123'
+    BOARD_ATTRSET = [
+        dict(userId=TEST_DEFAULT_USERID, boardId=TEST_DEFAULT_BOARDID),
+    ]
+
+    @pytest.fixture(scope='function', autouse=True)
+    def applyMocks(self, delete_service):
+        mock_boards = create_mock_entities(self.BOARD_ATTRSET)
+        delete_service._repo.searchBoard.return_value = {
+            'boards': mock_boards,
+            'returnCount': len(mock_boards),
+            'matchedCountCount': len(mock_boards),
+        }
+
+    def test_deleteBoardByIdShouldDeleteEntityById(self, delete_service):
+        mock_repo = delete_service._repo
+        expectedFilter = PrimitiveFilter.createFilter(dict(
+            operator='eq', field='boardId', value=[ self.TEST_DEFAULT_BOARDID ]
+        ))
+
+        delete_service.deleteBoardById(self.TEST_DEFAULT_BOARDID)
+
+        assert mock_repo.deleteBoard.call_count == 1
+        filterPassed, *_ = mock_repo.deleteBoard.call_args[0]
+        assert filterPassed == expectedFilter
+
+    def test_deleteBoardByIdShouldRaiseExceptionWhenNoId(self, delete_service):
+        noid_patterns = [None, '']
+
+        for boardid in noid_patterns:
+            with pytest.raises(exceptions.IdNotSpecifiedError):
+                delete_service.deleteBoardById(boardid)
+
+    def test_deleteBoardByIdShouldLookupBoardOnRepo(self, delete_service):
+        mock_repo = delete_service._repo
+        expectedFilter = PrimitiveFilter.createFilter(dict(
+            operator='eq', field='boardId', value=[ self.TEST_DEFAULT_BOARDID ]
+        ))
+
+        delete_service.deleteBoardById(self.TEST_DEFAULT_BOARDID)
+
+        assert mock_repo.searchBoard.call_count == 1
+        filterPassed, *_ = mock_repo.searchBoard.call_args[0]
+        assert filterPassed == expectedFilter
+
+    def test_deleteBoardByIdShouldRaiseExceptionWhenAuthorizeFail(self, delete_service):
+        board_attributes = [ dict(boardId=self.TEST_DEFAULT_BOARDID, userId='random_id') ]
+        mock_repo = delete_service._repo
+        mock_repo.searchBoard.return_value = dict(
+            boards=create_mock_entities(board_attributes),
+            matchedCount=1,
+            returnCount=1,
+        )
+
+        with pytest.raises(exceptions.UnauthorizedError):
+            delete_service.deleteBoardById(self.TEST_DEFAULT_BOARDID)
+
+    def test_deleteBoardByIdShouldNotCallDeleteWhenAuthorizeFail(self, delete_service):
+        board_attributes = [ dict(boardId=self.TEST_DEFAULT_BOARDID, userId='random_id') ]
+        mock_repo = delete_service._repo
+        mock_repo.searchBoard.return_value = dict(
+            boards=create_mock_entities(board_attributes),
+            matchedCount=1,
+            returnCount=1,
+        )
+
+        try:
+            delete_service.deleteBoardById(self.TEST_DEFAULT_BOARDID)
+        except Exception:
+            pass
+
+        assert mock_repo.deleteBoard.call_count == 0
+    
+    def test_deleteByIdShouldReturnDeleteResult(self, delete_service):
+        mock_repo = delete_service._repo
+        service_return = dict( deleteCount=1 )
+        mock_repo.deleteBoard.return_value = service_return
+
+        rv = delete_service.deleteBoardById(self.TEST_DEFAULT_BOARDID)
 
         assert rv == service_return

@@ -30,6 +30,8 @@ class DeleteService:
         Returns:
             result of operation
         """
+        logger.info('Deleting user')
+
         if not id:
             logger.error('Failed to delete beceuase Id was not provided')
             raise exceptions.IdNotSpecifiedError('Specify entity Id to perform delete')
@@ -48,6 +50,8 @@ class DeleteService:
         Returns:
             result of operation
         """
+        logger.info('Deleting post')
+
         if not id:
             logger.error('Failed to delete beceuase Id was not provided')
             raise exceptions.IdNotSpecifiedError('Specify entity Id to perform delete')
@@ -66,6 +70,8 @@ class DeleteService:
         Returns:
             result of operation
         """
+        logger.info('Deleting thread')
+
         if not id:
             logger.error('Failed to delete beceuase Id was not provided')
             raise exceptions.IdNotSpecifiedError('Specify entity Id to perform delete')
@@ -75,25 +81,25 @@ class DeleteService:
 
         return self._repo.deleteThread(searchFilter)
 
-    def _createSearchFilterFromKeyValuesForField(self, keyValues, fieldname):
+    def deleteBoardById(self, id):
         """
-        Creates searchFilter used to search entities from repo,
-        by extracting fieldname from keyvalues
+        Delete Board by its id.
         
         Args:
-            keyValues(dict):
-            fieldname(string): creates searchfilter using this fieldname
+            id(str): id of Board to delete
         Returns:
-            PrimitiveFilter
+            result of operation
         """
-        fieldvalue = keyValues.get(fieldname, None)
-        if fieldvalue is None:
-            logger.error('Failed to delete due to no Id specified in keyValues')
+        logger.info('Deleting board')
+
+        if not id:
+            logger.error('Failed to delete beceuase Id was not provided')
             raise exceptions.IdNotSpecifiedError('Specify entity Id to perform delete')
-        
-        return PrimitiveFilter.createFilter(dict(
-            operator='eq', field=fieldname, value=[ fieldvalue ]
-        ))
+
+        searchFilter = self._createEqFilterForId(id, 'boardId')
+        self._authorizeDeleteBoard(searchFilter)
+
+        return self._repo.deleteBoard(searchFilter)
 
     def _createEqFilterForId(self, id, fieldname):
         """
@@ -137,6 +143,20 @@ class DeleteService:
         for thread in threads:
             self._authorizeDelete( thread.userId )
 
+    def _authorizeDeleteBoard(self, searchFilter):
+        """
+        Authorizes current user to delete this board.
+        
+        Args:
+            searchFilter(PrimitiveFilter): used to search boards from repo
+        Returns:
+            None
+        """
+        boards = self._repo.searchBoard(searchFilter, paging=PagingNoLimit())['boards']
+        
+        for board in boards:
+            self._authorizeDelete( board.userId )
+
     def _authorizeDelete(self, userId):
         """
         Authorizes delete operation by comparing resource owner with current user.
@@ -147,6 +167,8 @@ class DeleteService:
         Returns:
             None
         """
+        logging.info('Authorizing deletion of entity')
+
         session_user = self._session.get_user()
         if (session_user is None) or (session_user.userId != userId):
             logger.error('Failed operation due to unauthorized user')

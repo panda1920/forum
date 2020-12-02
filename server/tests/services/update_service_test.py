@@ -62,7 +62,7 @@ class TestUserUpdateService:
 
         mock_repo.searchUser.assert_called_with(expectedFilter)
 
-    def test_updateUserShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
+    def test_updateUserShouldRaiseExceptionWhenAuthorizationFail(self, setup_service):
         session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
         setup_service._session.get_user.return_value = session_user
 
@@ -132,7 +132,7 @@ class TestPostUpdateService:
 
         mock_repo.searchPost.assert_called_with(expectedFilter)
 
-    def test_updatePostShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
+    def test_updatePostShouldRaiseExceptionWhenAuthorizationFail(self, setup_service):
         session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
         setup_service._session.get_user.return_value = session_user
 
@@ -201,7 +201,7 @@ class TestThreadUpdateService:
 
         mock_repo.searchThread.assert_called_with(expectedFilter)
 
-    def test_updateThreadShouldRaiseExceptionWhenReturnedOwnerNotMatchSession(self, setup_service):
+    def test_updateThreadShouldRaiseExceptionWhenAuthorizationFail(self, setup_service):
         session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
         setup_service._session.get_user.return_value = session_user
 
@@ -237,5 +237,74 @@ class TestThreadUpdateService:
 
     def test_updateThreadShouldReturnResultFromRepo(self, setup_service):
         result = setup_service.updateThread(self.DEFAULT_THREAD)
+
+        assert result == self.DEFAULT_REPOUPDATE_RESULT
+
+
+class TestBoardUpdateService:
+    DEFAULT_REPOUPDATE_RESULT = 'default_result'
+    REPOBOARD_ATTRSET = [
+        dict(boardId='0', userId=DEFAULT_SESSION_USER.userId, title='test_board_1')
+    ]
+    DEFAULT_BOARD_ATTRSET = [
+        dict(boardId='0', title='Hello this is my first board')
+    ]
+    DEFAULT_BOARD = create_mock_entities(DEFAULT_BOARD_ATTRSET)[0]
+
+    @pytest.fixture(scope='function', autouse=True)
+    def setup_mocks(self, setup_service):
+        mock_boards = create_mock_entities(self.REPOBOARD_ATTRSET)
+        repoboard_return = create_repo_return(mock_boards, 'boards')
+
+        mock_repo = setup_service._repo
+        mock_repo.searchBoard.return_value = repoboard_return
+        mock_repo.updateBoard.return_value = self.DEFAULT_REPOUPDATE_RESULT
+
+    def test_updateBoardShouldCallSearchForBoardInformation(self, setup_service):
+        mock_repo = setup_service._repo
+        expectedFilter = PrimitiveFilter.createFilter(dict(
+            field='boardId', operator='eq', value=[ self.DEFAULT_BOARD.boardId ]
+        ))
+
+        setup_service.updateBoard(self.DEFAULT_BOARD)
+
+        mock_repo.searchBoard.assert_called_with(expectedFilter)
+    
+    def test_updateBoardShouldRaiseExceptionWhenAuthorizationFail(self, setup_service):
+        session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
+        setup_service._session.get_user.return_value = session_user
+
+        with pytest.raises(exceptions.UnauthorizedError):
+            setup_service.updateBoard(self.DEFAULT_BOARD)
+    
+    def test_updateBoardShouldNotUpdateWhenAuthorizationFail(self, setup_service):
+        session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
+        setup_service._session.get_user.return_value = session_user
+
+        try:
+            setup_service.updateBoard(self.DEFAULT_BOARD)
+        except Exception:
+            pass
+
+        assert setup_service._repo.updateBoard.call_count == 0
+    
+    def test_updateBoardShouldPassCreatedFilterAndEntityToUpdate(self, setup_service):
+        mock_repo = setup_service._repo
+        expectedFilter = PrimitiveFilter.createFilter(dict(
+            field='boardId', operator='eq', value=[ self.DEFAULT_BOARD.boardId ]
+        ))
+
+        setup_service.updateBoard(self.DEFAULT_BOARD)
+
+        mock_repo.updateBoard.assert_called_with(expectedFilter, self.DEFAULT_BOARD)
+    
+    def test_updateBoardShouldRaiseExceptionWhenNoBoardId(self, setup_service):
+        mock_board = create_mock_entities([dict(title='test_title')])[0]
+
+        with pytest.raises(exceptions.IdNotSpecifiedError):
+            setup_service.updateBoard(mock_board)
+    
+    def test_updateBoardShouldReturnResultFromRepo(self, setup_service):
+        result = setup_service.updateBoard(self.DEFAULT_BOARD)
 
         assert result == self.DEFAULT_REPOUPDATE_RESULT

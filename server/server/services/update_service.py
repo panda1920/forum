@@ -68,6 +68,22 @@ class UpdateService:
 
         return self._repo.updateThread(searchFilter, thread)
 
+    def updateBoard(self, board):
+        """
+        Updates a single board.
+        
+        Args:
+            board(entity): A board entity object
+        Returns:
+            dict that reports result of updating repository
+        """
+        logger.info('Updating Board entity')
+
+        searchFilter = self._create_eqfilter(board, 'boardId')
+        self._authorizeUpdateBoard(searchFilter)
+
+        return self._repo.updateBoard(searchFilter, board)
+
     def _create_eqfilter(self, entity, fieldname):
         try:
             return self._filter.createFilter(dict(
@@ -122,6 +138,21 @@ class UpdateService:
 
         threads = self._repo.searchThread(searchFilter)['threads']
         self._authorizeUpdate(threads)
+
+    def _authorizeUpdateBoard(self, searchFilter):
+        """
+        Authorize deletion of boards.
+        Boards are searched from repo using searchFilter.
+        
+        Args:
+            searchFilter(PrimitiveFilter): used to search for entities from repo
+        Returns:
+            None
+        """
+        logger.debug('Authorizing update of Board entity')
+
+        boards = self._repo.searchBoard(searchFilter)['boards']
+        self._authorizeUpdate(boards)
 
     def _authorizeUpdate(self, entities):
         """

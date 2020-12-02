@@ -60,6 +60,19 @@ class EntityCreationService:
 
         return self._createThread(thread)
 
+    def createNewBoard(self, board):
+        """
+        Create new board entity
+        
+        Args:
+            thead: Board entity object
+        Returns:
+            dictionary that reports result of operation
+        """
+        logger.info('Creating new Board')
+
+        return self._createBoard(board)
+
     def _checkUserExists(self, user):
         try:
             username = user.userName
@@ -103,6 +116,11 @@ class EntityCreationService:
         thread.userId = self._session.get_user().userId
 
         return self._repo.createThread(thread)
+
+    def _createBoard(self, board):
+        board.userId = self._session.get_user().userId
+
+        return self._repo.createBoard(board)
 
     def _updateThreadForNewPost(self, post, newId):
         searchFilter = self._filter.createFilter(dict(

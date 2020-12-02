@@ -16,6 +16,7 @@ DEFAULT_SESSION_USER = create_mock_entity_fromattrs( dict(userId=OWNER_ID) )
 CREATE_USER_RETURN = dict(createdCount=1, createdId='test_inserted_user')
 CREATE_POST_RETURN = dict(createdCount=1, createdId='test_inserted_post')
 CREATE_THREAD_RETURN = dict(createdCount=1, createdId='test_inserted_thread')
+CREATE_BOARD_RETURN = dict(createdCount=1, createdId='test_inserted_board')
 
 
 @pytest.fixture(scope='function')
@@ -24,6 +25,7 @@ def service():
     mock_repo.createUser.return_value = CREATE_USER_RETURN
     mock_repo.createPost.return_value = CREATE_POST_RETURN
     mock_repo.createThread.return_value = CREATE_THREAD_RETURN
+    mock_repo.createBoard.return_value = CREATE_BOARD_RETURN
     
     mock_filter = mocks.createMockFilter()
 
@@ -234,3 +236,51 @@ class TestCreateNewThread:
         result = service.createNewThread(mock_thread)
         
         assert result == CREATE_THREAD_RETURN
+
+
+class TestCreateNewBoard:
+    DEFAULT_ATTRS = dict(
+        title='test_board_title'
+    )
+
+    @pytest.fixture(scope='function')
+    def mock_board(self):
+        mock_board = mocks.createMockEntity()
+        for attr, value in self.DEFAULT_ATTRS.items():
+            setattr(mock_board, attr, value)
+
+        yield mock_board
+
+    @pytest.fixture(scope='function', autouse=True)
+    def setup_defaultreturn(self, service):
+        service._session.get_user.return_value = DEFAULT_SESSION_USER
+
+    def test_createNewBoardShouldPassDefaultKeyValuesToDB(self, service, mock_board):
+        mock_repo = service._repo
+
+        service.createNewBoard(mock_board)
+
+        mock_repo.createBoard.call_count == 1
+        mock_repo.createBoard.assert_called_with(mock_board)
+    
+    def test_createNewBoardGeneratesDefaultValues(self, service, mock_board):
+        mock_repo = service._repo
+
+        service.createNewBoard(mock_board)
+
+        board_passed, *_ = mock_repo.createBoard.call_args_list[0][0]
+        # assert board_passed.
+    
+    def test_createNewBoardShouldInsertSessionUserIdAsItsOwner(self, service, mock_board):
+        mock_repo = service._repo
+        expected_ownerid = DEFAULT_SESSION_USER.userId
+
+        service.createNewBoard(mock_board)
+
+        board_passed, *_ = mock_repo.createBoard.call_args_list[0][0]
+        assert getattr(board_passed, 'userId') == expected_ownerid
+    
+    def test_createNewBoardShouldReturnResultFromRepo(self, service, mock_board):
+        result = service.createNewBoard(mock_board)
+        
+        assert result == CREATE_BOARD_RETURN
