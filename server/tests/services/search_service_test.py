@@ -11,7 +11,13 @@ from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 import tests.mocks as mocks
 from tests.mocks import createMockEntity
-from tests.helpers import create_mock_entities
+from tests.helpers import (
+    create_mock_entities,
+    create_testuser_attrs,
+    create_testpost_attrs,
+    create_testthread_attrs,
+    create_testboard_attrs,
+)
 
 
 @pytest.fixture(scope='function')
@@ -109,15 +115,14 @@ class TestSearchUsersByKeyValues:
 
 
 class TestSearchPostsByKeyValues:
-    DEFAULT_POST_OWNERID = 'test_id'
     DEFAULT_KEYVALUES = dict(search='some_content', postId='test_postid')
     MOCK_POST_ATTRSET = [
-        dict(postId='test_postid', userId='test_userid')
+        create_testpost_attrs(userId='test_userid'),
     ]
     MOCK_USER_ATTRSET = [
-        dict(userId='test_userid'),
-        dict(userId='test_userid1'),
-        dict(userId='test_userid2'),
+        create_testuser_attrs(userId='test_userid'),
+        create_testuser_attrs(),
+        create_testuser_attrs(),
     ]
     MOCK_SEARCHFILTER = 'test_search_filter'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
@@ -208,9 +213,9 @@ class TestSearchPostsByKeyValues:
     def test_searchPostsByKeyValuesSearchesOwnerUsersForMultiplePosts(self, service):
         repo = service._repo
         mock_attrset = [
-            dict(postId='test_postid1', userId='test_userid_1'),
-            dict(postId='test_postid2', userId='test_userid_2'),
-            dict(postId='test_postid3', userId='test_userid_3'),
+            create_testpost_attrs(userId='test_userid_1'),
+            create_testpost_attrs(userId='test_userid_2'),
+            create_testpost_attrs(userId='test_userid_3'),
         ]
         owner_ids = [ attr['userId'] for attr in mock_attrset ]
         mock_posts = create_mock_entities(mock_attrset)
@@ -264,20 +269,19 @@ class TestSearchThreadsByKeyValues:
         search='test_search',
     )
     MOCK_THREAD_ATTRSET = [
-        dict(threadId='2222', userId='11111111', boardid='123123', _id='some_random_id', lastPostId='1234')
+        create_testthread_attrs(userId='11111111', boardId='123123', lastPostId='1234', )
     ]
     MOCK_USER_ATTRSET = [
-        dict(userId='11111111', name='Alan', _id='some_random_id'),
-        dict(userId='33333333', name='Bobby', _id='some_random_id'),
+        create_testuser_attrs(userId='11111111'),
+        create_testuser_attrs(),
     ]
     MOCK_BOARD_ATTRSET = [
-        dict(boardId='123123'),
-        dict(boardId='234234'),
+        create_testboard_attrs(boardId='123123'),
     ]
     MOCK_POST_ATTRSET = [
-        dict(postId='1234', userId='33333333'),
-        dict(postId='3456', userId='33333333'),
-        dict(postId='4567', userId='33333333'),
+        create_testpost_attrs(postId='1234'),
+        create_testpost_attrs(),
+        create_testpost_attrs(),
     ]
     MOCK_SEARCHFILTER = 'test_search_filter'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
@@ -295,6 +299,7 @@ class TestSearchThreadsByKeyValues:
 
         service._repo.searchThread.return_value = threads_from_repo
         service._repo.searchUser.return_value = users_from_repo
+        service._repo.searchBoard.return_value = boards_from_repo
         service._repo.searchPost.return_value = posts_from_repo
         service._searchFilterCreator.create_threadsearch.return_value = self.MOCK_SEARCHFILTER
         service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
@@ -377,9 +382,9 @@ class TestSearchThreadsByKeyValues:
     def test_searchThreadsByKeyValuesShouldGenerateSearchForAllOwners(self, service):
         repo = service._repo
         thread_attrs = [
-            dict(threadId='test_1', userId='user_1', lastPostId='post_1'),
-            dict(threadId='test_2', userId='user_2', lastPostId='post_2'),
-            dict(threadId='test_3', userId='user_3', lastPostId='post_3'),
+            create_testthread_attrs(userId='user_1'),
+            create_testthread_attrs(userId='user_2'),
+            create_testthread_attrs(userId='user_3'),
         ]
         mock_threads = create_mock_entities(thread_attrs)
         repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
@@ -393,6 +398,27 @@ class TestSearchThreadsByKeyValues:
         service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
 
         passed_filter, *_ = repo.searchUser.call_args_list[0][0]
+        assert passed_filter == expected_filter
+
+    def test_searchThreadsByKeyValuesShouldGenerateSearchForOwnerBoards(self, service):
+        repo = service._repo
+        thread_attrs = [
+            create_testthread_attrs(boardId='board_1'),
+            create_testthread_attrs(boardId='board_2'),
+            create_testthread_attrs(boardId='board_3'),
+        ]
+        mock_threads = create_mock_entities(thread_attrs)
+        repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
+        owner_ids = [ attrs['boardId'] for attrs in thread_attrs ]
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='boardId',
+            operator='eq',
+            value=owner_ids
+        ))
+
+        service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        passed_filter, *_ = repo.searchBoard.call_args_list[0][0]
         assert passed_filter == expected_filter
 
     def test_searchThreadsByKeyValuesShouldGenerateSearchForLastPost(self, service):
@@ -412,9 +438,9 @@ class TestSearchThreadsByKeyValues:
     def test_searchThreadsByKeyValuesShouldGenerateSearchForAllLastPosts(self, service):
         repo = service._repo
         thread_attrs = [
-            dict(threadId='test_1', userId='user_1', lastPostId='post_1'),
-            dict(threadId='test_2', userId='user_2', lastPostId='post_2'),
-            dict(threadId='test_3', userId='user_3', lastPostId='post_3'),
+            create_testthread_attrs(lastPostId='post_1'),
+            create_testthread_attrs(lastPostId='post_2'),
+            create_testthread_attrs(lastPostId='post_3'),
         ]
         mock_threads = create_mock_entities(thread_attrs)
         repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
@@ -433,9 +459,9 @@ class TestSearchThreadsByKeyValues:
     def test_searchThreadsByKeyValuesShouldIgnoreEmptyLastPostId(self, service):
         repo = service._repo
         thread_attrs = [
-            dict(threadId='test_1', userId='user_1', lastPostId=None),
-            dict(threadId='test_2', userId='user_2', lastPostId=None),
-            dict(threadId='test_3', userId='user_3', lastPostId='post_3'),
+            create_testthread_attrs(lastPostId=None),
+            create_testthread_attrs(lastPostId=None),
+            create_testthread_attrs(lastPostId='post_3'),
         ]
         mock_threads = create_mock_entities(thread_attrs)
         repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
@@ -483,6 +509,15 @@ class TestSearchThreadsByKeyValues:
             assert len(owner) == 1
             assert getattr(owner[0], 'userId') == getattr(thread, 'userId')
 
+    def test_searchThreadsByKeyValuesReturnThreadsWithOwnerBoard(self, service):
+        result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
+
+        threads = result['threads']
+        for thread in threads:
+            owner = getattr(thread, 'ownerBoard')
+            assert len(owner) == 1
+            assert getattr(owner[0], 'boardId') == getattr(thread, 'boardId')
+
     def test_searchThreadsByKeyValuesShouldContainLastPostInfo(self, service):
         result = service.searchThreadsByKeyValues(self.DEFAULT_KEYVALUES)
         expected_lastpost_attrs = self.MOCK_POST_ATTRSET[0]
@@ -496,9 +531,9 @@ class TestSearchThreadsByKeyValues:
     def test_searchThreadsByKeyValuesShouldHaveEmptyLastpostsWhenNoMatchingPostFound(self, service):
         repo = service._repo
         thread_attrset = [
-            dict(threadId='test_id1', userId='test_user1', lastPostId='nonexistant_id'),
-            dict(threadId='test_id2', userId='test_user1', lastPostId='nonexistant_id'),
-            dict(threadId='test_id3', userId='test_user1', lastPostId='nonexistant_id'),
+            create_testthread_attrs(lastPostId='nonexistant_id'),
+            create_testthread_attrs(lastPostId='nonexistant_id'),
+            create_testthread_attrs(lastPostId='nonexistant_id'),
         ]
         mock_threads = create_mock_entities(thread_attrset)
         repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
@@ -512,17 +547,20 @@ class TestSearchThreadsByKeyValues:
 
 class TestSearchThreadByExplicitId:
     DEFAULT_THREAD_ID = 'test_id'
+    MOCK_BOARD_ATTRSET = [
+        create_testboard_attrs(boardId='123123'),
+    ]
     MOCK_THREAD_ATTRSET = [
-        dict(threadId='test_id', userId='11111111', _id='some_random_id', lastPostId='1234')
+        create_testthread_attrs(boardId='123123', userId='11111111', lastPostId='1234'),
     ]
     MOCK_USER_ATTRSET = [
-        dict(userId='11111111', name='Alan', _id='some_random_id'),
-        dict(userId='33333333', name='Bobby', _id='some_random_id'),
+        create_testuser_attrs(userId='11111111'),
+        create_testuser_attrs(),
     ]
     MOCK_POST_ATTRSET = [
-        dict(postId='1234', userId='33333333'),
-        dict(postId='3456', userId='33333333'),
-        dict(postId='4567', userId='33333333'),
+        create_testpost_attrs(postId='1234'),
+        create_testpost_attrs(),
+        create_testpost_attrs(),
     ]
     MOCK_SEARCHFILTER = 'test_search_filter'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
@@ -533,11 +571,14 @@ class TestSearchThreadByExplicitId:
         threads_from_repo = create_return_from_repo(mock_threads, 'threads')
         mock_users = create_mock_entities(self.MOCK_USER_ATTRSET)
         users_from_repo = create_return_from_repo(mock_users, 'users')
+        mock_boards = create_mock_entities(self.MOCK_BOARD_ATTRSET)
+        boards_from_repo = create_return_from_repo(mock_boards, 'boards')
         mock_posts = create_mock_entities(self.MOCK_POST_ATTRSET)
         posts_from_repo = create_return_from_repo(mock_posts, 'posts')
 
         service._repo.searchThread.return_value = threads_from_repo
         service._repo.searchUser.return_value = users_from_repo
+        service._repo.searchBoard.return_value = boards_from_repo
         service._repo.searchPost.return_value = posts_from_repo
         service._searchFilterCreator.create_threadsearch.return_value = self.MOCK_SEARCHFILTER
         service._paging.return_value = self.MOCKPAGING_DEFAULT_RETURN
@@ -601,6 +642,21 @@ class TestSearchThreadByExplicitId:
         passed_filter, *_ = mockRepo.searchUser.call_args_list[0][0]
         assert passed_filter == expected_filter
 
+    def test_searchThreadByExplicitIdShouldGenerateSearchForOwnerBoard(self, service):
+        mockRepo = service._repo
+        owner_ids = [ attrs['boardId'] for attrs in self.MOCK_THREAD_ATTRSET ]
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='boardId',
+            operator='eq',
+            value=owner_ids
+        ))
+
+        service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
+
+        assert len(mockRepo.searchBoard.call_args_list)
+        passed_filter, *_ = mockRepo.searchBoard.call_args_list[0][0]
+        assert passed_filter == expected_filter
+
     def test_searchThreadsByExplicitIdShouldNotSearchForLastPostOrOwnerWhenNoThreadReturned(self, service):
         repo = service._repo
         repo.searchThread.return_value = create_return_from_repo([], 'threads')
@@ -633,6 +689,17 @@ class TestSearchThreadByExplicitId:
         for k, v in expected_user.items():
             assert getattr(owner[0], k) == v
 
+    def test_searchThreadByExplicitIdShouldReturnOwnerBoard(self, service):
+        expected_owner = self.MOCK_BOARD_ATTRSET[0]
+        
+        result = service.searchThreadByExplicitId(self.DEFAULT_THREAD_ID)
+
+        thread = result['threads'][0]
+        owner = getattr(thread, 'ownerBoard')
+        assert len(owner) == 1
+        for k, v in expected_owner.items():
+            assert getattr(owner[0], k) == v
+
     def test_searchThreadByExplicitIdShouldContainLastPostInfo(self, service):
         expected_lastpost_attrs = self.MOCK_POST_ATTRSET[0]
 
@@ -647,9 +714,9 @@ class TestSearchThreadByExplicitId:
     def test_searchThreadByExplicitIdShouldHaveEmptyLastpostsWhenNoMatchingPostFound(self, service):
         repo = service._repo
         thread_attrset = [
-            dict(threadId='test_id1', userId='test_user1', lastPostId='nonexistant_id'),
-            dict(threadId='test_id2', userId='test_user1', lastPostId='nonexistant_id'),
-            dict(threadId='test_id3', userId='test_user1', lastPostId='nonexistant_id'),
+            create_testthread_attrs(lastPostId='nonexistant_id'),
+            create_testthread_attrs(lastPostId='nonexistant_id'),
+            create_testthread_attrs(lastPostId='nonexistant_id'),
         ]
         mock_threads = create_mock_entities(thread_attrset)
         repo.searchThread.return_value = create_return_from_repo(mock_threads, 'threads')
@@ -667,11 +734,11 @@ class TestSearchBoardsByKeyValues:
         boardId='some_id'
     )
     MOCK_BOARD_ATTRSET = [
-        dict(boardId='test_id', userId='11111111', _id='some_random_id', )
+        create_testboard_attrs(userId='11111111')
     ]
     MOCK_USER_ATTRSET = [
-        dict(userId='11111111', name='Alan', _id='some_random_id'),
-        dict(userId='33333333', name='Bobby', _id='some_random_id'),
+        create_testuser_attrs(userId='11111111'),
+        create_testuser_attrs(),
     ]
     MOCK_SEARCHFILTER = 'test_search_filter'
     MOCKPAGING_DEFAULT_RETURN = 'default_paging'
@@ -762,9 +829,9 @@ class TestSearchBoardsByKeyValues:
     def test_searchBoardsByKeyValuesSearchesOwnerUsersForMultipleBoards(self, service):
         repo = service._repo
         mock_attrset = [
-            dict(boardId='test_boardid1', userId='test_userid_1'),
-            dict(boardId='test_boardid2', userId='test_userid_2'),
-            dict(boardId='test_boardid3', userId='test_userid_3'),
+            create_testboard_attrs(userId='test_userid_1'),
+            create_testboard_attrs(userId='test_userid_2'),
+            create_testboard_attrs(userId='test_userid_3'),
         ]
         owner_ids = [ attr['userId'] for attr in mock_attrset ]
         mock_boards = create_mock_entities(mock_attrset)

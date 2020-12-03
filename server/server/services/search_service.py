@@ -85,6 +85,7 @@ class SearchService:
         result = self._repo.searchThread(searchFilter, paging=paging, sorter=sorter)
         self._joinOwner(result['threads'])
         self._joinLastPost(result['threads'])
+        self._joinOwnerBoard(result['threads'])
         
         return dict(
             threads=result['threads'],
@@ -111,6 +112,7 @@ class SearchService:
         result = self._repo.searchThread(searchFilter, paging=paging)
         self._joinOwner(result['threads'])
         self._joinLastPost(result['threads'])
+        self._joinOwnerBoard(result['threads'])
 
         updateThread = Thread()
         updateThread.increment = 'views'
@@ -181,12 +183,31 @@ class SearchService:
             None
         """
         if len(entities) == 0:
-            return 0
+            return
 
         postSearchFilter = self._createEqFiltersFromRelatedFieldnames('postId', 'lastPostId', entities)
         posts = self._repo.searchPost(postSearchFilter)['posts']
         self._joinOwner(posts)
         self._joinDocuments(entities, posts, 'lastPostId', 'postId', 'lastPost')
+
+    def _joinOwnerBoard(self, entities):
+        """
+        add owner Board information to each entity document
+        by searching for it in repo
+        Intented to be used for Thread entities.
+        
+        Args:
+            entities(list): documents of entities like threads
+        Returns:
+            None
+        """
+        if len(entities) == 0:
+            return
+
+        boardSearchFilter = self._createEqFiltersFromRelatedFieldnames('boardId', 'boardId', entities)
+        boards = self._repo.searchBoard(boardSearchFilter)['boards']
+        self._joinOwner(boards)
+        self._joinDocuments(entities, boards, 'boardId', 'boardId', 'ownerBoard')
 
     def _createEqFiltersFromRelatedFieldnames(self, filterFieldname, entityFieldname, entities):
         value = [

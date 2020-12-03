@@ -5,6 +5,87 @@ This file houses useful functions that are used across multiple tests
 
 from tests.mocks import createMockEntity
 
+# default attributes for each entity used in tests
+DEFAULT_TESTUSER_ATTRIBUTES = {
+    'userId': 'test_user',
+}
+DEFAULT_TESTPOST_ATTRIBUTES = {
+    'postId': 'test_post',
+    'userId': 'test_user',
+    'threadId': 'test_thread',
+}
+DEFAULT_TESTTHREAD_ATTRIBUTES = {
+    'threadid': 'test_thread',
+    'userId': 'test_user',
+    'boardId': 'test_board',
+    'lastPostId': 'test_post',
+}
+DEFAULT_TESTBOARD_ATTRIBUTES = {
+    'boardId': 'test_board',
+    'userId': 'test_user',
+}
+
+
+def create_testuser_attrs(**kwargs):
+    """
+    Creates test attributes for User entity
+    Automates creation of attributes so that required attributes would not be missing, unless explicitly told so
+    
+    Args:
+        kwargs: attributes explicitly set by consumer
+    Returns:
+        Dict of attribute name: value pairs
+    """
+    return combine_attributes(DEFAULT_TESTUSER_ATTRIBUTES, kwargs)
+
+
+def create_testpost_attrs(**kwargs):
+    """
+    Creates test attributes for Post entity
+    Automates creation of attributes so that required attributes would not be missing, unless explicitly told so
+    
+    Args:
+        kwargs: attributes explicitly set by consumer
+    Returns:
+        Dict of attribute name: value pairs
+    """
+    return combine_attributes(DEFAULT_TESTPOST_ATTRIBUTES, kwargs)
+
+
+def create_testthread_attrs(**kwargs):
+    """
+    Creates test attributes for Thread entity
+    Automates creation of attributes so that required attributes would not be missing, unless explicitly told so
+    
+    Args:
+        kwargs: attributes explicitly set by consumer
+    Returns:
+        Dict of attribute name: value pairs
+    """
+    return combine_attributes(DEFAULT_TESTTHREAD_ATTRIBUTES, kwargs)
+
+
+def create_testboard_attrs(**kwargs):
+    """
+    Creates test attributes for Board entity
+    Automates creation of attributes so that required attributes would not be missing, unless explicitly told so
+    
+    Args:
+        kwargs: attributes explicitly set by consumer
+    Returns:
+        Dict of attribute name: value pairs
+    """
+    return combine_attributes(DEFAULT_TESTBOARD_ATTRIBUTES, kwargs)
+
+
+def combine_attributes(default_attributes, kwargs):
+    attributes = default_attributes.copy()
+
+    for k, v in kwargs.items():
+        attributes[k] = v
+
+    return attributes
+
 
 def create_mock_entity_fromattrs(attrs):
     """

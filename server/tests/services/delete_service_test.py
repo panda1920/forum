@@ -12,6 +12,7 @@ from server.services.delete_service import DeleteService
 
 TEST_DEFAULT_USERID = '11223344'
 
+
 @pytest.fixture(scope='function')
 def delete_service():
     session_user = create_mock_entity_fromattrs(dict(userId=TEST_DEFAULT_USERID))
