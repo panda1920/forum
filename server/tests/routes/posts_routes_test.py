@@ -6,14 +6,15 @@ import pytest
 
 from server.config import Config
 from server.entity import Post
-from tests.helpers import create_mock_entities
+from tests.helpers import create_mock_entities, create_testpost_attrs
 import server.exceptions as exceptions
 
 DEFAULT_RETURN_SEARCHPOST_ATTRSET = [
-    dict(postId='test_postid1', userId='owner1', content='test_content'),
-    dict(postId='test_postid2', userId='owner1', content='test_content'),
-    dict(postId='test_postid3', userId='owner1', content='test_content'),
+    create_testpost_attrs(postId='test_postid1'),
+    create_testpost_attrs(postId='test_postid2'),
+    create_testpost_attrs(postId='test_postid3'),
 ]
+DEFAULT_RETURN_SEARCHPOST = create_mock_entities(DEFAULT_RETURN_SEARCHPOST_ATTRSET)
 DEFAULT_RETURN_CREATENEWPOST = dict(created='post')
 DEFAULT_RETURN_UPDATEPOST = 'some_value_updatepost'
 DEFAULT_RETURN_DELETEPOST = dict(deleteCount=1)
@@ -21,16 +22,37 @@ DEFAULT_RETURN_DELETEPOST = dict(deleteCount=1)
 
 @pytest.fixture(scope='function', autouse=True)
 def set_mock_returnvalues(mockApp):
-    Config.getCreationService(mockApp).createNewPost.return_value = DEFAULT_RETURN_CREATENEWPOST
+    Config.getCreationService(mockApp) \
+        .createNewPost.return_value = DEFAULT_RETURN_CREATENEWPOST
     
-    mock_returned_posts = create_mock_entities(DEFAULT_RETURN_SEARCHPOST_ATTRSET)
-    for post, attrs in zip(mock_returned_posts, DEFAULT_RETURN_SEARCHPOST_ATTRSET):
-        post.to_serialize.return_value = attrs
-    Config.getSearchService(mockApp).searchPostsByKeyValues.return_value = dict(posts=mock_returned_posts)
+    Config.getSearchService(mockApp) \
+        .searchPostsByKeyValues.return_value = dict(posts=DEFAULT_RETURN_SEARCHPOST)
 
-    Config.getUpdateService(mockApp).updatePost.return_value = DEFAULT_RETURN_UPDATEPOST
+    Config.getUpdateService(mockApp) \
+        .updatePost.return_value = DEFAULT_RETURN_UPDATEPOST
 
-    Config.getDeleteService(mockApp).deletePostById.return_value = DEFAULT_RETURN_DELETEPOST
+    Config.getDeleteService(mockApp) \
+        .deletePostById.return_value = DEFAULT_RETURN_DELETEPOST
+
+
+@pytest.fixture(scope='function', autouse=True)
+def reset_mocks(mockApp):
+    yield
+    
+    for mock in DEFAULT_RETURN_SEARCHPOST:
+        mock.reset_mock(side_effect=True)
+
+    Config.getCreationService(mockApp) \
+        .createNewPost.reset_mock(side_effect=True)
+    
+    Config.getSearchService(mockApp) \
+        .searchPostsByKeyValues.reset_mock(side_effect=True)
+
+    Config.getUpdateService(mockApp) \
+        .updatePost.reset_mock(side_effect=True)
+
+    Config.getDeleteService(mockApp) \
+        .deletePostById.reset_mock(side_effect=True)
 
 
 class TestPostAPIs:
@@ -123,6 +145,7 @@ class TestPostAPIs:
         with mockApp.test_client() as client:
             response = client.get(url)
 
+            print(response.get_json())
             assert response.status_code == 200
             posts = response.get_json()['result']['posts']
             for post in posts:

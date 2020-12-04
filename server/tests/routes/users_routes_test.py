@@ -7,15 +7,16 @@ import pytest
 
 from server.config import Config
 from server.entity import User
-from tests.helpers import create_mock_entities
+from tests.helpers import create_mock_entities, create_testuser_attrs
 import server.exceptions as exceptions
 
 
 DEFAULT_RETURN_SEARCHUSER_ATTRSET = [
-    dict(userId='test_userid1', userName='user1@example.com', displayName='alice'),
-    dict(userId='test_userid2', userName='user2@example.com', displayName='bobby'),
-    dict(userId='test_userid3', userName='user3@example.com', displayName='charlie'),
+    create_testuser_attrs(userId='test_userid1'),
+    create_testuser_attrs(userId='test_userid2'),
+    create_testuser_attrs(userId='test_userid3'),
 ]
+DEFAULT_RETURN_SEARCHUSER = create_mock_entities(DEFAULT_RETURN_SEARCHUSER_ATTRSET)
 DEFAULT_RETURN_SIGNUP = dict(created='user')
 DEFAULT_RETURN_UPDATEUSER = 'some_value_updateuser'
 DEFAULT_RETURN_DELETEUSER = dict(deleteCount=1)
@@ -25,19 +26,55 @@ DEFAULT_RETURN_LOGOUT = dict()
 
 @pytest.fixture(scope='function', autouse=True)
 def set_mock_returnvalues(mockApp):
-    Config.getCreationService(mockApp).signup.return_value = DEFAULT_RETURN_SIGNUP
+    Config.getCreationService(mockApp) \
+        .signup.return_value = DEFAULT_RETURN_SIGNUP
     
-    mock_returned_users = create_mock_entities(DEFAULT_RETURN_SEARCHUSER_ATTRSET)
-    for user, attrs in zip(mock_returned_users, DEFAULT_RETURN_SEARCHUSER_ATTRSET):
-        user.to_serialize.return_value = attrs
-    Config.getSearchService(mockApp).searchUsersByKeyValues.return_value = dict(users=mock_returned_users)
+    Config.getSearchService(mockApp) \
+        .searchUsersByKeyValues.return_value = dict(users=DEFAULT_RETURN_SEARCHUSER)
 
-    Config.getUpdateService(mockApp).updateUser.return_value = DEFAULT_RETURN_UPDATEUSER
+    Config.getUpdateService(mockApp) \
+        .updateUser.return_value = DEFAULT_RETURN_UPDATEUSER
 
-    Config.getDeleteService(mockApp).deleteUserById.return_value = DEFAULT_RETURN_DELETEUSER
+    Config.getDeleteService(mockApp) \
+        .deleteUserById.return_value = DEFAULT_RETURN_DELETEUSER
 
-    Config.getAuthService(mockApp).login.return_value = DEFAULT_RETURN_LOGIN
-    Config.getAuthService(mockApp).logout.return_value = DEFAULT_RETURN_LOGOUT
+    Config.getAuthService(mockApp) \
+        .login.return_value = DEFAULT_RETURN_LOGIN
+    
+    Config.getAuthService(mockApp) \
+        .logout.return_value = DEFAULT_RETURN_LOGOUT
+
+    Config.getRequestUserManager(mockApp) \
+        .addCurrentUserToResponse.side_effect = lambda response: response
+
+
+@pytest.fixture(scope='function', autouse=True)
+def reset_mocks(mockApp):
+    yield
+
+    for mock in DEFAULT_RETURN_SEARCHUSER:
+        mock.reset_mock(side_effect=True)
+
+    Config.getCreationService(mockApp) \
+        .signup.reset_mock(side_effect=True)
+    
+    Config.getSearchService(mockApp) \
+        .searchUsersByKeyValues.reset_mock(side_effect=True)
+
+    Config.getUpdateService(mockApp) \
+        .updateUser.reset_mock(side_effect=True)
+
+    Config.getDeleteService(mockApp) \
+        .deleteUserById.reset_mock(side_effect=True)
+
+    Config.getAuthService(mockApp) \
+        .login.reset_mock(side_effect=True)
+    
+    Config.getAuthService(mockApp) \
+        .logout.reset_mock(side_effect=True)
+
+    Config.getRequestUserManager(mockApp) \
+        .addCurrentUserToResponse.reset_mock(side_effect=True)
 
 
 class TestUserAPIs:

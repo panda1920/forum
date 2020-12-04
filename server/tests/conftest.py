@@ -13,7 +13,7 @@ def app():
     app.testing = True
     yield app
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def saveOldConfig(app):
     oldConf = app.config
     app.config = {**oldConf}

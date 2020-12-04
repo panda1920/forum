@@ -6,7 +6,7 @@ import pytest
 
 import tests.mocks as mocks
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def mockApp(app):
     """
     Replaces some objects in configuration by its mocked versions.
