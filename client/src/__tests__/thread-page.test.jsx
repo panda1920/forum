@@ -2,8 +2,16 @@ import React from 'react';
 import { render, cleanup, act, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
 
-import { createMockFetchImplementation } from '../scripts/test-utilities';
-import { searchPosts, createPost, searchThreadById, searchBoards } from '../scripts/api';
+import {
+  createMockFetchImplementation,
+  createSearchReturn
+} from '../scripts/test-utilities';
+import {
+  searchPosts,
+  createPost,
+  searchThreadById,
+  searchBoards
+} from '../scripts/api';
 import EntityList from '../components/entity-list/entity-list.component';
 import PostCard from '../components/post-card/post-card.component';
 import HtmlInput from '../components/htmlinput/htmlinput.component';
@@ -45,7 +53,7 @@ const TEST_DATA = {
     { postId: 'test_postid_2' },
     { postId: 'test_postid_3' },
   ],
-  BOARD_RETURN: [
+  BOARDS_RETURN: [
     { boardId: 'test_boardid', title: 'test_board_title', },
   ],
 };
@@ -88,27 +96,17 @@ afterEach(() => {
 
 function mockDependantFunctions() {
   searchPosts.mockImplementation(createMockFetchImplementation(
-      true, 200, async () => createSearchReturn(TEST_DATA.POSTS_RETURN, 'posts')
+    true, 200, async () => createSearchReturn(TEST_DATA.POSTS_RETURN, 'posts')
     ));
   createPost.mockImplementation(createMockFetchImplementation(
-      true, 201, async () => ({ createdCount: 1 })
+    true, 201, async () => ({ createdCount: 1 })
     ));
   searchThreadById.mockImplementation(createMockFetchImplementation(
     true, 200, async () => createSearchReturn([ TEST_DATA.THREAD_DATA ], 'threads')
   ));
   searchBoards.mockImplementation(createMockFetchImplementation(
-    true, 200, async () => createSearchReturn(TEST_DATA.BOARD_RETURN, 'boards')
+    true, 200, async () => createSearchReturn(TEST_DATA.BOARDS_RETURN, 'boards')
   ));
-}
-
-function createSearchReturn(entities, entitiesName) {
-  return {
-    result: {
-      [entitiesName]: entities,
-      returnCount: entities.length,
-      matchedCount: entities.length,
-    },
-  };
 }
 
 describe('Testing ThreadPage renders the component properly', () => {
@@ -198,7 +196,7 @@ describe('Testing behavior of ThreadPage', () => {
     }
   });
 
-  test('Should search for thread with path id on mount', async () => {
+  test('Should search for thread by path id on mount', async () => {
     await renderThreadPage();
 
     expect(searchThreadById).toHaveBeenCalledTimes(1);
@@ -227,8 +225,8 @@ describe('Testing behavior of ThreadPage', () => {
     const expectedLink = [
       { displayName: 'Home', path: '/' },
       {
-        displayName: TEST_DATA.BOARD_RETURN[0].title,
-        path: `/board/${TEST_DATA.BOARD_RETURN[0].boardId}`
+        displayName: TEST_DATA.BOARDS_RETURN[0].title,
+        path: `/board/${TEST_DATA.BOARDS_RETURN[0].boardId}`
       },
       { displayName: TEST_DATA.THREAD_DATA.title, path: null },
     ];

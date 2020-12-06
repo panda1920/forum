@@ -31,3 +31,13 @@ export function createErrorJsonData(msg) {
         }
     };
 }
+
+export function createSearchReturn(entities, entitiesName) {
+    return {
+      result: {
+        [entitiesName]: entities,
+        returnCount: entities.length,
+        matchedCount: entities.length,
+      },
+    };
+  }
