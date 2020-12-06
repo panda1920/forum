@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
-import { searchPosts, createPost } from '../../scripts/api';
-import { threadApi } from '../../paths';
+import { searchPosts, createPost, searchThreadById, searchBoards } from '../../scripts/api';
 import { convertEpochToLocalDateString } from '../../scripts/converter';
 import EntityList from '../../components/entity-list/entity-list.component';
 import PostCard from '../../components/post-card/post-card.component';
@@ -14,12 +13,14 @@ import './thread-page.styles.scss';
 const ThreadPage = ({ match, location }) => {
   const { threadId } = match.params;
   const [ thread, setThread ] = useState(null);
+  const [ board, setBoard ] = useState(null);
   const [ needRefresh, setNeedRefresh ] = useState(false);
 
+  // initlal fetch thread info from id
   useEffect(() => {
     const hasThreadInState = () => location.state && location.state.thread;
     const fetchThread = async () => {
-      const response = await window.fetch(`${threadApi}/${threadId}`);
+      const response = await searchThreadById(threadId);
       if (!response.ok)
         return;
 
@@ -32,6 +33,21 @@ const ThreadPage = ({ match, location }) => {
     else
       fetchThread();
   }, [threadId, location]);
+
+  // fetch initial board info from fetched thread
+  useEffect(() => {
+    const fetchOwnerBoard = async () => {
+      const response = await searchBoards({ boardId : thread.boardId });
+      if (!response.ok)
+        return;
+
+      const { result: { boards } } = await response.json();
+      setBoard( boards[0] );
+    };
+
+    if (thread)
+      fetchOwnerBoard();
+  }, [thread]);
 
   const searchEntity = useCallback(async (options = {}) => {
     const criteria = Object.assign({ threadId }, options);
@@ -71,25 +87,26 @@ const ThreadPage = ({ match, location }) => {
 
   // console.log('#######Rendering ThreadPage!');
 
-  return createThreadPage(thread, needRefresh, {
+  return createThreadPage(thread, board, needRefresh, {
     searchEntity,
     renderChildEntity,
     postPost,
   });
 };
 
-function createThreadPage(thread, needRefresh, callbacks) {
+function createThreadPage(thread, board, needRefresh, callbacks) {
   const { searchEntity, renderChildEntity, postPost } = callbacks;
 
   // wanted to avoid rendering the page when thread info is not available
-  if (!thread)
+  const isEntityAvailable = thread && board;
+  if (!isEntityAvailable)
     return (
       <Spinner />
     );
 
   return (
     <div className='thread-page'>
-      { createBreadcrumbs(thread) }
+      { createBreadcrumbs(thread, board) }
       { createThreadInfoSection(thread) }
       <EntityList
         searchEntity={searchEntity}
@@ -101,12 +118,11 @@ function createThreadPage(thread, needRefresh, callbacks) {
   );
 }
 
-function createBreadcrumbs(thread) {
+function createBreadcrumbs(thread, board) {
   // create navigation links to other pages
-  // const ownerBoard = thread.ownerBoard[0];
   const links = [
     { displayName: 'Home', path: '/' },
-    // { displayName: ownerBoard.title, path: `/board/${ownerBoard.boardId}` },
+    { displayName: board.title, path: `/board/${board.boardId}` },
     { displayName: thread.title, path: null },
   ];
 

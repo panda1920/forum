@@ -42,6 +42,14 @@ export function searchThreads(criteria) {
     );
 }
 
+export function searchThreadById(threadId) {
+    const url = `${paths.threadApi}?${createQueryString({ threadId })}`;
+    return apiCall(
+        url,
+        'GET',
+    );
+}
+
 export function searchPosts(criteria) {
     const url = `${paths.postApi}?${createQueryString(criteria)}`;
     return apiCall(
@@ -54,6 +62,14 @@ export function createPost(newPost) {
     const url = `${paths.createCreateApiPath(paths.postApi)}`;
     return apiCall(
         url, 'POST', { 'Content-Type': 'application/json' }, JSON.stringify(newPost)
+    );
+}
+
+export function searchBoards(criteria) {
+    const url = `${paths.boardApi}?${createQueryString(criteria)}`;
+    return apiCall(
+        url,
+        'GET',
     );
 }
 

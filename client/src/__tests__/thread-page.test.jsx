@@ -2,8 +2,8 @@ import React from 'react';
 import { render, cleanup, act, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
 
-import { threadApi, postApi, createCreateApiPath } from '../paths';
-import { createMockFetch } from '../scripts/test-utilities';
+import { createMockFetchImplementation } from '../scripts/test-utilities';
+import { searchPosts, createPost, searchThreadById, searchBoards } from '../scripts/api';
 import EntityList from '../components/entity-list/entity-list.component';
 import PostCard from '../components/post-card/post-card.component';
 import HtmlInput from '../components/htmlinput/htmlinput.component';
@@ -18,6 +18,16 @@ jest.mock('../components/htmlinput/htmlinput.component');
 jest.mock('../components/breadcrumbs/breadcrumbs.component');
 jest.mock('../components/spinner/spinner.component');
 
+// mock out dependant functions
+jest.mock('../scripts/api', () => {
+  return {
+    searchPosts: jest.fn().mockName('mocked searchPosts()'),
+    createPost: jest.fn().mockName('mocked createPost()'),
+    searchThreadById: jest.fn().mockName('mocked serachThreadById()'),
+    searchBoards: jest.fn().mockName('mocked serachBoards()'),
+  };
+});
+
 const TEST_DATA = {
   THREAD_ID: '1',
   THREAD_DATA: {
@@ -29,15 +39,14 @@ const TEST_DATA = {
     owner: [{
       displayName: 'test_user_name',
     }],
-    ownerBoard: [{
-      boardId: 'test_boardid',
-      title: 'test_board_title',
-    }],
   },
   POSTS_RETURN: [
     { postId: 'test_postid_1' },
     { postId: 'test_postid_2' },
     { postId: 'test_postid_3' },
+  ],
+  BOARD_RETURN: [
+    { boardId: 'test_boardid', title: 'test_board_title', },
   ],
 };
 
@@ -61,22 +70,8 @@ async function renderThreadPage(locations = null) {
   return renderResult;
 }
 
-function createApiReturn(entities, entitiesName) {
-  return {
-    result: {
-      [entitiesName]: entities,
-      returnCount: entities.length,
-      matchedCount: entities.length,
-    },
-  };
-}
-
-let originalFetch = null;
 beforeEach(() => {
-  originalFetch = window.fetch;
-  window.fetch = createMockFetch(true, 200, async () => {
-    return createApiReturn([ TEST_DATA.THREAD_DATA ], 'threads');
-  });
+  mockDependantFunctions();
 });
 afterEach(() => {
   cleanup();
@@ -85,8 +80,36 @@ afterEach(() => {
   HtmlInput.mockClear();
   Breadcrumbs.mockClear();
   Spinner.mockClear();
-  window.fetch = originalFetch;
+  searchPosts.mockClear();
+  createPost.mockClear();
+  searchThreadById.mockClear();
+  searchBoards.mockClear();
 });
+
+function mockDependantFunctions() {
+  searchPosts.mockImplementation(createMockFetchImplementation(
+      true, 200, async () => createSearchReturn(TEST_DATA.POSTS_RETURN, 'posts')
+    ));
+  createPost.mockImplementation(createMockFetchImplementation(
+      true, 201, async () => ({ createdCount: 1 })
+    ));
+  searchThreadById.mockImplementation(createMockFetchImplementation(
+    true, 200, async () => createSearchReturn([ TEST_DATA.THREAD_DATA ], 'threads')
+  ));
+  searchBoards.mockImplementation(createMockFetchImplementation(
+    true, 200, async () => createSearchReturn(TEST_DATA.BOARD_RETURN, 'boards')
+  ));
+}
+
+function createSearchReturn(entities, entitiesName) {
+  return {
+    result: {
+      [entitiesName]: entities,
+      returnCount: entities.length,
+      matchedCount: entities.length,
+    },
+  };
+}
 
 describe('Testing ThreadPage renders the component properly', () => {
   test('Should render EntityList', async () => {
@@ -122,15 +145,32 @@ describe('Testing ThreadPage renders the component properly', () => {
       .toBeInTheDocument();
   });
 
-  test('Should render spinner and only spinner when initial fetch fails', async () => {
-    window.fetch = createMockFetch(false, 400, async () => {});
+  test('Should render spinner and only spinner when thread fetch fails', async () => {
+    searchThreadById
+      .mockImplementation(createMockFetchImplementation(
+        false, 400, async () => {}
+      ));
 
     await renderThreadPage();
-
+    
+    expect(Spinner).toHaveBeenCalled();
     expect(EntityList).toHaveBeenCalledTimes(0);
     expect(HtmlInput).toHaveBeenCalledTimes(0);
     expect(Breadcrumbs).toHaveBeenCalledTimes(0);
-    expect(Spinner).toHaveBeenCalledTimes(1);
+  });
+
+  test('Should render spinner and only spinner when board fetch fails', async () => {
+    searchBoards
+      .mockImplementation(createMockFetchImplementation(
+        false, 400, async () => {}
+      ));
+
+    await renderThreadPage();
+    
+    expect(Spinner).toHaveBeenCalled();
+    expect(EntityList).toHaveBeenCalledTimes(0);
+    expect(HtmlInput).toHaveBeenCalledTimes(0);
+    expect(Breadcrumbs).toHaveBeenCalledTimes(0);
   });
 });
 
@@ -158,39 +198,94 @@ describe('Testing behavior of ThreadPage', () => {
     }
   });
 
-  test('searchEntity callback should search for posts', async () => {
-    // render component and capture component passed to child
+  test('Should search for thread with path id on mount', async () => {
     await renderThreadPage();
-    const latestEntityListCall = EntityList.mock.calls.slice(-1)[0];
-    const { searchEntity } = latestEntityListCall[0];
 
-    // setup expectation for test case
-    window.fetch = createMockFetch(true, 200, async () => {
-      return createApiReturn(TEST_DATA.POSTS_RETURN, 'posts');
-    });
-    const options = { offset: 10, limit: 20 };
-    const expectedUrl = `${postApi}?threadId=${TEST_DATA.THREAD_ID}`
-      + `&offset=${options.offset}`
-      + `&limit=${options.limit}`;
-    
-    await act(async () => { await searchEntity(options); });
-
-    expect(window.fetch).toHaveBeenCalledTimes(1);
-    const [ url, ..._ ] = window.fetch.mock.calls[0];
-    expect(url).toBe(expectedUrl);
+    expect(searchThreadById).toHaveBeenCalledTimes(1);
+    expect(searchThreadById).toHaveBeenCalledWith(TEST_DATA.THREAD_ID);
   });
 
-  test('searchEntity callback should return object with field entities, reference to returned posts', async () => {
+  test('Should search for owner board of thread on mount', async () => {
+    await renderThreadPage();
+
+    expect(searchBoards).toHaveBeenCalledTimes(1);
+    expect(searchBoards).toHaveBeenCalledWith({ boardId: TEST_DATA.THREAD_DATA.boardId });
+  });
+
+  test('Should not search when location state has thread info', async () => {
+    const locations = [{
+      pathname: `/threads/${TEST_DATA.THREAD_ID}`,
+      state: { thread: TEST_DATA.THREAD_DATA },
+    }];
+
+    await renderThreadPage(locations);
+
+    expect(searchThreadById).not.toHaveBeenCalled();
+  });
+  
+  test('Should pass link definitions to Breadcrumbs', async () => {
+    const expectedLink = [
+      { displayName: 'Home', path: '/' },
+      {
+        displayName: TEST_DATA.BOARD_RETURN[0].title,
+        path: `/board/${TEST_DATA.BOARD_RETURN[0].boardId}`
+      },
+      { displayName: TEST_DATA.THREAD_DATA.title, path: null },
+    ];
+
+    await renderThreadPage();
+
+    const [ props ] = Breadcrumbs.mock.calls[0];
+    const { links } = props;
+    expect(links[0]).toMatchObject(expectedLink[0]);
+    expect(links[1]).toMatchObject(expectedLink[1]);
+    expect(links[2]).toMatchObject(expectedLink[2]);
+  });
+
+  test.skip('Should *** if search failed', async () => {
+
+  });
+
+  test.skip('Should *** if search returned no thread', async () => {
+
+  });
+
+});
+
+describe('Testing callbacks', () => {
+  test('searchEntity callback should search for posts', async () => {
     await renderThreadPage();
     const latestEntityListCall = EntityList.mock.calls.slice(-1)[0];
     const { searchEntity } = latestEntityListCall[0];
-    window.fetch = createMockFetch(true, 200, async () => {
-      return createApiReturn(TEST_DATA.POSTS_RETURN, 'posts');
-    });
-    
+
+    await act(async () => await searchEntity() );
+
+    expect(searchPosts).toHaveBeenCalledTimes(1);
+  });
+
+  test('searchEntity callback should pass options and threadId to searchPosts', async () => {
+    const options = { offset: 10, limit: 20 };
+    await renderThreadPage();
+    const latestEntityListCall = EntityList.mock.calls.slice(-1)[0];
+    const { searchEntity } = latestEntityListCall[0];
+
+    await act(async () => await searchEntity(options) );
+
+    const [ searchOptions ] = searchPosts.mock.calls[0];
+    expect(searchOptions)
+      .toMatchObject(options);
+    expect(searchOptions)
+      .toMatchObject({ threadId: TEST_DATA.THREAD_ID });
+  });
+
+  test('searchEntity callback should return object with entities field, reference to returned posts', async () => {
+    await renderThreadPage();
+    const latestEntityListCall = EntityList.mock.calls.slice(-1)[0];
+    const { searchEntity } = latestEntityListCall[0];
+
     let search;
     await act(async () => {
-      search = await searchEntity({ offset: 10, limit: 20 });
+      search = await searchEntity();
     });
 
     expect(search).toHaveProperty('result');
@@ -201,7 +296,9 @@ describe('Testing behavior of ThreadPage', () => {
     await renderThreadPage();
     const latestEntityListCall = EntityList.mock.calls.slice(-1)[0];
     const { searchEntity } = latestEntityListCall[0];
-    window.fetch = createMockFetch(false, 400, async () => {});
+    searchPosts.mockImplementation(createMockFetchImplementation(
+      false, 400, async () => {}
+    ));
 
     let search;
     await act(async () => {
@@ -229,30 +326,28 @@ describe('Testing behavior of ThreadPage', () => {
     expect(props).toHaveProperty('postnum', 1);
   });
 
-  test('postEntity callback should send create post request to posts api', async () => {
+  test('postEntity callback should invoke createPost', async () => {
+    const newPostMsg = 'This is a new post by test test test';
     await renderThreadPage();
     const latestHtmlInputCall = HtmlInput.mock.calls.slice(-1)[0];
     const { postEntity } = latestHtmlInputCall[0];
 
-    window.fetch = createMockFetch(true, 200, async () => {});
-    const newPostMsg = 'This is a new post by test test test';
-    const expectedUrl = `${createCreateApiPath(postApi)}`;
-    const expectedOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-    };
-    
     await act(async () => { await postEntity(newPostMsg); });
 
-    expect(window.fetch).toHaveBeenCalled();
-    const [url, options] = window.fetch.mock.calls[0];
-    expect(url).toBe(expectedUrl);
-    expect(options).toMatchObject(expectedOptions);
-    const post = JSON.parse(options.body);
-    expect(post).toHaveProperty('content', newPostMsg);
-    expect(post).toHaveProperty('threadId', TEST_DATA.THREAD_ID);
+    expect(createPost).toHaveBeenCalledTimes(1);
+  });
+
+  test('postEntity callback should pass owner threadId and post msg to createPost', async () => {
+    const newPostMsg = 'This is a new post by test test test';
+    await renderThreadPage();
+    const latestHtmlInputCall = HtmlInput.mock.calls.slice(-1)[0];
+    const { postEntity } = latestHtmlInputCall[0];
+
+    await act(async () => { await postEntity(newPostMsg); });
+
+    const [ newpost ] = createPost.mock.calls[0];
+    expect(newpost).toMatchObject({ content: newPostMsg });
+    expect(newpost).toMatchObject({ threadId: TEST_DATA.THREAD_ID });
   });
 
   test('postEntity callback should update needRefresh passed to EntityList as true', async () => {
@@ -278,53 +373,5 @@ describe('Testing behavior of ThreadPage', () => {
     expect(EntityList).toHaveBeenCalledTimes(3);
     const [ props, ..._ ] = EntityList.mock.calls.slice(-1)[0];
     expect(props).toHaveProperty('needRefresh', false);
-  });
-
-  test('Should search for thread with path id on mount', async () => {
-    const expectedPath = `${threadApi}/${TEST_DATA.THREAD_DATA.threadId}`;
-
-    await renderThreadPage();
-
-    expect(window.fetch).toHaveBeenCalledTimes(1);
-    const [ url, ..._ ] = window.fetch.mock.calls[0];
-    expect(url).toBe(expectedPath);
-  });
-
-  test('Should not search when location state has thread info', async () => {
-    const locations = [{
-      pathname: `/threads/${TEST_DATA.THREAD_ID}`,
-      state: { thread: TEST_DATA.THREAD_DATA },
-    }];
-
-    await renderThreadPage(locations);
-
-    expect(window.fetch).not.toHaveBeenCalled();
-  });
-  
-  test.skip('Should pass link definitions to Breadcrumbs', async () => {
-    const expectedLink = [
-      { displayName: 'Home', path: '/' },
-      {
-        displayName: TEST_DATA.THREAD_DATA.ownerBoard[0].title,
-        path: `/board/${TEST_DATA.THREAD_DATA.boardId}`
-      },
-      { displayName: TEST_DATA.THREAD_DATA.title, path: null },
-    ];
-
-    await renderThreadPage();
-
-    const [ props ] = Breadcrumbs.mock.calls[0];
-    const { links } = props;
-    expect(links[0]).toMatchObject(expectedLink[0]);
-    expect(links[1]).toMatchObject(expectedLink[1]);
-    expect(links[2]).toMatchObject(expectedLink[2]);
-  });
-
-  test.skip('Should *** if search failed', async () => {
-
-  });
-
-  test.skip('Should *** if search returned no thread', async () => {
-
   });
 });

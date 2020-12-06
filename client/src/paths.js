@@ -31,3 +31,5 @@ export const userApiSession = userApi + '/session';
 export const postApi = apiBasePath + '/posts';
 
 export const threadApi = apiBasePath + '/threads';
+
+export const boardApi = apiBasePath + '/boards';
