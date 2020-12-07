@@ -2,11 +2,11 @@
 import React from 'react';
 
 const mockBoardPage = () => {
-  return <div title='board page'></div>;
+  return <div title='board-page'></div>;
 };
 
 const BoardPage = jest.fn()
-  .mockName('Mocked Board page component')
+  .mockName('Mocked BoardPage component')
   .mockImplementation(mockBoardPage);
 
 export default BoardPage;

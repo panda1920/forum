@@ -17,6 +17,10 @@
 
         margin-bottom: map-get($spaces, medium);
         color: map-get($colors, '01');
+
+        .thread-title {
+            margin-bottom: map-get($spaces, small);
+        }
     }
 
     .entity-list {

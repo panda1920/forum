@@ -1,22 +1,24 @@
 import React from 'react';
+import { MemoryRouter, Switch, Route } from 'react-router-dom';
 import { render, cleanup, act } from '@testing-library/react';
 
-import * as paths from '../paths';
-import { createMockFetch, createMockFetchImplementation, createSearchReturn } from '../scripts/test-utilities';
-import { searchBoards, searchThreads } from '../scripts/api';
-
-import { CurrentUserContext } from '../contexts/current-user/current-user';
-
-import ThreadList from '../components/thread-list/thread-list.component';
 import EntityList from '../components/entity-list/entity-list.component';
 import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
 import Spinner from '../components/spinner/spinner.component';
 import ThreadCard from '../components/thread-card/thread-card.component';
-import BoardPage from '../pages/board/board-page.component';
+import BoardPage from '../pages/board/board-page';
+
+import { clientBoardPath } from '../paths';
+import { createMockFetchImplementation, createSearchReturn } from '../scripts/test-utilities';
+import { searchBoards, searchThreads } from '../scripts/api';
+import { CurrentUserContext } from '../contexts/current-user/current-user';
 
 // mock out child component
-// jest.mock('../components/thread-card/thread-card.component');
-jest.mock('../components/thread-list/thread-list.component');
+jest.mock('../components/entity-list/entity-list.component');
+jest.mock('../components/thread-card/thread-card.component');
+jest.mock('../components/breadcrumbs/breadcrumbs.component');
+jest.mock('../components/spinner/spinner.component');
+
 
 // mock out dependant functions
 jest.mock('../scripts/api', () => {
@@ -26,42 +28,20 @@ jest.mock('../scripts/api', () => {
   };
 });
 
-const IDENTIFIERS = {
-  TITLE_NAVBAR: 'navigation bar',
-  TITLE_HEADING: 'page heading',
-  TITLE_BOARDINFO: 'board info',
-  TITLE_THREAD_LIST: 'thread list',
-};
-
 const TEST_DATA = {
   BOARD_ID: 'test_boardid',
   API_RETURN_SESSIONUSER: {
     userId: '1',
     userName: 'testuser@myforumwebapp.com',
   },
-  API_RETURN_RESULT: {
-    threads: [
-      {
-        boardId: '1',
-        threadId: '0',
-        userId: '2',
-        title: 'test thread title 0'
-      },
-      {
-        boardId: '1',
-        threadId: '1',
-        userId: '3',
-        title: 'test thread title 1'
-      },
-    ],
-    returnCount: 2,
-    matchedCount: 2,
-  },
   BOARD_DATA: {
     boardId: 'test_boardid',
     userId: 'test_owner_user',
     title: 'test_board_title',
     createdAt: 1577836800, // 2020/01/01 00:00:00,
+    owner: [{
+      displayName: 'test_user',
+    }]
   },
   THREADS_RETURN: [
     { threadId: 'test_thread_id', title: 'test_thread_title' },
@@ -70,19 +50,22 @@ const TEST_DATA = {
   ],
 };
 
-async function renderBoardPage() {
+async function renderBoardPage(locations = null) {
   const mockSetCurrentUser = jest.fn().mockName('Mocked setCurrentUser()');
-  let renderResult;
+  if (!locations) locations = createDefaultLocations();
 
   // needs to wrap render in async act because 
   // board page component is performing asynchronouse state change when mounted
+  let renderResult;
   await act(async () => {
     renderResult = render(
-      <CurrentUserContext.Provider
-        value={{setCurrentUser: mockSetCurrentUser}}
+      <MemoryRouter
+        initialEntries={locations}
       >
-        <BoardPage boardId={TEST_DATA.BOARD_ID}/>
-      </CurrentUserContext.Provider>
+        <Switch>
+          <Route path={`${clientBoardPath}/:boardId`} component={BoardPage}/>
+        </Switch>
+      </MemoryRouter>
     );
   });
 
@@ -92,14 +75,13 @@ async function renderBoardPage() {
   };
 }
 
-function createFetchSuccess() {
-
+function createDefaultLocations() {
+  return [
+    `${clientBoardPath}/${TEST_DATA.BOARD_ID}`,
+  ];
 }
 
-let originalFetch = null;
 beforeEach(() => {
-  originalFetch = window.fetch;
-  window.fetch = createFetchSuccess();
   searchBoards.mockImplementation(createMockFetchImplementation(
     true, 200, async () => createSearchReturn([ TEST_DATA.BOARD_DATA ], 'boards')
   ));
@@ -109,32 +91,13 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
-  ThreadList.mockClear();
-  window.fetch = originalFetch;
+  // ThreadList.mockClear();
+  EntityList.mockClear();
+  Breadcrumbs.mockClear();
+  Spinner.mockClear();
+
   searchBoards.mockClear();
   searchThreads.mockClear();
-});
-
-describe('testing behavior of board-page', () => {
-  test('all subcomponents of board-page should render on screen', async () => {
-    const { getByTitle, getAllByTitle } = await renderBoardPage();
-
-    expect( getAllByTitle(IDENTIFIERS.TITLE_NAVBAR) )
-      .toHaveLength(2);
-    getByTitle(IDENTIFIERS.TITLE_HEADING);
-    getByTitle(IDENTIFIERS.TITLE_BOARDINFO);
-    // expect( getAllByTitle(IDENTIFIERS.TITLE_PAGING) )
-    //   .toHaveLength(2);
-    getByTitle(IDENTIFIERS.TITLE_THREAD_LIST);
-  });
-
-  test('upon render should pass boardId to ThreadList component', async () => {
-    await renderBoardPage();
-
-    expect(ThreadList).toHaveBeenCalled();
-    const [ props, ..._ ] = ThreadList.mock.calls[0];
-    expect(props).toHaveProperty('boardId', TEST_DATA.BOARD_ID);
-  });
 });
 
 describe('Testing BoardPage renders the components properly', () => {
@@ -150,8 +113,16 @@ describe('Testing BoardPage renders the components properly', () => {
     expect(Breadcrumbs).toHaveBeenCalledTimes(1);
   });
 
-  test.skip('Should render Board info', async () => {
+  test('Should render Board info', async () => {
+    const { getByText } = await renderBoardPage();
 
+    const titlePattern = new RegExp(`.*${TEST_DATA.BOARD_DATA.title}.*`);
+    const ownerPattern = new RegExp(`.*${TEST_DATA.BOARD_DATA.owner[0].displayName}.*`);
+    const createdDatePattern = new RegExp(`.*2020/01/01, 00:00:00.*`);
+
+    expect( getByText(titlePattern) ).toBeInTheDocument();
+    expect( getByText(ownerPattern) ).toBeInTheDocument();
+    expect( getByText(createdDatePattern) ).toBeInTheDocument();
   });
 
   test('Should render Spinner and only Spinner when board fetch fails', async () => {
@@ -171,20 +142,20 @@ describe('Testing behavior of BoardPage', () => {
   test('Should pass callbacks to EntityList', async () => {
     await renderBoardPage();
 
-    for (const call in EntityList.mock.calls) {
+    for (const call of EntityList.mock.calls) {
       const [ props ] = call;
 
       expect(props).toHaveProperty('searchEntity');
-      expect(props).toHaveProperty('renderEntity');
+      expect(props).toHaveProperty('renderChildEntity');
       expect(props.searchEntity).toBeInstanceOf(Function);
-      expect(props.renderEntity).toBeInstanceOf(Function);
+      expect(props.renderChildEntity).toBeInstanceOf(Function);
     }
   });
 
   test('Should pass needRefresh to EntityList as false', async () => {
     await renderBoardPage();
 
-    for (const call in EntityList.mock.calls) {
+    for (const call of EntityList.mock.calls) {
       const [ props ] = call;
 
       expect(props).toHaveProperty('needRefresh', false);
@@ -199,7 +170,7 @@ describe('Testing behavior of BoardPage', () => {
 
     await renderBoardPage();
 
-    for (const call in Breadcrumbs.mock.calls) {
+    for (const call of Breadcrumbs.mock.calls) {
       const [ props ] = call;
 
       expect(props).toHaveProperty('links');
@@ -218,7 +189,7 @@ describe('Testing behavior of BoardPage', () => {
 
   test('Should not search board info when location state has board info', async () => {
     const locations = [
-      { pathname: `/boards/${TEST_DATA.BOARD_ID}`, state: { board: TEST_DATA.BOARD_DATA } },
+      { pathname: `${clientBoardPath}/${TEST_DATA.BOARD_ID}`, state: { board: TEST_DATA.BOARD_DATA } },
     ];
 
     await renderBoardPage(locations);
@@ -263,6 +234,7 @@ describe('Testing callbacks of BoardPage', () => {
 
     expect(result).toHaveProperty('result');
     expect(result.result).toHaveProperty('threads', TEST_DATA.THREADS_RETURN);
+    expect(result.result).toHaveProperty('entities', TEST_DATA.THREADS_RETURN);
   });
 
   test('searchEntity callback should return null when search failed', async () => {

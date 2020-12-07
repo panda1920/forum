@@ -2,6 +2,13 @@ import React from 'react';
 import { render, cleanup, act, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
 
+import EntityList from '../components/entity-list/entity-list.component';
+import PostCard from '../components/post-card/post-card.component';
+import HtmlInput from '../components/htmlinput/htmlinput.component';
+import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
+import Spinner from '../components/spinner/spinner.component';
+import ThreadPage from '../pages/thread/thread-page';
+
 import {
   createMockFetchImplementation,
   createSearchReturn
@@ -12,12 +19,7 @@ import {
   searchThreadById,
   searchBoards
 } from '../scripts/api';
-import EntityList from '../components/entity-list/entity-list.component';
-import PostCard from '../components/post-card/post-card.component';
-import HtmlInput from '../components/htmlinput/htmlinput.component';
-import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
-import Spinner from '../components/spinner/spinner.component';
-import ThreadPage from '../pages/thread/thread-page';
+import { clientBoardPath, clientThreadPath } from '../paths';
 
 // mock out child components
 jest.mock('../components/entity-list/entity-list.component');
@@ -60,7 +62,7 @@ const TEST_DATA = {
 
 async function renderThreadPage(locations = null) {
   if (!locations)
-    locations = [`/threads/${TEST_DATA.THREAD_ID}`];
+    locations = [`${clientThreadPath}/${TEST_DATA.THREAD_ID}`];
   let renderResult;
   
   await act(async () => {
@@ -69,7 +71,7 @@ async function renderThreadPage(locations = null) {
         initialEntries={locations}
       >
         <Switch>
-          <Route path='/threads/:threadId' component={ThreadPage} />
+          <Route path={`${clientThreadPath}/:threadId`} component={ThreadPage} />
         </Switch>
       </MemoryRouter>
     );
@@ -83,11 +85,13 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+
   EntityList.mockClear();
   PostCard.mockClear();
   HtmlInput.mockClear();
   Breadcrumbs.mockClear();
   Spinner.mockClear();
+
   searchPosts.mockClear();
   createPost.mockClear();
   searchThreadById.mockClear();
@@ -226,7 +230,7 @@ describe('Testing behavior of ThreadPage', () => {
       { displayName: 'Home', path: '/' },
       {
         displayName: TEST_DATA.BOARDS_RETURN[0].title,
-        path: `/board/${TEST_DATA.BOARDS_RETURN[0].boardId}`
+        path: `${clientBoardPath}/${TEST_DATA.BOARDS_RETURN[0].boardId}`
       },
       { displayName: TEST_DATA.THREAD_DATA.title, path: null },
     ];

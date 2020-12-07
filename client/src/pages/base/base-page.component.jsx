@@ -1,7 +1,7 @@
 import React, { useReducer, useEffect, useContext, useCallback } from 'react';
 import { Switch, Route } from 'react-router-dom';
 
-import BoardPage from '../board/board-page.component';
+import BoardPage from '../board/board-page';
 import ThreadPage from '../thread/thread-page';
 import Header from  '../../components/header/header.component';
 import Footer from  '../../components/footer/footer.component';
@@ -11,6 +11,7 @@ import ModalSignup from '../../components/modal-signup/modal-signup.component';
 import { ModalContextProvider } from '../../contexts/modal/modal';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
 import { getSessionUser } from '../../scripts/api';
+import { clientBoardPath, clientThreadPath } from '../../paths';
 
 import './base-page.styles.scss';
 
@@ -54,9 +55,10 @@ const BasePage = () => {
             <Route path='/sample'>
               <h1>SAMPLE</h1>
             </Route>
-            <Route path='/thread/:threadId' component={ThreadPage} />
+            <Route path={`${clientThreadPath}/:threadId`} component={ThreadPage} />
+            <Route path={`${clientBoardPath}/:boardId`} component={BoardPage} />
             <Route path='/'>
-              <BoardPage boardId='0' />
+              <div>hello world!</div>
             </Route>
           </Switch>
         </div>

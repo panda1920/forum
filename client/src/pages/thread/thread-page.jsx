@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
+import { clientBoardPath } from '../../paths';
 import { searchPosts, createPost, searchThreadById, searchBoards } from '../../scripts/api';
 import { convertEpochToLocalDateString } from '../../scripts/converter';
+
 import EntityList from '../../components/entity-list/entity-list.component';
 import PostCard from '../../components/post-card/post-card.component';
 import HtmlInput from '../../components/htmlinput/htmlinput.component';
@@ -122,7 +124,7 @@ function createBreadcrumbs(thread, board) {
   // create navigation links to other pages
   const links = [
     { displayName: 'Home', path: '/' },
-    { displayName: board.title, path: `/board/${board.boardId}` },
+    { displayName: board.title, path: `${clientBoardPath}/${board.boardId}` },
     { displayName: thread.title, path: null },
   ];
 

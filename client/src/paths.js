@@ -33,3 +33,9 @@ export const postApi = apiBasePath + '/posts';
 export const threadApi = apiBasePath + '/threads';
 
 export const boardApi = apiBasePath + '/boards';
+
+// path used on client side
+
+export const clientThreadPath = '/threads';
+
+export const clientBoardPath = '/boards';

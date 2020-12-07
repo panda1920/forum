@@ -4,6 +4,8 @@
     display: flex;
     flex-direction: row;
 
+    background-color: lighten(map-get($colors, '00'), 20%);
+
     > div {
         padding: 5px 20px;
         color: map-get($colors, '01');
@@ -16,6 +18,15 @@
         .thread-card-title {
             font-size: map-get($font-size, 'medium');
             font-weight: 600;
+            text-decoration: none;
+            color: map-get($colors, '01');
+
+            &:link {
+                color: inherit;
+            }
+            &:hover {
+                color: map-get($colors, '02');
+            }
         }
     }
     .thread-card-views-posts {

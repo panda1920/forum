@@ -1,8 +1,11 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 import BlockText from '../block-text/block-text.component';
 import Portrait from '../portrait/portrait.component';
+
 import { convertEpochToLocalDateString } from '../../scripts/converter';
+import { clientThreadPath } from '../../paths';
 
 import './thread-card.styles.scss';
 
@@ -12,7 +15,15 @@ const ThreadCard = ({ thread }) => {
   return (
     <div title='thread card' className='thread-card'>
       <div className='thread-card-title-userinfo'>
-        <BlockText className='thread-card-title'>{thread.title}</BlockText>
+        <Link
+          className='thread-card-title'
+          to={{
+            pathname: `${clientThreadPath}/${thread.threadId}`,
+            state: { thread },
+          }}
+        >
+          { thread.title }
+        </Link>
         <BlockText className='thread-card-userinfo'>
           Created by {owner.displayName},&nbsp;
           {convertEpochToLocalDateString(thread.createdAt)}
@@ -25,7 +36,7 @@ const ThreadCard = ({ thread }) => {
         </div>
         <div className='views-posts-values'>
           <BlockText>{thread.views}</BlockText>
-          <BlockText>{thread.posts}</BlockText>
+          <BlockText>{thread.postCount}</BlockText>
         </div>
       </div>
       { displayLastPost(thread) }

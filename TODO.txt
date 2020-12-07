@@ -8,10 +8,8 @@ FORUM
         - Find a way to send backend log entry to an external monitoring service like cloudwatch/s3
             https://aws.amazon.com/blogs/devops/send-ecs-container-logs-to-cloudwatch-logs-for-centralized-monitoring/
         - Better logging: place logging output for each files
-        - Implement Board entity and its related services/repo
         - Sanitize content of user posts
         - Setup better validation for other user inputs (max length of displayName etc.)
-        - Setup /health route
         - Setup route to upload images
     
     [Frontend]

@@ -1,7 +1,12 @@
 import React from 'react';
+import { Router } from 'react-router-dom';
 import { render, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { createMemoryHistory } from 'history';
 
 import ThreadCard from '../components/thread-card/thread-card.component';
+
+import { clientThreadPath } from '../paths';
 
 const TEST_DATA = {
   THREAD_DATA: {
@@ -11,7 +16,7 @@ const TEST_DATA = {
     lastPostId: 'lastpostId',
     title: 'title of thread',
     views: 1234,
-    posts: 22,
+    postCount: 22,
     createdAt: 1577836800.1,
     owner: [{
       userId: 'testuser',
@@ -37,10 +42,20 @@ const IDENTIFIERS = {
 function createThreadCard(threadData = null) {
   if (!threadData)
     threadData = TEST_DATA.THREAD_DATA;
+  const history = createMemoryHistory();
     
-  return render(
-    <ThreadCard thread={threadData} />
+  const renderResult = render(
+    <Router
+      history={history}
+    >
+      <ThreadCard thread={threadData} />
+    </Router>
   );
+
+  return {
+    ...renderResult,
+    history
+  };
 }
 
 beforeEach(() => {
@@ -55,12 +70,32 @@ describe('Testing behavior of ThreadCard component', () => {
     const { getByText, getByTitle } = createThreadCard();
 
     getByText(TEST_DATA.THREAD_DATA.title);
-    getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.posts.toString()}.*`) );
+    getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.postCount.toString()}.*`) );
     getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.views.toString()}.*`) );
     getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.owner[0].displayName}.*`) );
     getByText( new RegExp(`.*${TEST_DATA.THREAD_CREATED_TIME}.*`) );
     getByText( new RegExp(`.*${TEST_DATA.LASTPOST_CREATED_TIME}.*`) );
     getByTitle(IDENTIFIERS.TITLE_LASTPOST_PORTRAIT);
     getByText( new RegExp(`.*${TEST_DATA.THREAD_DATA.lastPost[0].owner[0].displayName}.*`) );
+  });
+
+  test('Should transition to thread page when clicked on thread title', () => {
+    const { getByText, history } = createThreadCard();
+    const threadTitle = getByText(TEST_DATA.THREAD_DATA.title);
+    const expectedPath = `${clientThreadPath}/${TEST_DATA.THREAD_DATA.threadId}`;
+
+    userEvent.click(threadTitle);
+
+    expect(history.location.pathname).toBe(expectedPath);
+  });
+
+  test('Should store thread info in history during transition', () => {
+    const { getByText, history } = createThreadCard();
+    const threadTitle = getByText(TEST_DATA.THREAD_DATA.title);
+
+    userEvent.click(threadTitle);
+
+    expect(history.location.state).toHaveProperty('thread');
+    expect(history.location.state.thread).toMatchObject(TEST_DATA.THREAD_DATA);
   });
 });

@@ -1,9 +1,9 @@
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen, cleanup, getByText, act, wait } from '@testing-library/react';
 
 import BasePage from '../pages/base/base-page.component';
-import BoardPage from '../pages/board/board-page.component';
+import BoardPage from '../pages/board/board-page';
 import { ModalLoginTitle } from '../components/modal-login/modal-login.component';
 import { ModalSignupTitle } from '../components/modal-signup/modal-signup.component';
 
@@ -12,7 +12,8 @@ import { userApiSession } from '../paths';
 import { createMockFetch, } from  '../scripts/test-utilities';
 
 // mock out child components
-jest.mock('../pages/board/board-page.component');
+jest.mock('../pages/board/board-page');
+jest.mock('../pages/thread/thread-page');
 
 const TEST_DATA = {
   BOARD_ID: '0',
@@ -37,15 +38,15 @@ function renderBasePage() {
   const userContextValue = { ...INITIAL_STATE, setCurrentUser: mockSetCurrentUser };
 
   const result = render(
-    <BrowserRouter>
-      <div id='root'>
-        <CurrentUserContext.Provider
-          value={ userContextValue }
-        >
+    <div id='root'>
+      <CurrentUserContext.Provider
+        value={ userContextValue }
+      >
+        <MemoryRouter>
           <BasePage />
-        </CurrentUserContext.Provider>
-      </div>
-    </BrowserRouter>
+        </MemoryRouter>
+      </CurrentUserContext.Provider>
+    </div>
   );
 
   return {
@@ -77,20 +78,6 @@ describe('Testing BasePage', () => {
 
     getByTitle(ELEMENT_IDENTIFIER.HEADER_TITLE);
     getByTitle(ELEMENT_IDENTIFIER.FOOTER_TITLE);
-  });
-
-  test('Base page should render board page by default', () => {
-    const { getByTitle } = renderBasePage();
-
-    getByTitle(ELEMENT_IDENTIFIER.BOARD_PAGE_TITLE);
-  });
-
-  test('Base page should pass test baordid to board page component', () => {
-    renderBasePage();
-
-    expect(BoardPage).toHaveBeenCalled();
-    const [ props, ..._ ] = BoardPage.mock.calls[0];
-    expect(props).toHaveProperty('boardId', TEST_DATA.BOARD_ID);
   });
 
   test('Clicking on login should blur the page', () => {

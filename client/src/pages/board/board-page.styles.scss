@@ -1,5 +1,36 @@
 @import '../../base-style';
 
 .board-page {
+    padding: map-get($spaces, large) 0;
 
+    .breadcrumbs-container {
+        margin-bottom: map-get($spaces, medium);
+        background-color: lighten(map-get($colors, '00'), 20%);
+        
+        .breadcrumbs {
+            @include centralize-in-page;
+        }
+    }
+
+    .board-page-boardinfo {
+        @include centralize-in-page;
+
+        margin-bottom: map-get($spaces, medium);
+        color: map-get($colors, '01');
+
+        .board-title {
+            margin-bottom: map-get($spaces, small);
+        }
+    }
+
+    .entity-list {
+        @include centralize-in-page;
+
+        .thread-card:first-of-type {
+            margin-top: map-get($spaces, small);
+        }
+        .thread-card:last-of-type {
+            margin-bottom: map-get($spaces, small)
+        }
+    }
 }
