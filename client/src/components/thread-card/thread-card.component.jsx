@@ -15,17 +15,19 @@ const ThreadCard = ({ thread }) => {
   return (
     <div title='thread card' className='thread-card'>
       <div className='thread-card-title-userinfo'>
-        <Link
-          className='thread-card-title'
-          to={{
-            pathname: `${clientThreadPath}/${thread.threadId}`,
-            state: { thread },
-          }}
-        >
-          { thread.title }
-        </Link>
+        <BlockText>
+          <Link
+            className='thread-card-title'
+            to={{
+              pathname: `${clientThreadPath}/${thread.threadId}`,
+              state: { thread },
+            }}
+          >
+            { thread.title }
+          </Link>
+        </BlockText>
         <BlockText className='thread-card-userinfo'>
-          Created by {owner.displayName},&nbsp;
+          Created by {owner.displayName} at&nbsp;
           {convertEpochToLocalDateString(thread.createdAt)}
         </BlockText>
       </div>

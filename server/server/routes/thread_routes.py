@@ -25,12 +25,11 @@ def searchThreadsv1():
         return route_utils.createJSONErrorResponse(e)
 
 
-@cors_wrapped_route(routes.route, '/v1/threads/<threadId>', methods=['GET'])
-def searchThreadByIdv1(threadId):
+@cors_wrapped_route(routes.route, '/v1/threads/<threadId>/view', methods=['PATCH'])
+def viewThread(threadId):
     try:
-        search = Config.getSearchService(current_app)
-        result = search.searchThreadByExplicitId(threadId)
-        result['threads'] = [ thread.to_serialize() for thread in result['threads'] ]
+        update = Config.getUpdateService(current_app)
+        result = update.viewThread(threadId)
         return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)

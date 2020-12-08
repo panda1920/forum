@@ -42,11 +42,11 @@ export function searchThreads(criteria) {
     );
 }
 
-export function searchThreadById(threadId) {
-    const url = `${paths.threadApi}?${createQueryString({ threadId })}`;
+export function viewThread(threadId) {
+    const url = `${paths.threadApi}/${threadId}/view`;
     return apiCall(
         url,
-        'GET',
+        'PATCH',
     );
 }
 

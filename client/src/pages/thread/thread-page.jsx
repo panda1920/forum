@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
 import { clientBoardPath } from '../../paths';
-import { searchPosts, createPost, searchThreadById, searchBoards } from '../../scripts/api';
+import { searchPosts, createPost, searchThreads, searchBoards, viewThread } from '../../scripts/api';
 import { convertEpochToLocalDateString } from '../../scripts/converter';
 
 import EntityList from '../../components/entity-list/entity-list.component';
@@ -22,7 +22,7 @@ const ThreadPage = ({ match, location }) => {
   useEffect(() => {
     const hasThreadInState = () => location.state && location.state.thread;
     const fetchThread = async () => {
-      const response = await searchThreadById(threadId);
+      const response = await searchThreads({ threadId });
       if (!response.ok)
         return;
 
@@ -50,6 +50,11 @@ const ThreadPage = ({ match, location }) => {
     if (thread)
       fetchOwnerBoard();
   }, [thread]);
+
+  // update viewcount of thread
+  useEffect(() => {
+    viewThread(threadId);
+  }, [threadId]);
 
   const searchEntity = useCallback(async (options = {}) => {
     const criteria = Object.assign({ threadId }, options);
@@ -99,7 +104,7 @@ const ThreadPage = ({ match, location }) => {
 function createThreadPage(thread, board, needRefresh, callbacks) {
   const { searchEntity, renderChildEntity, postPost } = callbacks;
 
-  // wanted to avoid rendering the page when thread info is not available
+  // wanted to avoid rendering the page when not enough info is available
   const isEntityAvailable = thread && board;
   if (!isEntityAvailable)
     return (
@@ -124,7 +129,11 @@ function createBreadcrumbs(thread, board) {
   // create navigation links to other pages
   const links = [
     { displayName: 'Home', path: '/' },
-    { displayName: board.title, path: `${clientBoardPath}/${board.boardId}` },
+    {
+      displayName: board.title,
+      path: `${clientBoardPath}/${board.boardId}`,
+      state: { board },
+    },
     { displayName: thread.title, path: null },
   ];
 

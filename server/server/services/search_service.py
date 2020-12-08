@@ -85,51 +85,12 @@ class SearchService:
         result = self._repo.searchThread(searchFilter, paging=paging, sorter=sorter)
         self._joinOwner(result['threads'])
         self._joinLastPost(result['threads'])
-        self._joinOwnerBoard(result['threads'])
         
         return dict(
             threads=result['threads'],
             returnCount=result['returnCount'],
             matchedCount=result['matchedCount'],
         )
-
-    def searchThreadByExplicitId(self, threadId):
-        """
-        Searches for thread based on threadId
-        
-        Args:
-            threadId(string): Id of thread to search
-        Returns:
-            dict: result of search operation
-        """
-        logging.info('Searching for a Thread entity by Id')
-
-        searchFilter = self._searchFilterCreator.create_threadsearch(
-            dict(threadId=threadId)
-        )
-        paging = self._paging()
-
-        result = self._repo.searchThread(searchFilter, paging=paging)
-        self._joinOwner(result['threads'])
-        self._joinLastPost(result['threads'])
-        self._joinOwnerBoard(result['threads'])
-
-        updateThread = Thread()
-        updateThread.increment = 'views'
-        self._repo.updateThread(searchFilter, updateThread)
-
-        return dict(
-            threads=result['threads'],
-            returnCount=result['returnCount'],
-            matchedCount=result['matchedCount'],
-        )
-
-    def _createFilter(self, fieldname, operator, values):
-        return self._filter.createFilter(dict(
-            field=fieldname,
-            operator=operator,
-            value=values
-        ))
 
     def searchBoardsByKeyValues(self, keyValues):
         """
@@ -154,6 +115,13 @@ class SearchService:
             returnCount=result['returnCount'],
             matchedCount=result['matchedCount'],
         )
+
+    def _createFilter(self, fieldname, operator, values):
+        return self._filter.createFilter(dict(
+            field=fieldname,
+            operator=operator,
+            value=values
+        ))
 
     def _joinOwner(self, entities):
         """

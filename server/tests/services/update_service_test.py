@@ -173,7 +173,7 @@ class TestPostUpdateService:
 
 
 class TestThreadUpdateService:
-    DEFAULT_REPOUPDATE_RESULT = 'default_result'
+    DEFAULT_REPOUPDATE_RESULT = dict(updatedCount=1, matchedCount=1)
     REPOTHREAD_ATTRSET = [
         dict(threadId='0', userId=DEFAULT_SESSION_USER.userId, title='test_thread_1')
     ]
@@ -239,6 +239,49 @@ class TestThreadUpdateService:
         result = setup_service.updateThread(self.DEFAULT_THREAD)
 
         assert result == self.DEFAULT_REPOUPDATE_RESULT
+
+    def test_viewThreadShouldIncrementParticularThreadInDB(self, setup_service):
+        mock_repo = setup_service._repo
+        threadId = self.DEFAULT_THREAD.threadId
+        expected_filter = PrimitiveFilter.createFilter(dict(
+            field='threadId', operator='eq', value=[ threadId ]
+        ))
+
+        setup_service.viewThread(threadId)
+
+        assert mock_repo.updateThread.call_count == 1
+        searchFilter, update, *_ = mock_repo.updateThread.call_args_list[0][0]
+        assert searchFilter == expected_filter
+        assert getattr(update, 'increment') == 'views'
+
+    def test_viewThreadShouldReturnUpdateResult(self, setup_service):
+        threadId = self.DEFAULT_THREAD.threadId
+        expected_result = { 'updatedCount': self.DEFAULT_REPOUPDATE_RESULT['updatedCount'] }
+
+        result = setup_service.viewThread(threadId)
+
+        assert result == expected_result
+
+    def test_viewThreadShouldReturnUpdateResultWhenUpdateFails(self, setup_service):
+        threadId = self.DEFAULT_THREAD.threadId
+        mock_repo = setup_service._repo
+        mock_repo.updateThread.return_value = dict(updatedCount=0, matchedCount=10)
+        expected_result = { 'updatedCount': 0 }
+
+        result = setup_service.viewThread(threadId)
+
+        assert result == expected_result
+
+    def test_viewThreadShouldNotUpdateThreadWhenInvalidId(self, setup_service):
+        mock_repo = setup_service._repo
+        threadIds = [ None, '', ]
+        expected_result = { 'updatedCount': 0 }
+
+        for threadId in threadIds:
+            result = setup_service.viewThread(threadId)
+
+            assert mock_repo.updateThread.call_count == 0
+            assert result == expected_result
 
 
 class TestBoardUpdateService:

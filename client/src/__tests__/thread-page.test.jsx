@@ -16,8 +16,9 @@ import {
 import {
   searchPosts,
   createPost,
-  searchThreadById,
-  searchBoards
+  searchThreads,
+  searchBoards,
+  viewThread
 } from '../scripts/api';
 import { clientBoardPath, clientThreadPath } from '../paths';
 
@@ -33,8 +34,9 @@ jest.mock('../scripts/api', () => {
   return {
     searchPosts: jest.fn().mockName('mocked searchPosts()'),
     createPost: jest.fn().mockName('mocked createPost()'),
-    searchThreadById: jest.fn().mockName('mocked serachThreadById()'),
+    searchThreads: jest.fn().mockName('mocked searchThreads()'),
     searchBoards: jest.fn().mockName('mocked serachBoards()'),
+    viewThread: jest.fn().mockName('mocked viewThread()')
   };
 });
 
@@ -94,8 +96,9 @@ afterEach(() => {
 
   searchPosts.mockClear();
   createPost.mockClear();
-  searchThreadById.mockClear();
+  searchThreads.mockClear();
   searchBoards.mockClear();
+  viewThread.mockClear();
 });
 
 function mockDependantFunctions() {
@@ -105,7 +108,7 @@ function mockDependantFunctions() {
   createPost.mockImplementation(createMockFetchImplementation(
     true, 201, async () => ({ createdCount: 1 })
     ));
-  searchThreadById.mockImplementation(createMockFetchImplementation(
+  searchThreads.mockImplementation(createMockFetchImplementation(
     true, 200, async () => createSearchReturn([ TEST_DATA.THREAD_DATA ], 'threads')
   ));
   searchBoards.mockImplementation(createMockFetchImplementation(
@@ -148,7 +151,7 @@ describe('Testing ThreadPage renders the component properly', () => {
   });
 
   test('Should render spinner and only spinner when thread fetch fails', async () => {
-    searchThreadById
+    searchThreads
       .mockImplementation(createMockFetchImplementation(
         false, 400, async () => {}
       ));
@@ -203,8 +206,8 @@ describe('Testing behavior of ThreadPage', () => {
   test('Should search for thread by path id on mount', async () => {
     await renderThreadPage();
 
-    expect(searchThreadById).toHaveBeenCalledTimes(1);
-    expect(searchThreadById).toHaveBeenCalledWith(TEST_DATA.THREAD_ID);
+    expect(searchThreads).toHaveBeenCalledTimes(1);
+    expect(searchThreads).toHaveBeenCalledWith({ threadId: TEST_DATA.THREAD_ID });
   });
 
   test('Should search for owner board of thread on mount', async () => {
@@ -212,6 +215,13 @@ describe('Testing behavior of ThreadPage', () => {
 
     expect(searchBoards).toHaveBeenCalledTimes(1);
     expect(searchBoards).toHaveBeenCalledWith({ boardId: TEST_DATA.THREAD_DATA.boardId });
+  });
+
+  test('Should update viewcount of thread on mount', async () => {
+    await renderThreadPage();
+
+    expect(viewThread).toHaveBeenCalledTimes(1);
+    expect(viewThread).toBeCalledWith(TEST_DATA.THREAD_ID);
   });
 
   test('Should not search when location state has thread info', async () => {
@@ -222,7 +232,7 @@ describe('Testing behavior of ThreadPage', () => {
 
     await renderThreadPage(locations);
 
-    expect(searchThreadById).not.toHaveBeenCalled();
+    expect(searchThreads).not.toHaveBeenCalled();
   });
   
   test('Should pass link definitions to Breadcrumbs', async () => {
@@ -230,7 +240,8 @@ describe('Testing behavior of ThreadPage', () => {
       { displayName: 'Home', path: '/' },
       {
         displayName: TEST_DATA.BOARDS_RETURN[0].title,
-        path: `${clientBoardPath}/${TEST_DATA.BOARDS_RETURN[0].boardId}`
+        path: `${clientBoardPath}/${TEST_DATA.BOARDS_RETURN[0].boardId}`,
+        state: { board: TEST_DATA.BOARDS_RETURN[0] },
       },
       { displayName: TEST_DATA.THREAD_DATA.title, path: null },
     ];
@@ -243,15 +254,6 @@ describe('Testing behavior of ThreadPage', () => {
     expect(links[1]).toMatchObject(expectedLink[1]);
     expect(links[2]).toMatchObject(expectedLink[2]);
   });
-
-  test.skip('Should *** if search failed', async () => {
-
-  });
-
-  test.skip('Should *** if search returned no thread', async () => {
-
-  });
-
 });
 
 describe('Testing callbacks', () => {

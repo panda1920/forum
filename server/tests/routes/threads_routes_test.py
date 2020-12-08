@@ -17,6 +17,7 @@ DEFAULT_RETURN_SEARCHTHREAD_ATTRSET = [
 DEFAULT_RETURN_CREATENEWTHREAD = dict(created='thread')
 DEFAULT_RETURN_UPDATETHREAD = 'some_value_updatethread'
 DEFAULT_RETURN_DELETETHREAD = dict(deleteCount=1)
+DEFAULT_RETURN_VIEWTHREAD = dict(updatedCount=1)
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -27,9 +28,9 @@ def set_mock_returnvalues(mockApp):
     for thread, attrs in zip(mock_returned_threads, DEFAULT_RETURN_SEARCHTHREAD_ATTRSET):
         thread.to_serialize.return_value = attrs
     Config.getSearchService(mockApp).searchThreadsByKeyValues.return_value = dict(threads=mock_returned_threads)
-    Config.getSearchService(mockApp).searchThreadByExplicitId.return_value = dict(threads=mock_returned_threads)
 
     Config.getUpdateService(mockApp).updateThread.return_value = DEFAULT_RETURN_UPDATETHREAD
+    Config.getUpdateService(mockApp).viewThread.return_value = DEFAULT_RETURN_VIEWTHREAD
 
     Config.getDeleteService(mockApp).deleteThreadById.return_value = DEFAULT_RETURN_DELETETHREAD
 
@@ -91,30 +92,28 @@ class TestThreadAPIs:
 
                 assert response.status_code == e.getStatusCode()
 
-    def test_searchThreadByExplicitIdShouldPassPostedDataAndIdToService(self, mockApp, client):
-        search_service = Config.getSearchService(mockApp)
+    def test_viewThreadShouldPassPostedIdToService(self, mockApp, client):
+        update_service = Config.getUpdateService(mockApp)
         threadId = '1'
-        url = f'{self.THREAD_API_BASE }/{threadId}'
+        url = f'{self.THREAD_API_BASE }/{threadId}/view'
 
-        client.get(url)
+        client.patch(url)
 
-        search_service.searchThreadByExplicitId.assert_called_with(threadId)
+        update_service.viewThread.assert_called_with(threadId)
 
-    def test_searchThreadByExplicitIdShouldCall_to_serializeOnReturnedThreads(self, mockApp, client):
+    def test_viewThreadShouldReturn200AndOperationResult(self, mockApp, client):
         threadId = '1'
-        url = f'{self.THREAD_API_BASE }/{threadId}'
-        search_service = Config.getSearchService(mockApp)
-        threads = search_service.searchThreadsByKeyValues.return_value['threads']
-        
-        client.get(url)
+        url = f'{self.THREAD_API_BASE }/{threadId}/view'
 
-        for thread in threads:
-            assert thread.to_serialize.call_count == 1
+        response = client.patch(url)
 
-    def test_searchThreadByExplicitIdShouldReturnErrorWhenServiceRaiseException(self, mockApp):
+        assert response.status_code == 200
+        assert response.get_json()['result'] == DEFAULT_RETURN_VIEWTHREAD
+
+    def test_viewThreadShouldReturnErrorWhenServiceRaiseException(self, mockApp):
         threadId = '1'
-        url = f'{self.THREAD_API_BASE }/{threadId}'
-        search_service = Config.getSearchService(mockApp)
+        url = f'{self.THREAD_API_BASE }/{threadId}/view'
+        update_service = Config.getUpdateService(mockApp)
         exceptionsToTest = [
             exceptions.ServerMiscError,
             exceptions.EntityValidationError,
@@ -122,9 +121,9 @@ class TestThreadAPIs:
         ]
         
         for e in exceptionsToTest:
-            search_service.searchThreadByExplicitId.side_effect = e('some-error')
+            update_service.viewThread.side_effect = e('some-error')
             with mockApp.test_client() as client:
-                response = client.get(url)
+                response = client.patch(url)
 
                 assert response.status_code == e.getStatusCode()
 

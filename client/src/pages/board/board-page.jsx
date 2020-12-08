@@ -27,7 +27,9 @@ const BoardPage = ({ match, location }) => {
       setBoard(searchJson.result.boards[0]);
     };
 
-    if (!isBoardInLocation)
+    if (isBoardInLocation)
+      setBoard(location.state.board);
+    else
       fetchBoardInfo();
   }, [ boardId, location.state ]);
 

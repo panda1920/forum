@@ -6,6 +6,7 @@ This file houses business logic related to entity update
 import logging
 
 import server.exceptions as exceptions
+from server.entity import Thread
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,32 @@ class UpdateService:
         self._authorizeUpdateThread(searchFilter)
 
         return self._repo.updateThread(searchFilter, thread)
+
+    def viewThread(self, threadId):
+        """
+        Notify the app that a particular thread has been viewed by user.
+        Do things like increment view count.
+        
+        Args:
+            threadId(str): ID of string
+        Returns:
+            dict that reports result of update
+        """
+        logger.info('Updating Thread entity')
+
+        if not threadId:
+            logger.warning('Invalid Id was passed: %s', threadId)
+            return dict(updatedCount=0)
+
+        update = Thread(increment='views')
+        searchFilter = self._filter.createFilter(dict(
+            field='threadId', operator='eq', value=[ threadId ]
+        ))
+        result = self._repo.updateThread(searchFilter, update)
+
+        return dict(
+            updatedCount=result['updatedCount']
+        )
 
     def updateBoard(self, board):
         """

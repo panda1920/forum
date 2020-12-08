@@ -3,11 +3,12 @@
 .thread-card {
     display: flex;
     flex-direction: row;
-
     background-color: lighten(map-get($colors, '00'), 20%);
-
+    
     > div {
         padding: 5px 20px;
+        margin-right: 1px;
+
         color: map-get($colors, '01');
         font-size: map-get($font-size, 'small');
     }

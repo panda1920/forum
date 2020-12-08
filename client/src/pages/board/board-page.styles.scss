@@ -26,11 +26,15 @@
     .entity-list {
         @include centralize-in-page;
 
-        .thread-card:first-of-type {
-            margin-top: map-get($spaces, small);
-        }
-        .thread-card:last-of-type {
-            margin-bottom: map-get($spaces, small)
+        .thread-card {
+            margin-bottom: 1px;
+            
+            &:first-of-type {
+                margin-top: map-get($spaces, small);
+            }
+            &:last-of-type {
+                margin-bottom: map-get($spaces, small)
+            }
         }
     }
 }

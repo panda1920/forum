@@ -222,7 +222,6 @@ class TestConversionMethods:
             'threadId',
             'boardId',
             'owner',
-            'ownerBoard',
             'lastPost',
             'title',
             'subject',
@@ -241,6 +240,7 @@ class TestConversionMethods:
     def test_to_serializeRaisesNoExceptionWhenMissingOptionalAttributes(self):
         optional_attributes = [
             'updatedAt',
+            'ownerBoard',
         ]
 
         for optional_attribute in optional_attributes:
