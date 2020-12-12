@@ -8,7 +8,7 @@ from server.config import Config
 import server.routes.route_utils as route_utils
 from server.routes.route_utils import cors_wrapped_route
 from server.exceptions import MyAppException
-from server.entity import Board
+# from server.entity import Board
 
 routes = Blueprint('boardRoutes', __name__)
 

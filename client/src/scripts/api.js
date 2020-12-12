@@ -74,8 +74,10 @@ export function searchBoards(criteria) {
 }
 
 async function apiCall(url, method, headers, body) {
+    // add custom header to trigger CORS preflight
+    const custom_header = { ...headers, 'X-Requested-With': 'myapp' };
     try {
-        let response = await fetch(url, { method, headers, body, credentials: 'same-origin' });
+        let response = await fetch(url, { method, headers: custom_header, body, credentials: 'same-origin' });
         return defaultResponseHandler(response);
     }
     catch(err) {

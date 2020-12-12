@@ -29,7 +29,7 @@ jest.mock('../components/htmlinput/htmlinput.component');
 jest.mock('../components/breadcrumbs/breadcrumbs.component');
 jest.mock('../components/spinner/spinner.component');
 
-// mock out dependant functions
+// mock out api functions
 jest.mock('../scripts/api', () => {
   return {
     searchPosts: jest.fn().mockName('mocked searchPosts()'),
@@ -83,7 +83,7 @@ async function renderThreadPage(locations = null) {
 }
 
 beforeEach(() => {
-  mockDependantFunctions();
+  mockApiFunctions();
 });
 afterEach(() => {
   cleanup();
@@ -101,7 +101,7 @@ afterEach(() => {
   viewThread.mockClear();
 });
 
-function mockDependantFunctions() {
+function mockApiFunctions() {
   searchPosts.mockImplementation(createMockFetchImplementation(
     true, 200, async () => createSearchReturn(TEST_DATA.POSTS_RETURN, 'posts')
     ));
@@ -116,7 +116,7 @@ function mockDependantFunctions() {
   ));
 }
 
-describe('Testing ThreadPage renders the component properly', () => {
+describe('Testing ThreadPage renders components properly', () => {
   test('Should render EntityList', async () => {
     await renderThreadPage();
 
@@ -176,6 +176,19 @@ describe('Testing ThreadPage renders the component properly', () => {
     expect(EntityList).toHaveBeenCalledTimes(0);
     expect(HtmlInput).toHaveBeenCalledTimes(0);
     expect(Breadcrumbs).toHaveBeenCalledTimes(0);
+  });
+
+  test('Should render components when thread info is in state and fetch was skipped', async () => {
+    const locations = [{
+      pathname: `/threads/${TEST_DATA.THREAD_ID}`,
+      state: { thread: TEST_DATA.THREAD_DATA },
+    }];
+
+    await renderThreadPage(locations);
+
+    expect(EntityList).toHaveBeenCalledTimes(1);
+    expect(HtmlInput).toHaveBeenCalledTimes(1);
+    expect(Breadcrumbs).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -29,5 +29,4 @@ FORUM
             current implementation makes search calls twice when pager callback is triggered
             once when offset changes,
             second time when search result is returned
-        - Make sure state is passed to Breadcrumbs in ThreadPage and BoardPage
         - Fix issue where date is being converted to UTC time, not local time

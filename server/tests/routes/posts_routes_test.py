@@ -310,25 +310,3 @@ class TestPostAPIs:
                 response = client.delete(url)
 
                 assert response.status_code == e.getStatusCode()
-
-
-class TestCORS:
-    URL_TO_TEST = [
-        TestPostAPIs.POSTSAPI_BASE_URL,
-    ]
-    
-    def test_apiConnectionWithOptionMethodShouldReturnCORSHeaders(self, client):
-        for url in self.URL_TO_TEST:
-            response = client.options(url)
-
-            headers = response.headers
-            assert headers.get('Access-Control-Allow-Origin') == '*'
-            assert headers.get('Access-Control-Allow-Headers') == '*'
-            assert headers.get('Access-Control-Allow-Methods') == '*'
-
-    def test_apiConnectionShouldReturnCORSHeaders(self, client):
-        for url in self.URL_TO_TEST:
-            response = client.get(url)
-
-            headers = response.headers
-            assert headers.get('Access-Control-Allow-Origin') == '*'

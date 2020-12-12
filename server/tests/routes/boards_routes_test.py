@@ -6,7 +6,6 @@ This file houses tests for Board related routes available for this app
 import pytest
 
 from server.config import Config
-from server.entity import Board
 from tests.helpers import create_mock_entities, create_testboard_attrs
 import server.exceptions as exceptions
 

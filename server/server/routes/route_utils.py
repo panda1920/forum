@@ -4,6 +4,7 @@ This file houses utility logic used by various routes
 """
 
 import json
+import os
 
 from flask import make_response, request
 
@@ -60,7 +61,7 @@ def createTextResponse(string, statusCode):
 
 
 def createCorsifiedResponse(string, statusCode, headers):
-    cors_headers = { 'Access-Control-Allow-Origin': '*' }
+    cors_headers = { 'Access-Control-Allow-Origin': os.getenv('CORS_ALLOWED_ORIGINS', '*') }
     cors_headers.update(headers)
     return make_response(string, statusCode, cors_headers)
 
@@ -79,7 +80,7 @@ def cors_wrapped_route(route_func, path, **options):
     def inner(func):
         def wrapper(*args, **kwargs):
             if request.method == 'OPTIONS':
-                return createPreflightCorsResponse()
+                return respondToPreflight()
             else:
                 return func(*args, **kwargs)
 
@@ -96,13 +97,14 @@ def cors_wrapped_route(route_func, path, **options):
     return inner
 
 
-def createPreflightCorsResponse():
+def respondToPreflight():
     response = make_response()
     cors_headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': '*',
-        'Access-Control-Allow-Methods': '*',
+        'Access-Control-Allow-Origin': os.getenv('CORS_ALLOWED_ORIGINS', '*'),
+        'Access-Control-Allow-Headers': os.getenv('CORS_ALLOWED_HEADERS', '*'),
+        'Access-Control-Allow-Methods': os.getenv('CORS_ALLOWED_METHODS', '*'),
     }
     response.headers.extend(cors_headers)
+    response.status_code = 204
 
     return response
