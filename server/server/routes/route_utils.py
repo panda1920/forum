@@ -80,7 +80,7 @@ def cors_wrapped_route(route_func, path, **options):
     def inner(func):
         def wrapper(*args, **kwargs):
             if request.method == 'OPTIONS':
-                return respondToPreflight()
+                return preflight_response()
             elif is_valid_request():
                 return func(*args, **kwargs)
             else:
@@ -101,7 +101,7 @@ def cors_wrapped_route(route_func, path, **options):
     return inner
 
 
-def respondToPreflight():
+def preflight_response():
     response = make_response()
     cors_headers = {
         'Access-Control-Allow-Origin': os.getenv('CORS_ALLOWED_ORIGINS', '*'),
@@ -117,7 +117,7 @@ def respondToPreflight():
 def is_valid_request():
     """
     Check against CSRF.
-    Make sure request contains a valid custom header,
+    Make sure request contains a custom header,
     and that its origin is allowed.
     
     Args:
@@ -131,16 +131,16 @@ def is_valid_request():
 
     headers = request.headers
     custom_header = 'X-Requested-With'
+    origin = headers.get('Origin', None)
 
-    try:
-        if custom_header not in headers:
-            return False
-        
-        origin = headers['Origin']
-        allowed_origins = os.getenv('CORS_ALLOWED_ORIGINS', '*')
-        if allowed_origins == '*':
-            return True
-
-        return origin in allowed_origins.split(', ')
-    except KeyError:
+    # check custom header
+    if custom_header not in headers:
         return False
+    
+    # if CORS request, origin must be allowed
+    if origin is not None:
+        allowed_origins = os.getenv('CORS_ALLOWED_ORIGINS', '*')
+        if allowed_origins != '*' and origin not in allowed_origins.split(', '):
+            return False
+
+    return True

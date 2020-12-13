@@ -35,24 +35,26 @@ def set_testflag_off(mockApp):
     mockApp.testing = True
 
 
-class TestCORS:
-    URL_TO_TEST = [
-        '/v1/users',
-        '/v1/posts',
-        '/v1/threads',
-        '/v1/boards',
-    ]
-    CUSTOM_HEADER = {
-        'Origin': os.getenv('CORS_ALLOWED_ORIGINS').split(', ')[0],  # select the first
-        'X-Requested-With': 'some_value',
-    }
+URL_TO_TEST = [
+    '/v1/users',
+    '/v1/posts',
+    '/v1/threads',
+    '/v1/boards',
+]
 
-    def test_apiConnectionWithOptionMethodShouldReturnCORSHeaders(self, client):
+# custom header to prevent CSRF attacks
+CUSTOM_HEADER = {
+    'X-Requested-With': 'some_value',
+}
+
+
+class TestCORS:
+    def test_CORSPreflightShouldReturnCORSHeaders(self, client):
         expected_origins = os.getenv('CORS_ALLOWED_ORIGINS')
         expected_headers = os.getenv('CORS_ALLOWED_HEADERS')
         expected_methods = os.getenv('CORS_ALLOWED_METHODS')
         
-        for url in self.URL_TO_TEST:
+        for url in URL_TO_TEST:
             response = client.options(url)
 
             assert response.status_code == 204  # should have no content
@@ -62,32 +64,48 @@ class TestCORS:
             assert headers.get('Access-Control-Allow-Headers') == expected_headers
             assert headers.get('Access-Control-Allow-Methods') == expected_methods
 
-    def test_apiConnectionWithGetMethodAndNoCustomHeaderShouldReturnBadRequest(self, client):
+    def test_CORSRequestNoCustomHeaderShouldReturnBadRequest(self, client):
         expected_origins = os.getenv('CORS_ALLOWED_ORIGINS')
+        request_headers = { 'Origin': os.getenv('CORS_ALLOWED_ORIGINS').split(', ')[0] }
         
-        for url in self.URL_TO_TEST:
-            response = client.get(url)
+        for url in URL_TO_TEST:
+            response = client.get(url, headers=request_headers)
 
             assert response.status_code == 400
 
             headers = response.headers
             assert headers.get('Access-Control-Allow-Origin') == expected_origins
 
-    def test_apiConnectionWithGetMethodWithCustomHeadersShouldBeSuccesful(self, client):
+    def test_CORSRequestWithCustomHeadersShouldBeSuccesful(self, client):
         expected_origins = os.getenv('CORS_ALLOWED_ORIGINS')
+        request_headers = { 'Origin': os.getenv('CORS_ALLOWED_ORIGINS').split(', ')[0] }
+        request_headers.update(CUSTOM_HEADER)
         
-        for url in self.URL_TO_TEST:
-            response = client.get(url, headers=self.CUSTOM_HEADER)
+        for url in URL_TO_TEST:
+            response = client.get(url, headers=request_headers)
 
             assert response.status_code == 200
 
             headers = response.headers
             assert headers.get('Access-Control-Allow-Origin') == expected_origins
 
-    def test_apiConnectionWithGetMethodAndNoCustomHeaderShouldNotProcessRequest(self, client, mockApp):
+
+class TestCSRF:
+    def test_RequestWithCustomHeaderShouldProcessRequest(self, client, mockApp):
         search = Config.getSearchService(mockApp)
         
-        for url in self.URL_TO_TEST:
+        for url in URL_TO_TEST:
+            client.get(url, headers=CUSTOM_HEADER)
+
+        assert search.searchUsersByKeyValues.call_count == 1
+        assert search.searchPostsByKeyValues.call_count == 1
+        assert search.searchThreadsByKeyValues.call_count == 1
+        assert search.searchBoardsByKeyValues.call_count == 1
+
+    def test_RequestWithNoCustomHeaderShouldNotProcessRequest(self, client, mockApp):
+        search = Config.getSearchService(mockApp)
+        
+        for url in URL_TO_TEST:
             client.get(url)
 
             assert search.searchUsersByKeyValues.call_count == 0
