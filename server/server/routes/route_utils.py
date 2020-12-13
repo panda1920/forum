@@ -6,7 +6,7 @@ This file houses utility logic used by various routes
 import json
 import os
 
-from flask import make_response, request
+from flask import make_response, request, current_app
 
 from server.exceptions import RequestDataTypeMismatchError
 
@@ -81,8 +81,12 @@ def cors_wrapped_route(route_func, path, **options):
         def wrapper(*args, **kwargs):
             if request.method == 'OPTIONS':
                 return respondToPreflight()
-            else:
+            elif is_valid_request():
                 return func(*args, **kwargs)
+            else:
+                return createJSONResponse(
+                    [{ 'error': { 'description': 'Invalid Request' } }], 400
+                )
 
         wrapper.__name__ = func.__name__
 
@@ -108,3 +112,35 @@ def respondToPreflight():
     response.status_code = 204
 
     return response
+
+
+def is_valid_request():
+    """
+    Check against CSRF.
+    Make sure request contains a valid custom header,
+    and that its origin is allowed.
+    
+    Args:
+        None
+    Returns:
+        Boolean
+    """
+    # disable checks during tests
+    if current_app.testing:
+        return True
+
+    headers = request.headers
+    custom_header = 'X-Requested-With'
+
+    try:
+        if custom_header not in headers:
+            return False
+        
+        origin = headers['Origin']
+        allowed_origins = os.getenv('CORS_ALLOWED_ORIGINS', '*')
+        if allowed_origins == '*':
+            return True
+
+        return origin in allowed_origins.split(', ')
+    except KeyError:
+        return False
