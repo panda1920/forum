@@ -34,7 +34,7 @@
         }
     }
 
-    .html-input {
+    .create-post {
         @include centralize-in-page;
 
         margin-top: map-get($spaces, medium);

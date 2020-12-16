@@ -11,6 +11,7 @@ import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
 import Spinner from '../../components/spinner/spinner.component';
 
 import './thread-page.styles.scss';
+import CreatePost from '../../components/create-post/create-post.component';
 
 const ThreadPage = ({ match, location }) => {
   const { threadId } = match.params;
@@ -70,6 +71,10 @@ const ThreadPage = ({ match, location }) => {
     return resultJson;
   }, [threadId]);
 
+  const onPostCreateHandler = useCallback(() => {
+    setNeedRefresh(true);
+  });
+
   const renderChildEntity = useCallback((entity, entityNum) => {
     return (
       <PostCard
@@ -79,30 +84,17 @@ const ThreadPage = ({ match, location }) => {
       />
     );
   }, []);
-
-  const postPost = useCallback(async (string) => {
-    const newPost = {
-      threadId,
-      content: string,
-    };
-    const result = await createPost(newPost);
-
-    if (result.ok) setNeedRefresh(true);
-
-    return result;
-  }, [threadId]);
-
   // console.log('#######Rendering ThreadPage!');
 
   return createThreadPage(thread, board, needRefresh, {
     searchEntity,
     renderChildEntity,
-    postPost,
+    onPostCreateHandler,
   });
 };
 
 function createThreadPage(thread, board, needRefresh, callbacks) {
-  const { searchEntity, renderChildEntity, postPost } = callbacks;
+  const { searchEntity, renderChildEntity, onPostCreateHandler } = callbacks;
 
   // wanted to avoid rendering the page when not enough info is available
   const isEntityAvailable = thread && board;
@@ -120,7 +112,10 @@ function createThreadPage(thread, board, needRefresh, callbacks) {
         renderChildEntity={renderChildEntity}
         needRefresh={needRefresh}
       />
-      <HtmlInput postEntity={postPost} />
+      <CreatePost
+        threadId={thread.threadId}
+        onCreate={onPostCreateHandler}
+      />
     </div>
   );
 }

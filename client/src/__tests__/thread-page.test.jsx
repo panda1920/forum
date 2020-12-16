@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Switch } from 'react-router-dom';
 
 import EntityList from '../components/entity-list/entity-list.component';
 import PostCard from '../components/post-card/post-card.component';
-import HtmlInput from '../components/htmlinput/htmlinput.component';
+import CreatePost from '../components/create-post/create-post.component';
 import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
 import Spinner from '../components/spinner/spinner.component';
 import ThreadPage from '../pages/thread/thread-page';
@@ -15,7 +15,6 @@ import {
 } from '../scripts/test-utilities';
 import {
   searchPosts,
-  createPost,
   searchThreads,
   searchBoards,
   viewThread
@@ -28,12 +27,12 @@ jest.mock('../components/post-card/post-card.component');
 jest.mock('../components/htmlinput/htmlinput.component');
 jest.mock('../components/breadcrumbs/breadcrumbs.component');
 jest.mock('../components/spinner/spinner.component');
+jest.mock('../components/create-post/create-post.component');
 
 // mock out api functions
 jest.mock('../scripts/api', () => {
   return {
     searchPosts: jest.fn().mockName('mocked searchPosts()'),
-    createPost: jest.fn().mockName('mocked createPost()'),
     searchThreads: jest.fn().mockName('mocked searchThreads()'),
     searchBoards: jest.fn().mockName('mocked serachBoards()'),
     viewThread: jest.fn().mockName('mocked viewThread()')
@@ -90,12 +89,11 @@ afterEach(() => {
 
   EntityList.mockClear();
   PostCard.mockClear();
-  HtmlInput.mockClear();
+  CreatePost.mockClear();
   Breadcrumbs.mockClear();
   Spinner.mockClear();
 
   searchPosts.mockClear();
-  createPost.mockClear();
   searchThreads.mockClear();
   searchBoards.mockClear();
   viewThread.mockClear();
@@ -104,9 +102,6 @@ afterEach(() => {
 function mockApiFunctions() {
   searchPosts.mockImplementation(createMockFetchImplementation(
     true, 200, async () => createSearchReturn(TEST_DATA.POSTS_RETURN, 'posts')
-    ));
-  createPost.mockImplementation(createMockFetchImplementation(
-    true, 201, async () => ({ createdCount: 1 })
     ));
   searchThreads.mockImplementation(createMockFetchImplementation(
     true, 200, async () => createSearchReturn([ TEST_DATA.THREAD_DATA ], 'threads')
@@ -123,10 +118,10 @@ describe('Testing ThreadPage renders components properly', () => {
     expect(EntityList).toHaveBeenCalledTimes(1);
   });
 
-  test('Should render HtmlInput', async () => {
+  test('Should render CreatePost', async () => {
     await renderThreadPage();
 
-    expect(HtmlInput).toHaveBeenCalledTimes(1);
+    expect(CreatePost).toHaveBeenCalledTimes(1);
   });
 
   test('Should render Breadcrumbs', async () => {
@@ -160,7 +155,7 @@ describe('Testing ThreadPage renders components properly', () => {
     
     expect(Spinner).toHaveBeenCalled();
     expect(EntityList).toHaveBeenCalledTimes(0);
-    expect(HtmlInput).toHaveBeenCalledTimes(0);
+    expect(CreatePost).toHaveBeenCalledTimes(0);
     expect(Breadcrumbs).toHaveBeenCalledTimes(0);
   });
 
@@ -174,7 +169,7 @@ describe('Testing ThreadPage renders components properly', () => {
     
     expect(Spinner).toHaveBeenCalled();
     expect(EntityList).toHaveBeenCalledTimes(0);
-    expect(HtmlInput).toHaveBeenCalledTimes(0);
+    expect(CreatePost).toHaveBeenCalledTimes(0);
     expect(Breadcrumbs).toHaveBeenCalledTimes(0);
   });
 
@@ -187,7 +182,7 @@ describe('Testing ThreadPage renders components properly', () => {
     await renderThreadPage(locations);
 
     expect(EntityList).toHaveBeenCalledTimes(1);
-    expect(HtmlInput).toHaveBeenCalledTimes(1);
+    expect(CreatePost).toHaveBeenCalledTimes(1);
     expect(Breadcrumbs).toHaveBeenCalledTimes(1);
   });
 });
@@ -267,6 +262,27 @@ describe('Testing behavior of ThreadPage', () => {
     expect(links[1]).toMatchObject(expectedLink[1]);
     expect(links[2]).toMatchObject(expectedLink[2]);
   });
+
+  test('Should pass threadId to CreatePost', async () => {
+    await renderThreadPage();
+
+    for (const call of CreatePost.mock.calls) {
+      const [ props, ..._ ] = call;
+
+      expect(props).toHaveProperty('threadId', TEST_DATA.THREAD_ID);
+    }
+  });
+
+  test('Should pass callback as onCreate to CreatePost', async () => {
+    await renderThreadPage();
+
+    for (const call of CreatePost.mock.calls) {
+      const [ props, ..._ ] = call;
+
+      expect(props).toHaveProperty('onCreate');
+      expect(props.onCreate).toBeInstanceOf(Function);
+    }
+  });
 });
 
 describe('Testing callbacks', () => {
@@ -343,36 +359,11 @@ describe('Testing callbacks', () => {
     expect(props).toHaveProperty('postnum', 1);
   });
 
-  test('postEntity callback should invoke createPost', async () => {
-    const newPostMsg = 'This is a new post by test test test';
+  test('onCreate callback should update needRefresh passed to EntityList as true', async () => {
     await renderThreadPage();
-    const latestHtmlInputCall = HtmlInput.mock.calls.slice(-1)[0];
-    const { postEntity } = latestHtmlInputCall[0];
+    const [ { onCreate } ] = CreatePost.mock.calls.slice(-1)[0];
 
-    await act(async () => { await postEntity(newPostMsg); });
-
-    expect(createPost).toHaveBeenCalledTimes(1);
-  });
-
-  test('postEntity callback should pass owner threadId and post msg to createPost', async () => {
-    const newPostMsg = 'This is a new post by test test test';
-    await renderThreadPage();
-    const latestHtmlInputCall = HtmlInput.mock.calls.slice(-1)[0];
-    const { postEntity } = latestHtmlInputCall[0];
-
-    await act(async () => { await postEntity(newPostMsg); });
-
-    const [ newpost ] = createPost.mock.calls[0];
-    expect(newpost).toMatchObject({ content: newPostMsg });
-    expect(newpost).toMatchObject({ threadId: TEST_DATA.THREAD_ID });
-  });
-
-  test('postEntity callback should update needRefresh passed to EntityList as true', async () => {
-    await renderThreadPage();
-    const latestHtmlInputCall = HtmlInput.mock.calls.slice(-1)[0];
-    const { postEntity } = latestHtmlInputCall[0];
-
-    await act(async () => { await postEntity('some message'); });
+    await act(async () => { onCreate(); });
 
     expect(EntityList).toHaveBeenCalledTimes(2);
     const [ props, ..._ ] = EntityList.mock.calls.slice(-1)[0];
@@ -381,10 +372,10 @@ describe('Testing callbacks', () => {
 
   test('searchEntity callback should update needRefresh passed to EntityList as false', async () => {
     await renderThreadPage();
-    const [ { postEntity } ] = HtmlInput.mock.calls.slice(-1)[0];
+    const [ { onCreate } ] = CreatePost.mock.calls.slice(-1)[0];
     const [ { searchEntity } ] = EntityList.mock.calls.slice(-1)[0];
 
-    await act(async () => { await postEntity('some message'); });
+    await act(async () => { onCreate(); });
     await act(async () => { await searchEntity(); });
 
     expect(EntityList).toHaveBeenCalledTimes(3);

@@ -40,34 +40,17 @@ const tinymceInitParams = {
   },
 }
 
-const HtmlInput = ({ postEntity }) => {
-  const [ content, setContent ] = useState('');
-  const inputHandler = (content) => setContent(content);
-  const postHandler = async (event) => {
-    event.preventDefault();
-    const sanitizedContent = createDOMPurify(window).sanitize(content);
-    const response = await postEntity(sanitizedContent);
-    if (response.ok)
-      setContent('');
-  };
-
+const HtmlInput = ({ value, onChange }) => {
   return (
     <div className='html-input'>
       <Editor
         initialValue="<p>This is the initial content of the editor</p>"
         init={tinymceInitParams}
-        value={content}
-        onEditorChange={inputHandler}
+        value={value}
+        onEditorChange={onChange}
       />
       <div className='html-input-menubar'></div>
       <div className='html-input-input'></div>
-      <button
-        className='html-input-postbutton'
-        name='postbutton'
-        onClick={postHandler}
-      >
-        Post!
-      </button>
     </div>
   );
 };

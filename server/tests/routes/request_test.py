@@ -91,7 +91,7 @@ class TestCORS:
 
 
 class TestCSRF:
-    def test_RequestWithCustomHeaderShouldProcessRequest(self, client, mockApp):
+    def test_requestWithCustomHeaderShouldBeProcessed(self, client, mockApp):
         search = Config.getSearchService(mockApp)
         
         for url in URL_TO_TEST:
@@ -102,7 +102,7 @@ class TestCSRF:
         assert search.searchThreadsByKeyValues.call_count == 1
         assert search.searchBoardsByKeyValues.call_count == 1
 
-    def test_RequestWithNoCustomHeaderShouldNotProcessRequest(self, client, mockApp):
+    def test_requestWithNoCustomHeaderShouldNotBeProcessed(self, client, mockApp):
         search = Config.getSearchService(mockApp)
         
         for url in URL_TO_TEST:

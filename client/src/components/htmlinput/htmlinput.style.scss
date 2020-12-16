@@ -1,37 +1,16 @@
-$border-settings: 1px solid gray;
+@import '../../base-style';
 
 .html-input {
     position: relative;
     box-sizing: border-box;
     background-color: lightblue;
-    border: $border-settings;
 
-    .html-input-menubar {
-        // height: 2em;
-        // background-color:gray;
-        border: $border-settings;
-        border-top: 0px;
-    }
     .html-input-input {
         min-height: 150px;
         padding: 5px 10px;
 
         &:focus {
             outline: 0;
-        }
-    }
-    .html-input-postbutton {
-        outline: inherit;
-        background: white;
-        border: none;
-        padding: none;
-        color: gray;
-        text-align: center;
-        height: 2em;
-        width: 100px;
-        
-        &:hover {
-            cursor: pointer;
         }
     }
 }
