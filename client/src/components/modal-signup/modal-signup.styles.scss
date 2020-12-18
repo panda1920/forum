@@ -30,15 +30,6 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
     }
 
     .form-button {
-        text-align: center;
         background-color: lighten(map-get($colors, '01'), 10);
-        color: map-get($colors, '00');
-        font-weight: 600;
-        margin-bottom: $vertical-spaces-between-widgets;
-
-        &:hover {
-            background-color: map-get($colors, '00');
-            color: lighten(map-get($colors, '01'), 10);
-        }
     }
 }

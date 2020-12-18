@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import 'tinymce';
 import 'tinymce/themes/silver';
 import 'tinymce/plugins/help';
 import { Editor } from '@tinymce/tinymce-react';
-import createDOMPurify from 'dompurify';
 
 // import {
 //   createInputHandler,

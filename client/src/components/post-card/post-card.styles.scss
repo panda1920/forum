@@ -5,6 +5,7 @@
     flex-direction: row;
     align-items: stretch;
     min-height: map-get($dimensions, post-card-min-height);
+    padding: map-get($spaces, small);
 
     border-radius: map-get($general-styling, border-radius-card);
     background-color: map-get($colors, '01');
@@ -12,7 +13,7 @@
     .post-card-ownerinfo {
         flex: 0 0 auto;
 
-        padding: map-get($spaces, medium);
+        padding: map-get($spaces, small);
 
         .portrait {
             height: map-get($dimensions, post-card-portrait-size);
@@ -31,11 +32,11 @@
         align-items: stretch;
         
         div {
-            padding: 5px 10px;
+            padding: map-get($spaces, small) map-get($spaces, medium);
         }
         hr {
             flex: 0 0 auto;
-            margin: 0px 10px;
+            margin: 0px map-get($spaces, medium);
         }
         .post-card-header, .post-card-footer {
             flex: 0 0 auto;

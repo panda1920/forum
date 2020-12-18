@@ -15,7 +15,7 @@
     .thread-page-threadinfo {
         @include centralize-in-page;
 
-        margin-bottom: map-get($spaces, medium);
+        margin-bottom: map-get($spaces, large);
         color: map-get($colors, '01');
 
         .thread-title {
@@ -37,6 +37,6 @@
     .create-post {
         @include centralize-in-page;
 
-        margin-top: map-get($spaces, medium);
+        margin-top: map-get($spaces, large);
     }
 }

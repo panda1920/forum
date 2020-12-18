@@ -1,7 +1,8 @@
 import React from 'react';
 
-import './form-button.styles.scss';
 import Button from '../button/button.component';
+
+import './form-button.styles.scss';
 
 const FormButton = ({ className, children, ...otherProps }) => {
   return (

@@ -12,17 +12,9 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
     }
 
     .form-button {
-        text-align: center;
         margin-bottom: $vertical-spaces-between-widgets;
         margin-right:  map-get($spaces, 'small');
         background-color: lighten(map-get($colors, '01'), 10);
-        color: map-get($colors, '00');
-        font-weight: 600;
-
-        &:hover {
-            background-color: map-get($colors, '00');
-            color: lighten(map-get($colors, '01'), 10);
-        }
     }
 
     .login-thirdparty-button-section {

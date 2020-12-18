@@ -1,0 +1,26 @@
+@import '../../base-style';
+
+.create-thread {
+    .error-text {
+        margin-bottom: map-get($spaces, medium);
+    }
+    
+    .create-thread-input-title-label {
+        color: map-get($colors, '01');
+    }
+
+    .create-thread-input-title {
+        margin-bottom: map-get($spaces, medium);
+        // height: map-get($dimensions, form-button-height);
+        // width: map-get($dimensions, form-button-width);
+        // border-radius: map-get($general-styling, border-radius-form);
+    }
+
+    .html-input {
+        margin-bottom: map-get($spaces, medium);
+    }
+
+    .form-button {
+
+    }
+}

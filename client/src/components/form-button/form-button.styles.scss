@@ -6,5 +6,13 @@
     padding: 0 5px;
     border-radius: map-get($general-styling, 'border-radius-button');
     
-    background-color: white;
+    background-color: map-get($colors, '01');
+    text-align: center;
+    color: map-get($colors, '00');
+    font-weight: 600;
+
+    &:hover {
+        background-color: map-get($colors, '00');
+        color: lighten(map-get($colors, '01'), 10);
+    }
 }

@@ -180,6 +180,7 @@ describe('Testing behavior of CreatePost', () => {
       expect(latestHtmlInputProps.value).toBe(text);
       expect(getByText('Error', { exact: false })).toBeInTheDocument();
     });
+    
     test('When post is not succesful should not invoke onCreate', async () => {
       const { getByText, onCreate } = renderCreatePost();
       const [ props ] = HtmlInput.mock.calls[0];

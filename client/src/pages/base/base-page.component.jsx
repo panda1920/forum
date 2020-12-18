@@ -3,6 +3,7 @@ import { Switch, Route } from 'react-router-dom';
 
 import BoardPage from '../board/board-page';
 import ThreadPage from '../thread/thread-page';
+import NewThread from '../newthread/newthread-page';
 import Header from  '../../components/header/header.component';
 import Footer from  '../../components/footer/footer.component';
 import ModalLogin from '../../components/modal-login/modal-login.component';
@@ -55,6 +56,13 @@ const BasePage = () => {
             <Route path='/sample'>
               <h1>SAMPLE</h1>
             </Route>
+            <Route
+              path={`${clientBoardPath}/:boardId/new`}
+              render={routeProps => {
+                const { boardId } = routeProps.match.params;
+                return <NewThread boardId={boardId} {...routeProps}></NewThread>;
+              }}
+            />
             <Route path={`${clientThreadPath}/:threadId`} component={ThreadPage} />
             <Route path={`${clientBoardPath}/:boardId`} component={BoardPage} />
             <Route path='/'>

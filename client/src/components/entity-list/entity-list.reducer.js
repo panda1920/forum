@@ -57,7 +57,7 @@ function getLastPageOffset(searchState) {
     const entityCountInLastPage = totalCount % limit;
     const pageNum = Math.floor(totalCount / limit);
 
-    if (entityCountInLastPage == 0)
+    if (entityCountInLastPage === 0)
         return (pageNum - 1) * limit;
     else
         return pageNum * limit;

@@ -4,7 +4,7 @@ import createDOMPurify from 'dompurify';
 
 import HtmlInput from '../htmlinput/htmlinput.component';
 import Button from '../button/button.component';
-import BlockText from '../block-text/block-text.component';
+import ErrorText from '../error-text/error-text.component';
 
 import { createPost } from '../../scripts/api';
 
@@ -35,7 +35,7 @@ const CreatePost = (props) => {
 
   return (
     <div className='create-post'>
-      { createErrorElement(error) }
+      <ErrorText text={error} />
       <HtmlInput
         value={content}
         onChange={setContent}
@@ -46,16 +46,5 @@ const CreatePost = (props) => {
     </div>
   );
 };
-
-function createErrorElement(error) {
-  if (error === null)
-    return null;
-
-  return (
-    <BlockText className='create-post-error'>
-       { `Error: ${error}` }
-    </BlockText>
-  );
-}
 
 export default CreatePost;

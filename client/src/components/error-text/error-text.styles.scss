@@ -1,0 +1,7 @@
+@import '../../base-style';
+
+.error-text {
+    background-color: lighten( map-get($colors, '99'), 30% );
+    padding: map-get($spaces, small);
+    border-radius: map-get($general-styling, 'border-radius-textbox');
+}

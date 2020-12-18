@@ -1,11 +1,10 @@
-import React, { useEffect, useContext, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 import EntityList from '../../components/entity-list/entity-list.component';
 import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
 import Spinner from '../../components/spinner/spinner.component';
 import ThreadCard from '../../components/thread-card/thread-card.component';
 
-import { CurrentUserContext } from '../../contexts/current-user/current-user';
 import { searchBoards, searchThreads } from '../../scripts/api';
 import { convertEpochToLocalDateString } from '../../scripts/converter';
 

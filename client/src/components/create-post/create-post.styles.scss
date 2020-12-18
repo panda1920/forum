@@ -3,13 +3,10 @@
 .create-post {
     .create-post-error {
         margin-bottom: map-get($spaces, medium);
-        background-color: lighten( map-get($colors, '99'), 30% );
-        padding: map-get($spaces, small);
-        border-radius: map-get($general-styling, 'border-radius-textbox');
     }
     .create-post-button {
         outline: inherit;
-        background: white;
+        background: map-get($colors, '01');
         text-align: center;
         width: 100px;
         border-radius: map-get($general-styling, 'border-radius-button');

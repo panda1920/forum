@@ -4,16 +4,19 @@ import { render, screen, cleanup, getByText, act, wait } from '@testing-library/
 
 import BasePage from '../pages/base/base-page.component';
 import BoardPage from '../pages/board/board-page';
+import ThreadPage from '../pages/thread/thread-page';
+import NewThread from '../pages/newthread/newthread-page';
 import { ModalLoginTitle } from '../components/modal-login/modal-login.component';
 import { ModalSignupTitle } from '../components/modal-signup/modal-signup.component';
 
 import { CurrentUserContext, INITIAL_STATE } from '../contexts/current-user/current-user';
-import { userApiSession } from '../paths';
+import { clientBoardPath, clientThreadPath, userApiSession } from '../paths';
 import { createMockFetch, } from  '../scripts/test-utilities';
 
 // mock out child components
 jest.mock('../pages/board/board-page');
 jest.mock('../pages/thread/thread-page');
+jest.mock('../pages/newthread/newthread-page');
 
 const TEST_DATA = {
   BOARD_ID: '0',
@@ -33,16 +36,18 @@ const ELEMENT_IDENTIFIER = {
   BOARD_PAGE_TITLE: 'board page',
 };
 
-function renderBasePage() {
+function renderBasePage(locations) {
   const mockSetCurrentUser = jest.fn().mockName('Mocked setCurrentUser()');
   const userContextValue = { ...INITIAL_STATE, setCurrentUser: mockSetCurrentUser };
+  if (!locations)
+    locations = [ '/' ];
 
   const result = render(
     <div id='root'>
       <CurrentUserContext.Provider
         value={ userContextValue }
       >
-        <MemoryRouter>
+        <MemoryRouter initialEntries={locations}>
           <BasePage />
         </MemoryRouter>
       </CurrentUserContext.Provider>
@@ -70,6 +75,8 @@ afterEach(() => {
   cleanup();
   window.fetch = originalFetch;
   BoardPage.mockClear();
+  ThreadPage.mockClear();
+  NewThread.mockClear();
 });
 
 describe('Testing BasePage', () => {
@@ -161,6 +168,47 @@ describe('Testing BasePage', () => {
       expect(mockFetch).toHaveBeenCalled();
       expect(mockSetCurrentUser).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('Test routing', () => {
+  test('Should render hello world at root', async () => {
+    const { getByText } = await renderBasePage([ '/' ]);
+
+    expect( getByText('hello world', { exact: false }) )
+      .toBeInTheDocument();
+  });
+
+  test('Should render NewThread at its path', async () => {
+    const boardId = '111';
+    const location = [ `${clientBoardPath}/${boardId}/new` ];
+    
+    await renderBasePage(location);
+
+    expect(NewThread).toHaveBeenCalledTimes(1);
+    for (const call of NewThread.mock.calls) {
+      const [ props ] = call;
+
+      expect(props).toHaveProperty('boardId', boardId);
+    }
+  });
+
+  test('Should render BoardPage at its path', async () => {
+    const boardId = '222';
+    const location = [ `${clientBoardPath}/${boardId}` ];
+    
+    await renderBasePage(location);
+
+    expect(BoardPage).toHaveBeenCalledTimes(1);
+  });
+
+  test('Should render ThreadPage at its path', async () => {
+    const threadId = '333';
+    const location = [ `${clientThreadPath}/${threadId}` ];
+    
+    await renderBasePage(location);
+
+    expect(ThreadPage).toHaveBeenCalledTimes(1);
   });
 });
 

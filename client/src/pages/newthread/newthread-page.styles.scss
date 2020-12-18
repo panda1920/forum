@@ -1,6 +1,6 @@
 @import '../../base-style';
 
-.board-page {
+.newthread-page {
     padding: map-get($spaces, large) 0;
 
     .breadcrumbs-container {
@@ -12,29 +12,18 @@
         }
     }
 
-    .board-page-boardinfo {
+    .newthread-page-info {
         @include centralize-in-page;
 
         margin-bottom: map-get($spaces, large);
         color: map-get($colors, '01');
 
-        .board-title {
+        .newthread-page-title {
             margin-bottom: map-get($spaces, small);
         }
     }
 
-    .entity-list {
+    .create-thread {
         @include centralize-in-page;
-
-        .thread-card {
-            margin-bottom: 1px;
-            
-            &:first-of-type {
-                margin-top: map-get($spaces, small);
-            }
-            &:last-of-type {
-                margin-bottom: map-get($spaces, small)
-            }
-        }
     }
 }

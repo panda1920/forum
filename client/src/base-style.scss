@@ -14,6 +14,7 @@ $font-size: (
 );
 
 $spaces: (
+    'xlarge': 80px,
     'large': 40px,
     'medium': 20px,
     'small': 10px,
@@ -37,7 +38,7 @@ $dimensions: (
     'thread-card-views-width': 150px,
     'thread-card-lastpost-width': 300px,
     
-    'post-card-min-height': 200px,
+    'post-card-min-height': 240px,
     'post-card-portrait-size': 64px,
     'post-card-header-postnum-width': 40px,
 

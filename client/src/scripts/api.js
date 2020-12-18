@@ -50,6 +50,13 @@ export function viewThread(threadId) {
     );
 }
 
+export function createThread(newThread) {
+    const url = `${paths.createCreateApiPath(paths.threadApi)}`;
+    return apiCall(
+        url, 'POST', { 'Content-Type': 'application/json' }, JSON.stringify(newThread)
+    );
+}
+
 export function searchPosts(criteria) {
     const url = `${paths.postApi}?${createQueryString(criteria)}`;
     return apiCall(
@@ -74,7 +81,7 @@ export function searchBoards(criteria) {
 }
 
 async function apiCall(url, method, headers, body) {
-    // add custom header to trigger CORS preflight
+    // add custom header to force trigger CORS preflight
     const custom_header = { ...headers, 'X-Requested-With': 'myapp' };
     try {
         let response = await fetch(url, { method, headers: custom_header, body, credentials: 'same-origin' });

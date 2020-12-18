@@ -27,7 +27,6 @@ export const userApiLogout = userApi + '/logout';
 
 export const userApiSession = userApi + '/session';
 
-
 export const postApi = apiBasePath + '/posts';
 
 export const threadApi = apiBasePath + '/threads';

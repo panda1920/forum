@@ -11,6 +11,9 @@ FORUM
         - Sanitize content of user posts
         - Setup better validation for other user inputs (max length of displayName etc.)
         - Setup route to upload images
+        - Change interface to communicate errors in responses so that
+            multiple errors can be registered
+            can specify the reason for the error
     
     [Frontend]
         - Create user profile page
