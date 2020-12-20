@@ -1,6 +1,8 @@
 import React from 'react';
-import { MemoryRouter, Switch, Route } from 'react-router-dom';
+import { Router, Switch, Route } from 'react-router-dom';
 import { render, cleanup, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { createMemoryHistory } from 'history';
 
 import EntityList from '../components/entity-list/entity-list.component';
 import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
@@ -11,7 +13,6 @@ import BoardPage from '../pages/board/board-page';
 import { clientBoardPath } from '../paths';
 import { createMockFetchImplementation, createSearchReturn } from '../scripts/test-utilities';
 import { searchBoards, searchThreads } from '../scripts/api';
-import { CurrentUserContext } from '../contexts/current-user/current-user';
 
 // mock out child component
 jest.mock('../components/entity-list/entity-list.component');
@@ -53,25 +54,27 @@ const TEST_DATA = {
 async function renderBoardPage(locations = null) {
   const mockSetCurrentUser = jest.fn().mockName('Mocked setCurrentUser()');
   if (!locations) locations = createDefaultLocations();
+  const history = createMemoryHistory({ initialEntries: locations });
 
   // needs to wrap render in async act because 
   // board page component is performing asynchronouse state change when mounted
   let renderResult;
   await act(async () => {
     renderResult = render(
-      <MemoryRouter
-        initialEntries={locations}
+      <Router
+        history={history}
       >
         <Switch>
           <Route path={`${clientBoardPath}/:boardId`} component={BoardPage}/>
         </Switch>
-      </MemoryRouter>
+      </Router>
     );
   });
 
   return {
     ...renderResult,
     mocks: { mockSetCurrentUser },
+    history,
   };
 }
 
@@ -123,6 +126,13 @@ describe('Testing BoardPage renders the components properly', () => {
     expect( getByText(titlePattern) ).toBeInTheDocument();
     expect( getByText(ownerPattern) ).toBeInTheDocument();
     expect( getByText(createdDatePattern) ).toBeInTheDocument();
+  });
+
+  test('Should render create thread button', async () => {
+    const { getByText } = await renderBoardPage();
+
+    expect( getByText('Create thread', { exact: false }) )
+      .toBeInTheDocument();
   });
 
   test('Should render Spinner and only Spinner when board fetch fails', async () => {
@@ -195,6 +205,26 @@ describe('Testing behavior of BoardPage', () => {
     await renderBoardPage(locations);
 
     expect(searchBoards).not.toHaveBeenCalled();
+  });
+
+  test('Should transition to CreateThread when create thread button is clicked', async () => {
+    const { getByText, history } =await renderBoardPage();
+    const createThreadButton = getByText('Create thread', { exact: false });
+    const expectedPath = `${clientBoardPath}/${TEST_DATA.BOARD_ID}/new`;
+
+    await act(async () => userEvent.click(createThreadButton) );
+
+    expect(history.location.pathname).toBe(expectedPath);
+  });
+
+  test('Should pass board information as state when create thread button is clicked', async () => {
+    const { getByText, history } =await renderBoardPage();
+    const createThreadButton = getByText('Create thread', { exact: false });
+    const expectedState = { board: TEST_DATA.BOARD_DATA };
+
+    await act(async () => userEvent.click(createThreadButton) );
+
+    expect(history.location.state).toMatchObject(expectedState);
   });
 });
 

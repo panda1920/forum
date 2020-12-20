@@ -4,25 +4,26 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: flex-end;
+
 
     color: map-get($colors, '01');
 
-    .pagination-space {
-        flex: 1 1 auto;
-    }
     .pagination-text {
-        flex: 0 1 map-get($dimensions, 'pagination-text-width');
+        flex: 0 1 auto;
 
-        font-size: map-get($font-size, 'small');
+        font-size: map-get($font-size, small);
+        margin-right: map-get($spaces, large);
     }
     .pagination-buttons {
         flex: 0 1 auto;
 
         font-weight: 600;
-        font-size: map-get($font-size, 'medium');
+        font-size: map-get($font-size, medium);
+
+        .button-disabled {
+            opacity: 0.4;
+        }
     }
 
-    .button-disabled {
-        opacity: 0.4;
-    }
 }

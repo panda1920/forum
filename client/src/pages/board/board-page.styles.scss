@@ -15,11 +15,35 @@
     .board-page-boardinfo {
         @include centralize-in-page;
 
-        margin-bottom: map-get($spaces, large);
+        margin-bottom: map-get($spaces, medium);
         color: map-get($colors, '01');
 
         .board-title {
             margin-bottom: map-get($spaces, small);
+        }
+    }
+
+    .board-page-controls {
+        @include centralize-in-page;
+        
+        margin-bottom: map-get($spaces, large);
+
+        .form-button {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 map-get($spaces, small);
+
+            &.create-thread{
+                width: 150px;
+
+                .fa-plus {
+                    font-size: map-get($font-size, large);
+                    color: lighten( map-get($colors, '00'), 10% );
+                    margin-right: map-get($spaces, small);
+                }
+            }
         }
     }
 

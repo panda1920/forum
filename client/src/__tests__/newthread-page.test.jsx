@@ -151,7 +151,7 @@ describe('Testing behavior of NewThread', () => {
     const { getByText } = await renderNewThread([ location ]);
 
     expect( getByText(TEST_DATA.BOARD_DATA.title, { exact: false }) )
-    .toBeInTheDocument();
+      .toBeInTheDocument();
   });
 
   test('Should pass link definitions to Breadcrumbs', async () => {

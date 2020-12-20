@@ -1,18 +1,26 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useHistory } from 'react-router-dom';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import EntityList from '../../components/entity-list/entity-list.component';
 import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
 import Spinner from '../../components/spinner/spinner.component';
 import ThreadCard from '../../components/thread-card/thread-card.component';
+import FormButton from '../../components/form-button/form-button.component';
+import BlockText from '../../components/block-text/block-text.component';
 
 import { searchBoards, searchThreads } from '../../scripts/api';
 import { convertEpochToLocalDateString } from '../../scripts/converter';
+import { clientBoardPath } from '../../paths';
 
 import './board-page.styles.scss';
 
 const BoardPage = ({ match, location }) => {
   const { boardId } = match.params;
   const [ board, setBoard ] = useState(null);
+  const history = useHistory();
 
   // fetch board information from boardId given on mount
   useEffect(() => {
@@ -49,7 +57,15 @@ const BoardPage = ({ match, location }) => {
     return <ThreadCard key={thread.threadId} thread={thread} threadnum={threadnum} />;
   }, []);
 
-  return renderComponent(board, { searchEntity, renderChildEntity });
+  // callback passed to button
+  const createThreadHandler = useCallback(() => {
+    history.push(
+      `${clientBoardPath}/${board.boardId}/new`,
+      { board },
+    );
+  }, [board, history]);
+
+  return renderComponent(board, { searchEntity, renderChildEntity, createThreadHandler });
 };
 
 // render a spinner instead of content when board info is not available
@@ -59,7 +75,7 @@ function renderComponent(board, callbacks) {
     <Spinner />
   );
     
-  const { searchEntity, renderChildEntity } = callbacks;
+  const { searchEntity, renderChildEntity, createThreadHandler } = callbacks;
   const links = [
     { displayName: 'Home', path: '/' },
     { displayName: board.title , path: null },
@@ -73,6 +89,7 @@ function renderComponent(board, callbacks) {
         />
       </div>
       { createBoardInfoSection(board) }
+      { createBoardControlsSection(createThreadHandler) }
       <EntityList
         searchEntity={searchEntity}
         renderChildEntity={renderChildEntity}
@@ -91,6 +108,17 @@ function createBoardInfoSection(board){
     <div className='board-page-boardinfo'>
       <h1 className='board-title'>{ board.title }</h1>
       <p className='board-createdat'>{ createdAt }</p>
+    </div>
+  );
+}
+
+function createBoardControlsSection(createThreadHandler) {
+  return (
+    <div className='board-page-controls'>
+      <FormButton className='create-thread' onClick={createThreadHandler}>
+        <FontAwesomeIcon icon={faPlus} />
+        <BlockText>Create thread</BlockText>
+      </FormButton>
     </div>
   );
 }

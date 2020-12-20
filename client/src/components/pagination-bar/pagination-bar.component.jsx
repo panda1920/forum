@@ -25,7 +25,6 @@ const PaginationBar = ({ displayInfo, disableBack, disableNext, dispatch }) => {
 
   return (
     <div title='pagination bar' className='pagination-bar'>
-      <div className='pagination-space'></div>
       <div className='pagination-text'>
         <BlockText>{generateDisplayRangeText(displayInfo)}</BlockText>
       </div>
