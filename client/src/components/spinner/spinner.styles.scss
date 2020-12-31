@@ -8,8 +8,8 @@
     .spinner-widget {
         @include centerize;
         
-        border: 10px solid darken(map-get($colors, '01'), 20%);
-        border-top: 10px solid map-get($colors, '01');
+        border: 10px solid map-get($colors, secondary-dark2);
+        border-top: 10px solid map-get($colors, secondary);
         border-radius: 50%;
         width: map-get($dimensions, spinner-size);
         height: map-get($dimensions, spinner-size);

@@ -13,25 +13,27 @@ class Button extends React.Component {
   }
 
   // prevent click being triggered rapidly
-  onClickHandler() {
+  onClickHandler(e) {
     const { clickedRecently } = this.state;
     const { onClick } = this.props;
     if (!onClick)
       return;
-    
     if (clickedRecently)
       return;
     
-    onClick();
-    this.setState({ clickedRecently: true });
-    this.resetClickedRecentlyLater();
+    this.executeAfterSettingFlag(() => onClick(e));
   }
 
-  resetClickedRecentlyLater() {
-    const id = setTimeout(() => {
+  executeAfterSettingFlag(onClick) {
+    const timerTaskId = setTimeout(() => {
       this.setState({ clickedRecently: false });
     }, 200);
-    this.setState({ timerTaskId: id });
+    // need to invoke onClick as callback
+    // because setstate would not immediatey update
+    // if onClick is invoked on a separate line,
+    // it may unmount the component before timerid is stored in state
+    // which causes the above settimeout to run on a non-existant component
+    this.setState({ clickedRecently: true, timerTaskId }, onClick);
   }
 
   // unregister async task to update component state because button will unmount
@@ -46,7 +48,7 @@ class Button extends React.Component {
     // onClick here is needed to prevent it being forwarded to div element below
     const testid = this.props['data-testid'];
     const classes = convertClassNamePropToString(className);
-    const onClickHandlerCallback = () => { this.onClickHandler(); };
+    const onClickHandlerCallback = (e) => { this.onClickHandler(e); };
 
     return (
       <div

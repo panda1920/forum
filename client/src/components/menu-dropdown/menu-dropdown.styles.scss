@@ -2,12 +2,12 @@
 
 $dropdown-padding: 5px 0;
 $dropdown-item-padding: 5px 20px 5px 15px;
-$dropdown-border-left: 5px solid map-get($colors, '00');
+$dropdown-border-left: 5px solid map-get($colors, primary);
 
 .menu-dropdown {
     position: absolute;
     line-height: none;
-    background-color: map-get($colors, '00');
+    background-color: map-get($colors, primary);
     padding: $dropdown-padding;
     z-index: 1;
 
@@ -19,7 +19,7 @@ $dropdown-border-left: 5px solid map-get($colors, '00');
         font-size: map-get($font-size, 'medium');
 
         li {
-            color: map-get($colors, '01');
+            color: map-get($colors, secondary);
             list-style: none;
         }
 
@@ -37,7 +37,7 @@ $dropdown-border-left: 5px solid map-get($colors, '00');
 
         .separator {
             margin: 5px 0;
-            border-top: 1px solid lighten(map-get($colors, '00'), 10%);
+            border-top: 1px solid map-get($colors, primary-light1);
         }
 
         .button {
@@ -45,8 +45,8 @@ $dropdown-border-left: 5px solid map-get($colors, '00');
             border-left: $dropdown-border-left;
 
             &:hover {
-                border-color: map-get($colors, '02');
-                color: map-get($colors, '02');
+                border-color: map-get($colors, highlight);
+                color: map-get($colors, highlight);
             }
         }
     }

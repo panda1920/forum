@@ -2,6 +2,6 @@
 
 .portrait {
     border-radius: 50%;
-    background-color: map-get($colors, '01');
+    background-color: map-get($colors, secondary);
     display: inline-block;
 }

@@ -5,7 +5,7 @@
 
     .breadcrumbs-container {
         margin-bottom: map-get($spaces, medium);
-        background-color: lighten(map-get($colors, '00'), 20%);
+        background-color: map-get($colors, primary-light2);
         
         .breadcrumbs {
             @include centralize-in-page;
@@ -16,7 +16,7 @@
         @include centralize-in-page;
 
         margin-bottom: map-get($spaces, large);
-        color: map-get($colors, '01');
+        color: map-get($colors, secondary);
 
         .thread-title {
             margin-bottom: map-get($spaces, small);

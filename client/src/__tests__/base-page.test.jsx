@@ -6,17 +6,19 @@ import BasePage from '../pages/base/base-page.component';
 import BoardPage from '../pages/board/board-page';
 import ThreadPage from '../pages/thread/thread-page';
 import NewThread from '../pages/newthread/newthread-page';
+import UserProfile from '../pages/user-profile/user-profile-page';
 import { ModalLoginTitle } from '../components/modal-login/modal-login.component';
 import { ModalSignupTitle } from '../components/modal-signup/modal-signup.component';
 
 import { CurrentUserContext, INITIAL_STATE } from '../contexts/current-user/current-user';
-import { clientBoardPath, clientThreadPath, userApiSession } from '../paths';
+import { clientBoardPath, clientThreadPath, clientUserProfilePath, userApiSession } from '../paths';
 import { createMockFetch, } from  '../scripts/test-utilities';
 
 // mock out child components
 jest.mock('../pages/board/board-page');
 jest.mock('../pages/thread/thread-page');
 jest.mock('../pages/newthread/newthread-page');
+jest.mock('../pages/user-profile/user-profile-page');
 
 const TEST_DATA = {
   BOARD_ID: '0',
@@ -77,6 +79,7 @@ afterEach(() => {
   BoardPage.mockClear();
   ThreadPage.mockClear();
   NewThread.mockClear();
+  UserProfile.mockClear();
 });
 
 describe('Testing BasePage', () => {
@@ -209,6 +212,14 @@ describe('Test routing', () => {
     await renderBasePage(location);
 
     expect(ThreadPage).toHaveBeenCalledTimes(1);
+  });
+
+  test('Should render UserProfile at its path', async () => {
+    const location = [ clientUserProfilePath ];
+
+    await renderBasePage(location);
+
+    expect(UserProfile).toHaveBeenCalledTimes(1);
   });
 });
 

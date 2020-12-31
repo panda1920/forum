@@ -6,7 +6,7 @@
     }
     .create-post-button {
         outline: inherit;
-        background: map-get($colors, '01');
+        background: map-get($colors, secondary);
         text-align: center;
         width: 100px;
         border-radius: map-get($general-styling, 'border-radius-button');

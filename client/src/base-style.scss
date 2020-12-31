@@ -1,9 +1,41 @@
+@use "sass:map";
+
 // defines base styles to be referenced by other styles
-$colors: (
+$color-palette: (
     '00': rgb(50, 50, 50),
     '01': rgb(220, 220, 220),
     '02': rgb(220, 150, 50),
     '99': red,
+);
+
+// @mixin create-shades($name, $color-idx) {
+//     $base-color: map-get($color-palette, $color-idx);
+//     #{$name}: $base-color;
+
+//     @for $i from 1 through 3 {
+//         #{$name}-light$i: lighten($base-color, #{$i*10%});
+//         #{$name}-dark$i: darken($base-color, #{$i*10%});
+//     }
+// }
+
+$colors: (
+    'primary': map-get($color-palette, '00'),
+    'primary-light1': lighten( map-get($color-palette, '00'), 10%),
+    'primary-light2': lighten( map-get($color-palette, '00'), 20%),
+    'primary-light3': lighten( map-get($color-palette, '00'), 30%),
+    'primary-dark1': darken( map-get($color-palette, '00'), 10%),
+    'primary-dark2': darken( map-get($color-palette, '00'), 20%),
+    'primary-dark3': darken( map-get($color-palette, '00'), 30%),
+
+    'secondary': map-get($color-palette, '01'),
+    'secondary-light1': lighten( map-get($color-palette, '01'), 20%),
+    'secondary-dark2': darken( map-get($color-palette, '01'), 20%),
+
+    'highlight': map-get($color-palette, '02'),
+
+    'warning': map-get($color-palette, '99'),
+    'warning-light3': lighten( map-get($color-palette, '99'), 30%),
+    'warning-dark2': darken( map-get($color-palette, '99'), 20%),
 );
 
 $font-size: (

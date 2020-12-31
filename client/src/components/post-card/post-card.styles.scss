@@ -8,7 +8,7 @@
     padding: map-get($spaces, small);
 
     border-radius: map-get($general-styling, border-radius-card);
-    background-color: map-get($colors, '01');
+    background-color: map-get($colors, secondary);
 
     .post-card-ownerinfo {
         flex: 0 0 auto;
@@ -55,7 +55,7 @@
             .post-card-header-postedat {
                 flex: 1 1 auto;
                 font-size: map-get($font-size, small);
-                color: lighten(map-get($colors, '00'), 30%);
+                color: map-get($colors, primary-light3);
             }
         }
         .post-card-footer {

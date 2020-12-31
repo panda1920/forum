@@ -3,13 +3,13 @@
 .thread-card {
     display: flex;
     flex-direction: row;
-    background-color: lighten(map-get($colors, '00'), 20%);
+    background-color: map-get($colors, primary-light2);
     
     > div {
         padding: 5px 20px;
         margin-right: 1px;
 
-        color: map-get($colors, '01');
+        color: map-get($colors, secondary);
         font-size: map-get($font-size, 'small');
     }
 
@@ -20,13 +20,13 @@
             font-size: map-get($font-size, 'medium');
             font-weight: 600;
             text-decoration: none;
-            color: map-get($colors, '01');
+            color: map-get($colors, secondary);
 
             &:link {
                 color: inherit;
             }
             &:hover {
-                color: map-get($colors, '02');
+                color: map-get($colors, highlight);
             }
         }
     }

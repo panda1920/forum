@@ -1,11 +1,23 @@
 import React from 'react';
+import { Route, Router } from 'react-router-dom';
+import { createMemoryHistory } from 'history';
 import { act, screen, render, cleanup, getByText, fireEvent } from '@testing-library/react';
+import UserEvent from '@testing-library/user-event';
 
 import MenuDropdown from '../components/menu-dropdown/menu-dropdown.component';
-
 import { CurrentUserContext } from '../contexts/current-user/current-user';
+
 import { createMockFetch } from '../scripts/test-utilities';
-import { userApiLogout } from '../paths';
+import { userApiLogout, clientUserProfilePath } from '../paths';
+import { logout } from '../scripts/api';
+import { createMockFetchImplementation } from '../scripts/test-utilities';
+
+// mock out functions
+jest.mock('../scripts/api', () => {
+  return {
+    logout: jest.fn().mockName('mocked logout()'),
+  };
+});
 
 const TEST_DATA = {
   TEST_USER: {
@@ -14,71 +26,72 @@ const TEST_DATA = {
     displayName: 'testuser',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/en/b/b1/Portrait_placeholder.png',
   },
+  DEFAULT_URL: '/test/path',
 };
 
 function createMenuDropdown() {
-  const mockSetCurrentUser = createMockFunction('Mocked setCurrentUser()');
-  const mockToggle = createMockFunction('Mocked toggle()');
-  const renderResult = renderMenuDropdown(mockSetCurrentUser, mockToggle);
+  const mockSetCurrentUser = jest.fn().mockName('Mocked setCurrentUser()');
+  const mockToggle = jest.fn().mockName('Mocked toggle()');
+  const history = createMemoryHistory({
+    initialEntires: [ TEST_DATA.DEFAULT_URL ]
+  });
+  const renderResult = renderMenuDropdown(mockSetCurrentUser, mockToggle, history);
 
   return {
     ...renderResult,
+    history,
     mocks: { mockSetCurrentUser, mockToggle }
   };
 }
 
-function renderMenuDropdown(setCurrentUser, toggleDropdown) {
+function renderMenuDropdown(setCurrentUser, toggleDropdown, history) {
   return render(
-    <CurrentUserContext.Provider
-      value={{ setCurrentUser }}
-    >
-      <MenuDropdown toggleDropdown={toggleDropdown} />
-    </CurrentUserContext.Provider>
+    <Router history={history}>
+      <CurrentUserContext.Provider
+        value={{ ...TEST_DATA.TEST_USER, setCurrentUser }}
+      >
+        <Route path='/'>
+          <MenuDropdown toggleDropdown={toggleDropdown} />
+        </Route>
+      </CurrentUserContext.Provider>
+    </Router>
   );
 }
 
-function createMockFunction(name) {
-  return jest.fn().mockName(name);
-}
-
-let originalFetch = null;
 beforeEach(() => {
-  originalFetch = window.fetch;
+  logout.mockImplementation(
+    createMockFetchImplementation(true, 200, async () => (
+      { sessionUser: TEST_DATA.TEST_USER }
+    ))
+  );
 });
 afterEach(() => {
-  window.fetch = originalFetch;
   cleanup();
+  logout.mockClear();
 });
 
 describe('testing behavior of menu dropdown component', () => {
   test('all sub elements should be rendrered as intended', () => {
     const { getByText } = createMenuDropdown();
-    getByText('Edit Profile');
-    getByText('Logout');
+
+    expect( getByText('User Profile') ).toBeInTheDocument();
+    expect( getByText('Logout') ).toBeInTheDocument();
+
+    // user info should rendered as well
+    expect( getByText(TEST_DATA.TEST_USER.displayName) ).toBeInTheDocument();
+    expect( getByText(TEST_DATA.TEST_USER.userName) ).toBeInTheDocument();
   });
   
-  test('clicking on logout should invoke logout API call', async () => {
+  test('Clicking on logout should invoke logout API call', async () => {
     createMenuDropdown();
-    const mockFetch = createMockFetch(
-      true, 200, () => Promise.resolve({ sessionUser: TEST_DATA.TEST_USER })
-    );
-    window.fetch = mockFetch;
 
     await clickLogout();
 
-    expect(mockFetch).toBeCalledTimes(1);
-    const [url, options ] = mockFetch.mock.calls[0];
-    expect(url).toBe(userApiLogout);
-    expect(options).toMatchObject({
-      method: 'POST'
-    });
+    expect(logout).toBeCalledTimes(1);
   });
   
-  test('successful logout should change user context', async () => {
+  test('Successful logout should change user context to user returned from api', async () => {
     const { mocks: { mockSetCurrentUser } } = createMenuDropdown();
-    window.fetch = createMockFetch(
-      true, 200, () => Promise.resolve({ sessionUser: TEST_DATA.TEST_USER })
-    );
     
     await clickLogout();
 
@@ -89,8 +102,8 @@ describe('testing behavior of menu dropdown component', () => {
   
   test('failed logout should not change user context', async () => {
     const { mocks: { mockSetCurrentUser } } = createMenuDropdown();
-    window.fetch = createMockFetch(
-      false, 400, () => Promise.resolve({ message: 'failed api call'})
+    logout.mockImplementation(
+      createMockFetchImplementation(false, 400, async () => {})
     );
     
     await clickLogout();
@@ -98,15 +111,12 @@ describe('testing behavior of menu dropdown component', () => {
     expect(mockSetCurrentUser).toBeCalledTimes(0);
   });
 
-  test('logout should call toggledropdown', async () => {
+  test('Successful logout should call toggledropdown', async () => {
     const { mocks: { mockToggle } } = createMenuDropdown();
-    window.fetch = createMockFetch(
-      true, 200, () => Promise.resolve({ sessionUser: TEST_DATA.TEST_USER })
-    );
 
     await clickLogout();
 
-    expect(mockToggle).toHaveBeenCalled();
+    expect(mockToggle).toHaveBeenCalledTimes(2);
   });
 
   test('menu dropdown rendered should gain focus', () => {
@@ -125,7 +135,25 @@ describe('testing behavior of menu dropdown component', () => {
       fireEvent(dropdown, blurevent);
     });
 
-    expect(mockToggle).toHaveBeenCalled();
+    expect(mockToggle).toHaveBeenCalledTimes(1);
+  });
+
+  test('Should transition to user page when userinfo is clicked', () => {
+    const { history, getByText } = createMenuDropdown();
+    const userInfo = getByText('User Profile');
+
+    UserEvent.click(userInfo);
+
+    expect(history.location.pathname).toBe(clientUserProfilePath);
+  });
+
+  test('Should invoke toggleDropdown when transition to user page', () => {
+    const { getByText, mocks: { mockToggle } } = createMenuDropdown();
+    const userInfo = getByText('User Profile');
+
+    UserEvent.click(userInfo);
+
+    expect(mockToggle).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -133,8 +161,5 @@ async function clickLogout() {
   const dropdown = screen.getByTitle('dropdown');
   const logout = getByText(dropdown, 'Logout');
 
-  // click implementation performs some async API calls
-  await act(async () => {
-    logout.click();
-  });
+  await act(async () => UserEvent.click(logout));
 }

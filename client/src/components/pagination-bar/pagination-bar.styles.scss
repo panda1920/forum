@@ -7,7 +7,7 @@
     justify-content: flex-end;
 
 
-    color: map-get($colors, '01');
+    color: map-get($colors, secondary);
 
     .pagination-text {
         flex: 0 1 auto;

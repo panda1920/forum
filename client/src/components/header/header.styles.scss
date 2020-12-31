@@ -5,8 +5,8 @@ header {
     flex-direction: row;
     height: map-get($dimensions, 'header-height');
 
-    background-color: map-get($colors, '00');
-    color: map-get($colors, '01');
+    background-color: map-get($colors, primary);
+    color: map-get($colors, secondary);
 
     .logo-section {
         flex-grow: 1;
@@ -53,6 +53,6 @@ header {
 
     &:hover {
         cursor: pointer;
-        color: map-get($colors, '02');
+        color: map-get($colors, highlight);
     }
 }

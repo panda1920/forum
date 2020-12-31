@@ -8,7 +8,7 @@ $height: 600px;
     top: calc(50vh - #{$height} / 2);
     left: calc(50vw - #{$width} / 2);
 
-    background-color: map-get($colors, '01');
+    background-color: map-get($colors, secondary);
     width: $width;
     height: $height;
 
@@ -19,7 +19,7 @@ $height: 600px;
         right: 20px;
         top : 20px;
 
-        color: map-get($colors, '00');
+        color: map-get($colors, primary);
     }
 }
 

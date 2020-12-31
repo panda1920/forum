@@ -38,3 +38,5 @@ export const boardApi = apiBasePath + '/boards';
 export const clientThreadPath = '/threads';
 
 export const clientBoardPath = '/boards';
+
+export const clientUserProfilePath = '/user-profile';

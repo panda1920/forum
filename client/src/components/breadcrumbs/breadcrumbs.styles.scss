@@ -11,16 +11,16 @@
     * {
         flex: 0 0 auto;
         margin-right: map-get($spaces, small);
-        color: map-get($colors, '01');
+        color: map-get($colors, secondary);
     }
     .breadcrumbs-active-link {
         text-decoration: none;
 
         &:link, &:visited {
-            color: map-get($colors, '01');
+            color: map-get($colors, secondary);
         }
         &:hover {
-            color: map-get($colors, '02');
+            color: map-get($colors, highlight);
         }
     }
     .breadcrumbs-inactive-link {

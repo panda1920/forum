@@ -3,14 +3,17 @@
 $vertical-spaces-between-widgets: map-get($spaces, 'small');
 
 .modal-signup {
+    padding:  map-get($spaces, large);
+
     .modal-header {
         font-size: map-get($font-size, 'header');
+        margin-bottom: map-get($spaces, large);
     }
 
     .input-label {
         font-size: map-get($font-size, 'medium');
         width: map-get($dimensions, 'form-input-width');
-        color: map-get($colors, '00');
+        color: map-get($colors, primary);
         
         display: flex;
         flex-direction: row;
@@ -21,15 +24,15 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
         }
 
         .required {
-            color: lighten( map-get($colors, '00'), 30 );
+            color: map-get($colors, primary-light3);
         }
     }
 
-    .form-input-container {
+    .form-input {
         margin-bottom: $vertical-spaces-between-widgets;
     }
 
     .form-button {
-        background-color: lighten(map-get($colors, '01'), 10);
+        background-color: lighten(map-get($colors, secondary), 10);
     }
 }

@@ -5,6 +5,7 @@ export const INITIAL_STATE = {
     userName: 'anoynymous',
     displayName: 'anonymous',
     imageUrl: '',
+    beforeFetch: true,
     setCurrentUser: () => {},
     isLoggedin: () => {},
 };
@@ -16,6 +17,7 @@ export const CurrentUserContextProvider = ({ children }) => {
   const [ userName, setUserName ] = useState('');
   const [ displayName, setDisplayName ] = useState('');
   const [ imageUrl, setImageUrl ] = useState('');
+  const [ beforeFetch, setBeforeFetch ] = useState(true);
 
   const setCurrentUser = useCallback((user) => {
     const { userId, userName, displayName, imageUrl } = user;
@@ -23,15 +25,19 @@ export const CurrentUserContextProvider = ({ children }) => {
     setUserName(userName);
     setDisplayName(displayName);
     setImageUrl(imageUrl);
+    setBeforeFetch(false);
   }, []);
 
   const isLoggedin = useCallback(() => {
-    return (userId !== '') && (userId !== '0');
-  }, [userId]);
+    const isUserIdAnonymous = userId === '0';
+    return !(beforeFetch || isUserIdAnonymous);
+  }, [userId, beforeFetch]);
 
   return (
     <CurrentUserContext.Provider
-      value={{ userId, userName, displayName, imageUrl, setCurrentUser, isLoggedin }}
+      value={{
+        userId, userName, displayName, imageUrl, beforeFetch, setCurrentUser, isLoggedin,
+      }}
     >
       { children }
     </CurrentUserContext.Provider>

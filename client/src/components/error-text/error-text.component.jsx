@@ -12,7 +12,7 @@ const ErrorText = ({ text, className }) => {
 
   return (
     <BlockText className={className}>
-      { `Error: ${text}` }
+      { text }
     </BlockText>
   );
 };

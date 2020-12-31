@@ -2,8 +2,18 @@ import React from 'react';
 import { screen, render, act, cleanup, getByTitle } from '@testing-library/react';
 
 import Header from '../components/header/header.component';
+import MenuDropdown from '../components/menu-dropdown/menu-dropdown.component';
 
 import { CurrentUserContext } from '../contexts/current-user/current-user';
+
+// mock out child components
+jest.mock('../components/menu-dropdown/menu-dropdown.component', () => {
+  return {
+    __esModule: true,
+    default: jest.fn().mockName('mocked MenuDropdown()')
+      .mockImplementation(() => <div title='dropdown' />)
+  };
+});
 
 const TEST_DATA = {
   TEST_USER_ANONYMOUS: {

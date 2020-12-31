@@ -4,6 +4,7 @@ import { Switch, Route } from 'react-router-dom';
 import BoardPage from '../board/board-page';
 import ThreadPage from '../thread/thread-page';
 import NewThread from '../newthread/newthread-page';
+import UserProfile from '../user-profile/user-profile-page';
 import Header from  '../../components/header/header.component';
 import Footer from  '../../components/footer/footer.component';
 import ModalLogin from '../../components/modal-login/modal-login.component';
@@ -12,7 +13,7 @@ import ModalSignup from '../../components/modal-signup/modal-signup.component';
 import { ModalContextProvider } from '../../contexts/modal/modal';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
 import { getSessionUser } from '../../scripts/api';
-import { clientBoardPath, clientThreadPath } from '../../paths';
+import { clientBoardPath, clientThreadPath, clientUserProfilePath } from '../../paths';
 
 import './base-page.styles.scss';
 
@@ -65,6 +66,7 @@ const BasePage = () => {
             />
             <Route path={`${clientThreadPath}/:threadId`} component={ThreadPage} />
             <Route path={`${clientBoardPath}/:boardId`} component={BoardPage} />
+            <Route path={clientUserProfilePath} component={UserProfile} />
             <Route path='/'>
               <div>hello world!</div>
             </Route>

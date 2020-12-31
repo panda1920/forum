@@ -5,7 +5,7 @@
 
     .breadcrumbs-container {
         margin-bottom: map-get($spaces, medium);
-        background-color: lighten(map-get($colors, '00'), 20%);
+        background-color: map-get($colors, primary-light2);
         
         .breadcrumbs {
             @include centralize-in-page;
@@ -16,7 +16,7 @@
         @include centralize-in-page;
 
         margin-bottom: map-get($spaces, medium);
-        color: map-get($colors, '01');
+        color: map-get($colors, secondary);
 
         .board-title {
             margin-bottom: map-get($spaces, small);
@@ -40,7 +40,7 @@
 
                 .fa-plus {
                     font-size: map-get($font-size, large);
-                    color: lighten( map-get($colors, '00'), 10% );
+                    color: map-get($colors, primary-light1);
                     margin-right: map-get($spaces, small);
                 }
             }

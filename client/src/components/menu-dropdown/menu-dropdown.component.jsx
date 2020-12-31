@@ -1,15 +1,18 @@
 import React, { useContext, useCallback } from 'react';
+import { useHistory } from 'react-router-dom';
 
 import Button from '../button/button.component';
+import BlockText from '../block-text/block-text.component';
 
 import { logout } from '../../scripts/api';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
+import { clientUserProfilePath } from '../../paths';
 
 import './menu-dropdown.styles.scss';
-import BlockText from '../block-text/block-text.component';
 
 const MenuDropdown = ({ toggleDropdown }) => {
   const { displayName, userName, setCurrentUser } = useContext(CurrentUserContext);
+  const history = useHistory();
 
   const logoutHandler = useCallback(async () => {
     const response = await logout();
@@ -25,6 +28,11 @@ const MenuDropdown = ({ toggleDropdown }) => {
     // focus when this component first renders
     if (dropdown) dropdown.focus();
   }, []);
+
+  const transitionToUserProfile = useCallback(() => {
+    history.push(clientUserProfilePath);
+    toggleDropdown();
+  }, [ history, toggleDropdown ]);
 
   return (
     <div
@@ -43,7 +51,9 @@ const MenuDropdown = ({ toggleDropdown }) => {
         </li>
         <li className='noselect separator'></li>
         <li className='noselect'>
-          <BlockText><Button onClick={() => {}}>Edit Profile</Button></BlockText>
+          <BlockText>
+            <Button onClick={transitionToUserProfile}>User Profile</Button>
+          </BlockText>
         </li>
         <li className='noselect'>
           <BlockText><Button onClick={logoutHandler}>Logout</Button></BlockText>

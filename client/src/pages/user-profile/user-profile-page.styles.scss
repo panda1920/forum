@@ -1,6 +1,6 @@
 @import '../../base-style';
 
-.newthread-page {
+.user-profile-page {
     padding: map-get($spaces, large) 0;
 
     .breadcrumbs-container {
@@ -12,18 +12,9 @@
         }
     }
 
-    .newthread-page-info {
+    .user-profile-page-info {
         @include centralize-in-page;
-
-        margin-bottom: map-get($spaces, large);
+        
         color: map-get($colors, secondary);
-
-        .newthread-page-title {
-            margin-bottom: map-get($spaces, small);
-        }
-    }
-
-    .create-thread {
-        @include centralize-in-page;
     }
 }

@@ -1,16 +1,14 @@
 import React from 'react';
-import BlockText from '../block-text/block-text.component';
+import ErrorText from '../error-text/error-text.component';
 
 import './form-input.styles.scss';
 
 const FormInput = (props) => {
   const { className, errorMsg, ...otherProps } = props;
   return (
-    <div className='form-input-container'>
-        <input className={computeClass(props)} {...otherProps} />
-        {
-          <BlockText className='form-input-error'>{errorMsg}</BlockText>
-        }
+    <div className='form-input'>
+      <input className={computeClass(props)} {...otherProps} />
+      { errorMsg ? <ErrorText text={errorMsg} /> : null }
     </div>
   );
 }

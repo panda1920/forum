@@ -1,17 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
 import { clientBoardPath } from '../../paths';
-import { searchPosts, createPost, searchThreads, searchBoards, viewThread } from '../../scripts/api';
+import { searchPosts, searchThreads, searchBoards, viewThread } from '../../scripts/api';
 import { convertEpochToLocalDateString } from '../../scripts/converter';
 
 import EntityList from '../../components/entity-list/entity-list.component';
 import PostCard from '../../components/post-card/post-card.component';
-import HtmlInput from '../../components/htmlinput/htmlinput.component';
 import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
 import Spinner from '../../components/spinner/spinner.component';
+import CreatePost from '../../components/create-post/create-post.component';
 
 import './thread-page.styles.scss';
-import CreatePost from '../../components/create-post/create-post.component';
 
 const ThreadPage = ({ match, location }) => {
   const { threadId } = match.params;
@@ -73,7 +72,7 @@ const ThreadPage = ({ match, location }) => {
 
   const onPostCreateHandler = useCallback(() => {
     setNeedRefresh(true);
-  });
+  }, []);
 
   const renderChildEntity = useCallback((entity, entityNum) => {
     return (

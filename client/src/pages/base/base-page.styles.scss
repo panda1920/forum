@@ -17,7 +17,7 @@ $footer-height: map-get($dimensions, 'footer-height');
         width: map-get($dimensions, 'main-content-width');
         min-height: calc(100vh - #{$header-height} - #{$footer-height});
         margin: 0 auto;
-        background-color: lighten( map-get($colors, '00'), 10% );
+        background-color: map-get($colors, primary-light1);
     }
     footer {
         flex: 0 1 $footer-height;

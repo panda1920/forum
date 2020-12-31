@@ -3,18 +3,21 @@
 $vertical-spaces-between-widgets: map-get($spaces, 'small');
 
 .modal-login {
+    padding:  map-get($spaces, large);
+
     .modal-header {
         font-size: map-get($font-size, 'header');
+        margin-bottom: map-get($spaces, large);
     }
     
-    .form-input-container {
+    .form-input {
         margin-bottom: $vertical-spaces-between-widgets;
     }
 
     .form-button {
         margin-bottom: $vertical-spaces-between-widgets;
         margin-right:  map-get($spaces, 'small');
-        background-color: lighten(map-get($colors, '01'), 10);
+        background-color: lighten(map-get($colors, secondary), 10);
     }
 
     .login-thirdparty-button-section {
@@ -48,7 +51,7 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
 
 .modal-content {
     padding-bottom: $vertical-spaces-between-widgets; 
-    border-bottom: 0.5px solid map-get($colors, '00');
+    border-bottom: 0.5px solid map-get($colors, primary);
     margin-bottom: $vertical-spaces-between-widgets;
 }
 
