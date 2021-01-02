@@ -3,22 +3,20 @@
 .form-input {
     font-family: inherit;
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
 
     input {
         display: block;
-        flex: 0 0 map-get($dimensions, 'form-input-width');
+        flex: 0 0 map-get($dimensions, 'form-input-height');
         padding: 0 5px;
         font-size: map-get($font-size, 'medium');
         line-height: map-get($dimensions, 'form-input-height');
-        height: map-get($dimensions, 'form-input-height');
+        width: map-get($dimensions, 'form-input-width');
         border-radius: map-get($general-styling, 'border-radius-form');
     
         background-color: map-get($colors, secondary-light2);
         border: 1px solid map-get($colors, secondary-light2);
-
-        margin-right: map-get($spaces, large);
 
         &:hover {
             border: 1px solid map-get($colors, primary);
@@ -30,7 +28,10 @@
 
     .error-text {
         flex: 1 1 auto;
-        padding: calc( map-get($spaces, small) / 2);
+        width: map-get($dimensions, 'form-input-width');
+        margin-top: map-get($spaces, small);
+        padding-top: calc( #{map-get($spaces,small)} / 2 );
+        padding-bottom: calc( #{map-get($spaces,small)} / 2 );
     }
 
 }

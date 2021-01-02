@@ -128,7 +128,7 @@ const ModalLogin = () => {
             Login
           </FormButton>
         </div>
-        <BlockText>OR</BlockText>
+        <BlockText className='login-button-or-text'>OR</BlockText>
         <div className='login-thirdparty-button-section'>
           <FormButton title='google-login'>
             <div className='button-with-icons'>

@@ -3,7 +3,7 @@
 $vertical-spaces-between-widgets: map-get($spaces, 'small');
 
 .modal-signup {
-    padding:  map-get($spaces, large);
+    padding: map-get($spaces, large);
 
     .modal-header {
         font-size: map-get($font-size, 'header');
@@ -33,6 +33,6 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
     }
 
     .form-button {
-        background-color: lighten(map-get($colors, secondary), 10);
+        margin-bottom: $vertical-spaces-between-widgets;
     }
 }

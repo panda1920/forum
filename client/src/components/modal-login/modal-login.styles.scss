@@ -17,7 +17,6 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
     .form-button {
         margin-bottom: $vertical-spaces-between-widgets;
         margin-right:  map-get($spaces, 'small');
-        background-color: lighten(map-get($colors, secondary), 10);
     }
 
     .login-thirdparty-button-section {
@@ -44,7 +43,7 @@ $vertical-spaces-between-widgets: map-get($spaces, 'small');
         }
     }
 
-    .block-text {
+    .login-button-or-text {
         margin-bottom: $vertical-spaces-between-widgets;
     }
 }

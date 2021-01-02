@@ -7,7 +7,8 @@ $height: 600px;
     position: fixed;
     top: calc(50vh - #{$height} / 2);
     left: calc(50vw - #{$width} / 2);
-
+    
+    outline: none;
     background-color: map-get($colors, secondary);
     width: $width;
     height: $height;
