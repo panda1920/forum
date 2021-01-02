@@ -7,6 +7,7 @@ import logging
 
 from passlib.context import CryptContext
 
+from server.database.filter import PrimitiveFilter
 import server.exceptions as exceptions
 
 logger = logging.getLogger(__name__)
@@ -59,9 +60,8 @@ class UserAuthenticationService:
     Class that provides login/logout functionality to the app.
     Houses business logic related to such authentication process.
     """
-    def __init__(self, repo, filter_class, session_manager):
+    def __init__(self, repo, session_manager):
         self._repo = repo
-        self._filter = filter_class
         self._session = session_manager
 
     def login(self, credential):
@@ -96,7 +96,7 @@ class UserAuthenticationService:
         return (userName, password)
 
     def _searchUserFromRepo(self, userName):
-        searchFilter = self._filter.createFilter(dict(
+        searchFilter = PrimitiveFilter.createFilter(dict(
             field='userName', operator='eq', value=[userName]
         ))
         
@@ -118,3 +118,21 @@ class UserAuthenticationService:
         """
         logger.info('Logout user')
         self._session.remove_user()
+
+    def confirm_session_credentials(self, password):
+        """
+        confirms that password is correct for current session user.
+        
+        Args:
+            password(str): plain text password for the current session user
+        Returns:
+            Boolean: True if correct, false if not.
+        """
+        logger.info('Verifying session user credentials')
+        session_user = self._session.get_user()
+
+        if not PasswordService.verifyPassword(password, session_user.password):
+            logger.info('Invalid user credential')
+            raise exceptions.InvalidUserCredentials('Invalid credentials')
+
+        return True

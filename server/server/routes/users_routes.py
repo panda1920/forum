@@ -92,6 +92,17 @@ def getSessionUserv1():
     return route_utils.createJSONResponse([], 200)
 
 
+@cors_wrapped_route(routes.route, '/v1/users/session/confirm', methods=['POST'])
+def confirmSessionUserv1():
+    try:
+        userauth = Config.getAuthService(current_app)
+        data = route_utils.getJsonFromRequest(request)
+        userauth.confirm_session_credentials(data['password'])
+        return route_utils.createResultResponse('Credentials verified')
+    except MyAppException as e:
+        return route_utils.createJSONErrorResponse(e)
+
+
 @routes.before_request
 def apply_middlewares_before():
     Config.getRequestUserManager(current_app).setCurrentUser()

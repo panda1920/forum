@@ -37,7 +37,7 @@ search_service = SearchService(repo, SearchFilterCreator, PrimitiveFilter, Aggre
 update_service = UpdateService(repo, PrimitiveFilter, session_service)
 delete_service = DeleteService(repo, session_service)
 image_scaler = ImageScaler()
-authentication_service = UserAuthenticationService(repo, PrimitiveFilter, session_service)
+authentication_service = UserAuthenticationService(repo, session_service)
 
 
 class Config:
@@ -62,6 +62,7 @@ class Config:
     DELETE_SERVICE = delete_service
     IMAGE_SCALER = image_scaler
     AUTHENTICATION_SERVICE = authentication_service
+    PASSWORD_SERVICE = PasswordService
 
     # middlewares
     REQUESTUSER_MIDDLEWARE = request_user

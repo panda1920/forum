@@ -11,11 +11,12 @@ from server.database.filter import PrimitiveFilter
 import tests.mocks as mocks
 from tests.helpers import create_mock_entity_fromattrs
 
+
 @pytest.fixture(scope='function')
 def user_auth():
     repo = mocks.createMockRepo()
     session = mocks.createMockSessionService()
-    return UserAuthenticationService(repo, PrimitiveFilter, session)
+    return UserAuthenticationService(repo, session)
     
 
 class TestPasswordService:
@@ -141,3 +142,41 @@ class TestLogout:
         user_auth.logout()
 
         mockSession.remove_user.assert_called_once()
+
+
+class TestConfirmSessionCredentials:
+    DEFAULT_SESSION_USER_ATTRS = dict(
+        _id='some_random_id',
+        userId='000',
+        userName='bobby@myforumwebapp.com',
+    )
+
+    def create_user_with_password(self, password):
+        """
+        helper function to create mock user object
+        """
+        attrs = self.DEFAULT_SESSION_USER_ATTRS.copy()
+        attrs['password'] = PasswordService.hashPassword(password)
+        return create_mock_entity_fromattrs(attrs)
+
+    def test_shouldReturnTrueWhenCorrectPasswordIsPassed(self, user_auth):
+        mock_session = user_auth._session
+        user_passwords = [ 'password', 'some_password', '12345678', 'hello_world' ]
+
+        for password in user_passwords:
+            user = self.create_user_with_password(password)
+            mock_session.get_user.return_value = user
+
+            assert user_auth.confirm_session_credentials(password) is True
+
+    def test_shouldRaiseExceptionWhenWrongPasswordIsPassed(self, user_auth):
+        mock_session = user_auth._session
+        wrong_password = 'wrong_password'
+        user_passwords = [ 'password', 'some_password', '12345678', 'hello_world' ]
+
+        for password in user_passwords:
+            user = self.create_user_with_password(password)
+            mock_session.get_user.return_value = user
+
+            with pytest.raises(exceptions.InvalidUserCredentials):
+                user_auth.confirm_session_credentials(wrong_password)

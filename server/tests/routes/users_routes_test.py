@@ -73,6 +73,9 @@ def reset_mocks(mockApp):
     Config.getAuthService(mockApp) \
         .logout.reset_mock(side_effect=True)
 
+    Config.getAuthService(mockApp) \
+        .confirm_session_credentials.reset_mock(side_effect=True)
+
     Config.getRequestUserManager(mockApp) \
         .addCurrentUserToResponse.reset_mock(side_effect=True)
 
@@ -452,5 +455,42 @@ class TestUserAPIs:
             mockRequestUser.addCurrentUserToResponse.side_effect = e('some error')
             with mockApp.test_client() as client:
                 response = client.get(url)
+
+                assert response.status_code == e.getStatusCode()
+
+    def test_confirmShouldPassCredentialsToAuthService(self, mockApp, client):
+        url = f'{self.USERAPI_BASE_URL}/session/confirm'
+        data = { 'password': 'some_password' }
+        user_auth = Config.getAuthService(mockApp)
+
+        client.post(url, json=data)
+
+        user_auth.confirm_session_credentials.assert_called_once
+        user_auth.confirm_session_credentials.assert_called_with(data['password'])
+
+    def test_confirmShouldReturn200WhenAuthSuccessful(self, mockApp, client):
+        url = f'{self.USERAPI_BASE_URL}/session/confirm'
+        data = { 'password': 'some_password' }
+        user_auth = Config.getAuthService(mockApp)
+        user_auth.confirm_session_credentials.return_value = True
+
+        response = client.post(url, json=data)
+
+        assert response.status_code == 200
+
+    def test_confirmShouldReturnErrorWhenExceptionRaised(self, mockApp):
+        url = f'{self.USERAPI_BASE_URL}/session/confirm'
+        data = { 'password': 'some_password' }
+        user_auth = Config.getAuthService(mockApp)
+        exceptions_raised = [
+            exceptions.InvalidUserCredentials,
+            exceptions.ServerMiscError,
+        ]
+
+        for e in exceptions_raised:
+            user_auth.confirm_session_credentials.side_effect = e()
+
+            with mockApp.test_client() as client:
+                response = client.post(url, json=data)
 
                 assert response.status_code == e.getStatusCode()

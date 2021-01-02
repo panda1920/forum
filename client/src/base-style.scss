@@ -28,14 +28,22 @@ $colors: (
     'primary-dark3': darken( map-get($color-palette, '00'), 30%),
 
     'secondary': map-get($color-palette, '01'),
-    'secondary-light1': lighten( map-get($color-palette, '01'), 20%),
+    'secondary-light1': lighten( map-get($color-palette, '01'), 10%),
+    'secondary-light2': lighten( map-get($color-palette, '01'), 20%),
+    'secondary-light3': lighten( map-get($color-palette, '01'), 30%),
+    'secondary-dark1': darken( map-get($color-palette, '01'), 10%),
     'secondary-dark2': darken( map-get($color-palette, '01'), 20%),
+    'secondary-dark3': darken( map-get($color-palette, '01'), 30%),
 
     'highlight': map-get($color-palette, '02'),
 
     'warning': map-get($color-palette, '99'),
+    'warning-light1': lighten( map-get($color-palette, '99'), 10%),
+    'warning-light2': lighten( map-get($color-palette, '99'), 20%),
     'warning-light3': lighten( map-get($color-palette, '99'), 30%),
+    'warning-dark1': darken( map-get($color-palette, '99'), 10%),
     'warning-dark2': darken( map-get($color-palette, '99'), 20%),
+    'warning-dark3': darken( map-get($color-palette, '99'), 30%),
 );
 
 $font-size: (

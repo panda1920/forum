@@ -46,7 +46,7 @@ class SessionService:
             None
         """
         logger.info('Removing session user')
-        anonymous = self._find_user(self.ANONYMOUS_USERID)
+        anonymous = self._find_user_byid(self.ANONYMOUS_USERID)
         self.set_user(anonymous)
 
     def get_user(self):
@@ -74,13 +74,13 @@ class SessionService:
         logger.info('Populating user information in request context')
         session_userid = self._context.read_session(self.SESSION_USER_KEY)
         if session_userid is None:
-            user = self._find_user(self.ANONYMOUS_USERID)
+            user = self._find_user_byid(self.ANONYMOUS_USERID)
         else:
-            user = self._find_user(session_userid)
+            user = self._find_user_byid(session_userid)
 
         self._context.write_global(self.REQUEST_USER_KEY, user)
 
-    def _find_user(self, userid):
+    def _find_user_byid(self, userid):
         search_filter = PrimitiveFilter.createFilter(dict(
             field='userId', operator='eq', value=[ userid ]
         ))
