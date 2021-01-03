@@ -4,7 +4,7 @@ import ErrorText from '../error-text/error-text.component';
 import './form-input.styles.scss';
 
 const FormInput = (props) => {
-  // want to ignore className here
+  // don't want to pass className to child here
   const { errorMsg, className, ...otherProps } = props;
   return (
     <div className={computeClass(props)}>

@@ -45,7 +45,7 @@ const CreateThread= ({ boardId }) => {
       setCreated(true);
     }
     catch(error) {
-      setError(error);
+      setError(`Error: ${error}`);
       return;
     }
 
@@ -64,9 +64,7 @@ const CreateThread= ({ boardId }) => {
         <ErrorText text={error} />
 
         <BlockText className='create-thread-input-title-label'>
-          <label
-            htmlFor='create-thread-input-title'
-          >
+          <label htmlFor='create-thread-input-title'>
             Title
           </label>
         </BlockText>
@@ -81,9 +79,15 @@ const CreateThread= ({ boardId }) => {
         <HtmlInput
           value={text}
           onChange={setText}
+          className='create-thread-input-post'
         />
         
-        <FormButton onClick={clickHandler}>Create</FormButton>
+        <FormButton
+          onClick={clickHandler}
+          className='create-thread-button'
+        >
+          Create
+        </FormButton>
       </form>
     </div>
   );

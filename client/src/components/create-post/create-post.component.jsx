@@ -17,7 +17,7 @@ const CreatePost = (props) => {
 
   const post = useCallback(async () => {
     if (!content) {
-      setError('Post must not be empty');
+      setError('Error: Post must not be empty');
       return;
     }
     
@@ -29,7 +29,7 @@ const CreatePost = (props) => {
       onCreate();
     }
     else {
-      setError('Creation failed');
+      setError('Error: Creation failed');
     }
   }, [ threadId, content, onCreate ]);
 

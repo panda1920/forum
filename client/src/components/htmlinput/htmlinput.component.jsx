@@ -39,9 +39,10 @@ const tinymceInitParams = {
   },
 }
 
-const HtmlInput = ({ value, onChange }) => {
+const HtmlInput = (props) => {
+  const { value, onChange, } = props;
   return (
-    <div className='html-input'>
+    <div className={computeClassName(props)}>
       <Editor
         initialValue="<p>This is the initial content of the editor</p>"
         init={tinymceInitParams}
@@ -53,5 +54,13 @@ const HtmlInput = ({ value, onChange }) => {
     </div>
   );
 };
+
+function computeClassName(props) {
+  const { className } = props;
+  let classString = 'html-input';
+  classString += className ? ` ${className}` : '';
+
+  return classString;
+}
 
 export default HtmlInput;
