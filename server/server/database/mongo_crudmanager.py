@@ -79,7 +79,8 @@ class MongoCrudManager(CrudManager):
 
     def updateUser(self, searchFilter, user):
         attrs = user.to_update()
-        attrs['password'] = self._userauth.hashPassword( attrs['password'] )
+        if 'password' in attrs:
+            attrs['password'] = self._userauth.hashPassword( attrs['password'] )
         query = searchFilter.getMongoFilter()
         update = self._createMongoUpdate(attrs)
         

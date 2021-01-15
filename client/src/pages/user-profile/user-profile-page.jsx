@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { Redirect } from 'react-router-dom';
 
 import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
+import ProfileFieldText from '../../components/profile-field-text/profile-field-text.component';
 import Spinner from '../../components/spinner/spinner.component';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
 
@@ -26,6 +27,7 @@ const UserProfile = () => {
       <div className='user-profile-page-info'>
         <h1>User info</h1>
       </div>
+      <ProfileFieldText fieldname='hello' value='test_field'/>
     </div>
   );
 };

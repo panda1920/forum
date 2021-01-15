@@ -34,6 +34,10 @@ const MenuDropdown = ({ toggleDropdown }) => {
     toggleDropdown();
   }, [ history, toggleDropdown ]);
 
+  const preventBlurOnMouseDown = useCallback((e) => {
+    e.preventDefault();
+  }, []);
+
   return (
     <div
       className='menu-dropdown'
@@ -41,6 +45,7 @@ const MenuDropdown = ({ toggleDropdown }) => {
       tabIndex='-1'
       ref={refCallback}
       onBlur={toggleDropdown}
+      onMouseDown={preventBlurOnMouseDown}
     >
       <ul>
         <li className='noselect'>
@@ -50,13 +55,15 @@ const MenuDropdown = ({ toggleDropdown }) => {
           </div>
         </li>
         <li className='noselect separator'></li>
-        <li className='noselect'>
+        <li className=''>
           <BlockText>
-            <Button onClick={transitionToUserProfile}>User Profile</Button>
+            <Button data-testid='user-profile' onClick={transitionToUserProfile}>User Profile</Button>
           </BlockText>
         </li>
-        <li className='noselect'>
-          <BlockText><Button onClick={logoutHandler}>Logout</Button></BlockText>
+        <li className=''>
+          <BlockText>
+            <Button onClick={logoutHandler} data-testid='logout'>Logout</Button>
+          </BlockText>
         </li>
       </ul>
     </div>

@@ -4,18 +4,18 @@ import { createMemoryHistory } from 'history';
 import { render, cleanup, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import HtmlInput from '../components/htmlinput/htmlinput.component';
-import CreateThread from '../components/create-thread/create-thread.component';
+import HtmlInput from '../../components/htmlinput/htmlinput.component';
+import CreateThread from '../../components/create-thread/create-thread.component';
 
-import { createThread, createPost } from '../scripts/api';
-import { createMockFetchImplementation } from '../scripts/test-utilities';
-import { clientBoardPath } from '../paths';
+import { createThread, createPost } from '../../scripts/api';
+import { createMockFetchImplementation } from '../../scripts/test-utilities';
+import { clientBoardPath } from '../../paths';
 
 // mock out child components
-jest.mock('../components/htmlinput/htmlinput.component');
+jest.mock('../../components/htmlinput/htmlinput.component');
 
 // mock out functions
-jest.mock('../scripts/api', () => {
+jest.mock('../../scripts/api', () => {
   return {
     createThread: jest.fn().mockName('mocked createThread()'),
     createPost: jest.fn().mockName('mocked createPost()'),

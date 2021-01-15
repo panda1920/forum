@@ -55,6 +55,9 @@ def updateUserv1(userId):
         return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
+    except Exception as e:
+        print(e)
+        raise
 
 
 @cors_wrapped_route(routes.route, '/v1/users/<userId>/delete', methods=['DELETE'])

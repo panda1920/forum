@@ -4,7 +4,7 @@ import {
   render, screen, cleanup, fireEvent, 
 } from '@testing-library/react';
 
-import ModalDialog from '../components/modal-dialog/modal-dialog.component';
+import ModalDialog from '../../components/modal-dialog/modal-dialog.component';
 
 afterEach(cleanup);
 // suppress warnings

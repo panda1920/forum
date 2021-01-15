@@ -30,3 +30,7 @@ input {
     border-color: none;
     outline: none;
 }
+
+button {
+    all: unset;
+}

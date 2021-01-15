@@ -60,35 +60,33 @@ const CreateThread= ({ boardId }) => {
 
   return (
     <div className='create-thread'>
-      <form>
-        <ErrorText text={error} />
+      <ErrorText text={error} />
 
-        <BlockText className='create-thread-input-title-label'>
-          <label htmlFor='create-thread-input-title'>
-            Title
-          </label>
-        </BlockText>
-        <FormInput
-          type='text'
-          id='create-thread-input-title'
-          className='create-thread-input-title'
-          value={title}
-          onChange={handleTitleChange}
-        />
+      <BlockText className='create-thread-input-title-label'>
+        <label htmlFor='create-thread-input-title'>
+          Title
+        </label>
+      </BlockText>
+      <FormInput
+        type='text'
+        id='create-thread-input-title'
+        className='create-thread-input-title'
+        value={title}
+        onChange={handleTitleChange}
+      />
 
-        <HtmlInput
-          value={text}
-          onChange={setText}
-          className='create-thread-input-post'
-        />
-        
-        <FormButton
-          onClick={clickHandler}
-          className='create-thread-button'
-        >
-          Create
-        </FormButton>
-      </form>
+      <HtmlInput
+        value={text}
+        onChange={setText}
+        className='create-thread-input-post'
+      />
+      
+      <FormButton
+        onClick={clickHandler}
+        className='create-thread-button'
+      >
+        Create
+      </FormButton>
     </div>
   );
 };

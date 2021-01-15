@@ -5,7 +5,7 @@ const mockPortrait = () => {
 };
 
 const Portrait = jest.fn()
-  .mockName('Mocked portrait')
+  .mockName('Mocked portrait()')
   .mockImplementation(mockPortrait);
 
 export default Portrait;

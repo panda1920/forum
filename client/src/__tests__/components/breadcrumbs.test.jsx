@@ -4,7 +4,7 @@ import { createMemoryHistory } from 'history';
 import { render, cleanup, screen, } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
+import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
 
 const TEST_DATA = {
   DEFAULT_LINKS: [

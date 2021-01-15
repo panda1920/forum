@@ -3,25 +3,25 @@ import { Router, Route } from 'react-router-dom';
 import { render, cleanup, act } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 
-import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
-import CreateThread from '../components/create-thread/create-thread.component';
-import Spinner from '../components/spinner/spinner.component';
-import NewThread from '../pages/newthread/newthread-page';
+import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
+import CreateThread from '../../components/create-thread/create-thread.component';
+import Spinner from '../../components/spinner/spinner.component';
+import NewThread from '../../pages/newthread/newthread-page';
 
-import { searchBoards } from '../scripts/api';
+import { searchBoards } from '../../scripts/api';
 import {
   createMockFetchImplementation,
   createSearchReturn,
-} from '../scripts/test-utilities';
-import { clientBoardPath } from '../paths';
+} from '../../scripts/test-utilities';
+import { clientBoardPath } from '../../paths';
 
 // mock out subcomponents
-jest.mock('../components/breadcrumbs/breadcrumbs.component');
-jest.mock('../components/create-thread/create-thread.component');
-jest.mock('../components/spinner/spinner.component');
+jest.mock('../../components/breadcrumbs/breadcrumbs.component');
+jest.mock('../../components/create-thread/create-thread.component');
+jest.mock('../../components/spinner/spinner.component');
 
 // mock out functions
-jest.mock('../scripts/api', () => ({
+jest.mock('../../scripts/api', () => ({
   searchBoards: jest.fn().mockName('mocked searchBoard()'),
 }));
 

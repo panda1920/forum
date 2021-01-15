@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Portrait from '../portrait/portrait.component';
+
 import { convertEpochToLocalDateString } from '../../scripts/converter';
 
 import './post-card.styles.scss';

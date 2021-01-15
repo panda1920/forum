@@ -2,17 +2,17 @@ import React from 'react';
 import { render, cleanup, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import HtmlInput from '../components/htmlinput/htmlinput.component';
-import CreatePost from '../components/create-post/create-post.component';
+import HtmlInput from '../../components/htmlinput/htmlinput.component';
+import CreatePost from '../../components/create-post/create-post.component';
 
-import { createPost } from '../scripts/api';
-import { createMockFetchImplementation } from '../scripts/test-utilities';
+import { createPost } from '../../scripts/api';
+import { createMockFetchImplementation } from '../../scripts/test-utilities';
 
 // mock out child components
-jest.mock('../components/htmlinput/htmlinput.component');
+jest.mock('../../components/htmlinput/htmlinput.component');
 
 // mock out functions
-jest.mock('../scripts/api', () => {
+jest.mock('../../scripts/api', () => {
   return {
     createPost: jest.fn().mockName('mocked createPost()')
   };

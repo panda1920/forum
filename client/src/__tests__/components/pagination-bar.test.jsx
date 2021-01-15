@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, cleanup, act } from '@testing-library/react';
 
-import PaginationBar from '../components/pagination-bar/pagination-bar.component';
+import PaginationBar from '../../components/pagination-bar/pagination-bar.component';
 
 const IDENTIFIERS = {
   TITLE_BUTTON_FIRST: 'pagination button first',

@@ -1,12 +1,12 @@
 import React from 'react';
 import { render, cleanup, act } from '@testing-library/react';
 
-import { CurrentUserContext } from '../contexts/current-user/current-user';
-import PaginationBar from '../components/pagination-bar/pagination-bar.component';
-import EntityList from '../components/entity-list/entity-list.component';
+import { CurrentUserContext } from '../../contexts/current-user/current-user';
+import PaginationBar from '../../components/pagination-bar/pagination-bar.component';
+import EntityList from '../../components/entity-list/entity-list.component';
 
 // mock out child components
-jest.mock('../components/pagination-bar/pagination-bar.component');
+jest.mock('../../components/pagination-bar/pagination-bar.component');
 
 const TEST_DATA = {
   SEARCH_RESULT: {

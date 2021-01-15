@@ -32,7 +32,7 @@ class Button extends React.Component {
     // because setstate would not immediatey update
     // if onClick is invoked on a separate line,
     // it may unmount the component before timerid is stored in state
-    // which causes the above settimeout to run on a non-existant component
+    // which causes above settimeout to run on a non-existant component
     this.setState({ clickedRecently: true, timerTaskId }, onClick);
   }
 
@@ -51,14 +51,14 @@ class Button extends React.Component {
     const onClickHandlerCallback = (e) => { this.onClickHandler(e); };
 
     return (
-      <div
+      <button
         className={`button ${classes}`}
         onClick={onClickHandlerCallback}
         data-testid={testid}
         {...otherProps}
       >
         { children }
-      </div>
+      </button>
     );
   }
 }

@@ -45,7 +45,7 @@ class PasswordService:
             password(str): plain text password to verify
             hash(str): hashed password that plain password is matched against
         Returns:
-            boolean: whether verification succeeded or not
+            bool: whether verification succeeded or not
         """
         logger.info('Verifying password')
         try:
@@ -126,7 +126,9 @@ class UserAuthenticationService:
         Args:
             password(str): plain text password for the current session user
         Returns:
-            Boolean: True if correct, false if not.
+            bool: True if correct
+        Raises:
+            InvalidUserCredentials: if password is incorrect
         """
         logger.info('Verifying session user credentials')
         session_user = self._session.get_user()

@@ -4,9 +4,9 @@ import { render, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 
-import ThreadCard from '../components/thread-card/thread-card.component';
+import ThreadCard from '../../components/thread-card/thread-card.component';
 
-import { clientThreadPath } from '../paths';
+import { clientThreadPath } from '../../paths';
 
 const TEST_DATA = {
   THREAD_DATA: {

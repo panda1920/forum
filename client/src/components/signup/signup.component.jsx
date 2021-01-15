@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 
 import TextInput from '../textinput/textinput.component';
+import Button from '../button/button.component';
 
 import UsersContext from '../../contexts/users/users.context';
 import { changeSignupState, createSubmitHandler } from './signup.logic';
@@ -20,7 +21,7 @@ const Signup = () => {
   
   return (
     <div className='signup'>
-      <form id='signup-form' onSubmit={submitHandler}>
+      <form id='signup-form'>
         <TextInput
           label='username'
           name='username'
@@ -39,7 +40,7 @@ const Signup = () => {
           type='password'
           onChange={ changeSignupState(setCpassword) }
         />
-        <button type='submit'>Signup</button>
+        <Button onClick={ submitHandler }>Signup</Button>
       </form>
     </div>
   );

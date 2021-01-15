@@ -3,15 +3,15 @@ import { Router } from 'react-router-dom';
 import { render, cleanup, act } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 
-import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
-import UserProfile from '../pages/user-profile/user-profile-page';
-import Spinner from '../components/spinner/spinner.component';
-import { CurrentUserContext } from '../contexts/current-user/current-user';
+import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
+import UserProfile from '../../pages/user-profile/user-profile-page';
+import Spinner from '../../components/spinner/spinner.component';
+import { CurrentUserContext } from '../../contexts/current-user/current-user';
 
 
 // mock out subcomponents
-jest.mock('../components/breadcrumbs/breadcrumbs.component');
-jest.mock('../components/spinner/spinner.component');
+jest.mock('../../components/breadcrumbs/breadcrumbs.component');
+jest.mock('../../components/spinner/spinner.component');
 
 
 const TEST_DATA = {

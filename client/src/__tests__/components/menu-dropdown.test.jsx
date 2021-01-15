@@ -4,16 +4,16 @@ import { createMemoryHistory } from 'history';
 import { act, screen, render, cleanup, getByText, fireEvent } from '@testing-library/react';
 import UserEvent from '@testing-library/user-event';
 
-import MenuDropdown from '../components/menu-dropdown/menu-dropdown.component';
-import { CurrentUserContext } from '../contexts/current-user/current-user';
+import MenuDropdown from '../../components/menu-dropdown/menu-dropdown.component';
+import { CurrentUserContext } from '../../contexts/current-user/current-user';
 
-import { createMockFetch } from '../scripts/test-utilities';
-import { userApiLogout, clientUserProfilePath } from '../paths';
-import { logout } from '../scripts/api';
-import { createMockFetchImplementation } from '../scripts/test-utilities';
+import { createMockFetch } from '../../scripts/test-utilities';
+import { userApiLogout, clientUserProfilePath } from '../../paths';
+import { logout } from '../../scripts/api';
+import { createMockFetchImplementation } from '../../scripts/test-utilities';
 
 // mock out functions
-jest.mock('../scripts/api', () => {
+jest.mock('../../scripts/api', () => {
   return {
     logout: jest.fn().mockName('mocked logout()'),
   };

@@ -4,25 +4,25 @@ import { render, cleanup, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 
-import EntityList from '../components/entity-list/entity-list.component';
-import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
-import Spinner from '../components/spinner/spinner.component';
-import ThreadCard from '../components/thread-card/thread-card.component';
-import BoardPage from '../pages/board/board-page';
+import EntityList from '../../components/entity-list/entity-list.component';
+import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
+import Spinner from '../../components/spinner/spinner.component';
+import ThreadCard from '../../components/thread-card/thread-card.component';
+import BoardPage from '../../pages/board/board-page';
 
-import { clientBoardPath } from '../paths';
-import { createMockFetchImplementation, createSearchReturn } from '../scripts/test-utilities';
-import { searchBoards, searchThreads } from '../scripts/api';
+import { clientBoardPath } from '../../paths';
+import { createMockFetchImplementation, createSearchReturn } from '../../scripts/test-utilities';
+import { searchBoards, searchThreads } from '../../scripts/api';
 
 // mock out child component
-jest.mock('../components/entity-list/entity-list.component');
-jest.mock('../components/thread-card/thread-card.component');
-jest.mock('../components/breadcrumbs/breadcrumbs.component');
-jest.mock('../components/spinner/spinner.component');
+jest.mock('../../components/entity-list/entity-list.component');
+jest.mock('../../components/thread-card/thread-card.component');
+jest.mock('../../components/breadcrumbs/breadcrumbs.component');
+jest.mock('../../components/spinner/spinner.component');
 
 
 // mock out dependant functions
-jest.mock('../scripts/api', () => {
+jest.mock('../../scripts/api', () => {
   return {
     searchBoards: jest.fn().mockName('mocked searchBoards()'),
     searchThreads: jest.fn().mockName('mocked searchThreads()'),

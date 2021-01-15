@@ -53,6 +53,6 @@ header {
 
     &:hover {
         cursor: pointer;
-        color: map-get($colors, highlight);
+        color: map-get($colors, 'highlight');
     }
 }

@@ -27,6 +27,17 @@ export function signup(email, password) {
     );
 }
 
+export function updateUser(fields) {
+    const { userId, ...rest } = fields;
+
+    return apiCall(
+        `${paths.userApi}/${userId}/update`,
+        'PATCH',
+        { 'Content-Type': 'application/json' },
+        JSON.stringify(rest),
+    );
+}
+
 export function getSessionUser() {
     return apiCall(
         paths.userApiSession,

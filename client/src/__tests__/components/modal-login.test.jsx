@@ -4,13 +4,13 @@ import {
   render, screen, cleanup, fireEvent, getByText, queryByText, findByText
 } from '@testing-library/react';
 
-import ModalLogin, { ModalLoginTitle } from '../components/modal-login/modal-login.component';
-import { ModalContext } from '../contexts/modal/modal';
-import { CurrentUserContext } from '../contexts/current-user/current-user';
-import { userApiLogin } from '../paths';
+import ModalLogin, { ModalLoginTitle } from '../../components/modal-login/modal-login.component';
+import { ModalContext } from '../../contexts/modal/modal';
+import { CurrentUserContext } from '../../contexts/current-user/current-user';
+import { userApiLogin } from '../../paths';
 import { act } from 'react-dom/test-utils';
 
-import { setNativeValue, createMockFetch, createErrorJsonData } from '../scripts/test-utilities';
+import { setNativeValue, createMockFetch, createErrorJsonData } from '../../scripts/test-utilities';
 
 const DEFAULT_USERINFO = {
   email: 'bobby@myforumapp.com',

@@ -1,16 +1,16 @@
 import React from 'react';
 import { screen, render, cleanup, act } from '@testing-library/react';
 
-import * as paths from '../paths';
-import { createMockFetch } from '../scripts/test-utilities';
+import * as paths from '../../paths';
+import { createMockFetch } from '../../scripts/test-utilities';
 
-import { CurrentUserContext } from '../contexts/current-user/current-user';
+import { CurrentUserContext } from '../../contexts/current-user/current-user';
 
-import ThreadCard from '../components/thread-card/thread-card.component';
-import ThreadList from '../components/thread-list/thread-list.component';
+import ThreadCard from '../../components/thread-card/thread-card.component';
+import ThreadList from '../../components/thread-list/thread-list.component';
 
 // mock out child component
-jest.mock('../components/thread-card/thread-card.component');
+jest.mock('../../components/thread-card/thread-card.component');
 
 const IDENTIFIERS = {
   TITLE_THREAD_CARD: 'thread card',

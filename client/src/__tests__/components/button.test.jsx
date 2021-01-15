@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, cleanup, act } from '@testing-library/react';
 
-import Button from '../components/button/button.component';
+import Button from '../../components/button/button.component';
 
 beforeEach(() => {
   jest.useFakeTimers();

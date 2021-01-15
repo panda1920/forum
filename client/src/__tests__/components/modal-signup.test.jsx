@@ -12,17 +12,17 @@ import {
 } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 
-import { ModalContext } from '../contexts/modal/modal';
-import { CurrentUserContext } from '../contexts/current-user/current-user';
+import { ModalContext } from '../../contexts/modal/modal';
+import { CurrentUserContext } from '../../contexts/current-user/current-user';
 import {
   setNativeValue,
   createMockFetch,
   createMockFetchImplementation,
   createErrorJsonData,
-} from '../scripts/test-utilities';
-import { userApiLogin, userApiCreate } from '../paths';
+} from '../../scripts/test-utilities';
+import { userApiLogin, userApiCreate } from '../../paths';
 
-import ModalSignup, { ModalSignupTitle } from '../components/modal-signup/modal-signup.component';
+import ModalSignup, { ModalSignupTitle } from '../../components/modal-signup/modal-signup.component';
 
 const TEST_DATA = {
   DEFAULT_USERINFO: {

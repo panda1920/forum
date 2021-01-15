@@ -2,35 +2,35 @@ import React from 'react';
 import { render, cleanup, act, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
 
-import EntityList from '../components/entity-list/entity-list.component';
-import PostCard from '../components/post-card/post-card.component';
-import CreatePost from '../components/create-post/create-post.component';
-import Breadcrumbs from '../components/breadcrumbs/breadcrumbs.component';
-import Spinner from '../components/spinner/spinner.component';
-import ThreadPage from '../pages/thread/thread-page';
+import EntityList from '../../components/entity-list/entity-list.component';
+import PostCard from '../../components/post-card/post-card.component';
+import CreatePost from '../../components/create-post/create-post.component';
+import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
+import Spinner from '../../components/spinner/spinner.component';
+import ThreadPage from '../../pages/thread/thread-page';
 
 import {
   createMockFetchImplementation,
   createSearchReturn
-} from '../scripts/test-utilities';
+} from '../../scripts/test-utilities';
 import {
   searchPosts,
   searchThreads,
   searchBoards,
   viewThread
-} from '../scripts/api';
-import { clientBoardPath, clientThreadPath } from '../paths';
+} from '../../scripts/api';
+import { clientBoardPath, clientThreadPath } from '../../paths';
 
 // mock out child components
-jest.mock('../components/entity-list/entity-list.component');
-jest.mock('../components/post-card/post-card.component');
-jest.mock('../components/htmlinput/htmlinput.component');
-jest.mock('../components/breadcrumbs/breadcrumbs.component');
-jest.mock('../components/spinner/spinner.component');
-jest.mock('../components/create-post/create-post.component');
+jest.mock('../../components/entity-list/entity-list.component');
+jest.mock('../../components/post-card/post-card.component');
+jest.mock('../../components/htmlinput/htmlinput.component');
+jest.mock('../../components/breadcrumbs/breadcrumbs.component');
+jest.mock('../../components/spinner/spinner.component');
+jest.mock('../../components/create-post/create-post.component');
 
 // mock out api functions
-jest.mock('../scripts/api', () => {
+jest.mock('../../scripts/api', () => {
   return {
     searchPosts: jest.fn().mockName('mocked searchPosts()'),
     searchThreads: jest.fn().mockName('mocked searchThreads()'),

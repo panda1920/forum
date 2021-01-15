@@ -3,9 +3,9 @@ import {
   render, screen, cleanup, fireEvent
 } from '@testing-library/react';
 
-import FormInput from '../components/form-input/form-input.component';
+import FormInput from '../../components/form-input/form-input.component';
 
-import { setNativeValue } from '../scripts/test-utilities';
+import { setNativeValue } from '../../scripts/test-utilities';
 
 afterEach(cleanup);
 

@@ -1,12 +1,11 @@
 import React from 'react';
-import { render, cleanup, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
-import Portrait from '../components/portrait/portrait.component';
-import PostCard from '../components/post-card/post-card.component';
-import { createPost } from '../scripts/api';
+import Portrait from '../../components/portrait/portrait.component';
+import PostCard from '../../components/post-card/post-card.component';
 
 // mock out child components
-jest.mock('../components/portrait/portrait.component');
+jest.mock('../../components/portrait/portrait.component');
 
 const TEST_DATA = {
   POST_NUM: 10,
@@ -32,7 +31,6 @@ beforeEach(() => {
 
 });
 afterEach(() => {
-  cleanup();
   Portrait.mockClear();
 });
 
@@ -44,6 +42,8 @@ describe('Testing behavior of PostCard component', () => {
     screen.getByText(postnum_pattern);
     screen.getByText(TEST_DATA.POST_DATA.content);
     screen.getByText(TEST_DATA.POST_DATA.owner[0].displayName);
+
+    expect(Portrait.getMockName()).toBe('Mocked portrait()');
   });
 
   test('Should pass title and owner user image to portrait', () => {

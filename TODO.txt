@@ -32,4 +32,5 @@ FORUM
             once when offset changes,
             second time when search result is returned
         - Fix issue where date is being converted to UTC time, not local time
-        - Create thread button should not appear when not logged in
+        - Create thread button should not appear in BoardPage when not logged in
+        - Client side validation during thread creation
