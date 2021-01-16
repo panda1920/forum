@@ -1,0 +1,54 @@
+@import '../../base-style.scss';
+
+.profile-field {
+    padding: 0 map-get($spaces, small);
+
+    color: map-get($colors, secondary);
+    background-color: map-get($colors, primary-light2);
+    font-size: map-get($font-size, medium);
+
+    .control-section, .fieldvalue-section {
+        padding: map-get($spaces, small) 0;
+        // width: map-get($dimensions, form-input-width);
+    }
+    .control-section {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+
+        font-weight: 600;
+
+        .label {
+            font-size: map-get($font-size, large);
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            .button {
+                padding: 5px;
+                margin-right: map-get($spaces, small);
+                border-radius: map-get($general-styling, border-radius-button);
+                
+                background-color: map-get($colors, secondary);
+                color: map-get($colors, primary);
+                text-align: center;
+                width: map-get($dimensions, user-profile-button-width);
+            }
+            .button.edit {
+                background-color: transparent;
+                color: map-get($colors, secondary);
+                font-size: map-get($font-size, large);
+            }
+            .button:last-of-type {
+                margin-right: 0;
+            }
+        }
+    }
+    .fieldvalue-section {
+        // background-color: map-get($colors, primary-light2);
+    }
+}

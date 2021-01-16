@@ -1,11 +1,16 @@
 import React, { useState, useCallback, useContext }  from 'react';
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit } from '@fortawesome/free-solid-svg-icons';
+
 import Button from '../button/button.component';
 import BlockText from '../block-text/block-text.component';
 import FormInput from '../form-input/form-input.component';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
 
 import { updateUser } from '../../scripts/api';
+
+import './profile-field-text.styles.scss';
 
 const ProfileFieldText = (props) => {
   const { value, fieldid, } = props;
@@ -59,7 +64,7 @@ const ProfileFieldText = (props) => {
     );
 
   return (
-    <div className='profile-field-text'>
+    <div className='profile-field profile-field-text'>
       { currentSection }
     </div>
   );
@@ -70,16 +75,25 @@ function createReadonlySection(props, callbacks) {
   const { toggleDisplayMode } = callbacks;
 
   return (
-    <div className='display-section profile-field-text-section'>
-      <BlockText>{ fieldname }</BlockText>
-      <BlockText data-testid='display-value'>{ value }</BlockText>
-      <Button
-        data-testid='edit-button'
-        onClick={toggleDisplayMode}
-        key='edit-button'
-      >
-        Edit
-      </Button>
+    <div className='profile-field-text-section display-mode'>
+      <div className='control-section'>
+        <BlockText className='label'>{ fieldname }</BlockText>
+
+        <div className='buttons'>
+          <Button
+            className='edit'
+            data-testid='edit-button'
+            onClick={toggleDisplayMode}
+            key='edit-button'
+          >
+            <FontAwesomeIcon icon={faEdit} />
+          </Button>
+        </div>
+      </div>
+
+      <div className='fieldvalue-section'>
+        <BlockText data-testid='display-value'>{ value }</BlockText>
+      </div>
     </div>
   );
 }
@@ -89,31 +103,39 @@ function createEditSection(props, input, error, callbacks) {
   const { saveHandler, toggleDisplayMode, onChangeHandler } = callbacks;
 
   return (
-    <div className='edit-section profile-field-text-section'>
-      <BlockText>
-        <label htmlFor='profile-field-text-input'>{ fieldname }</label>
-      </BlockText>
-      <FormInput
-        id='profile-field-text-input'
-        type='text'
-        value={input}
-        errorMsg={error}
-        onChange={onChangeHandler}
-      />
-      <Button
-        data-testid='save-button'
-        onClick={saveHandler}
-        key='save-button'
-      >
-        Save
-      </Button>
-      <Button
-        data-testid='cancel-button'
-        onClick={toggleDisplayMode}
-        key='cancel-button'
-      >
-        Cancel
-      </Button>
+    <div className='profile-field-text-section edit-mode'>
+      <div className='control-section'>
+        <BlockText className='label'>
+          <label htmlFor='profile-field-text-input'>{ fieldname }</label>
+        </BlockText>
+
+        <div className='buttons'>
+          <Button
+            data-testid='save-button'
+            onClick={saveHandler}
+            key='save-button'
+          >
+            Save
+          </Button>
+          <Button
+            data-testid='cancel-button'
+            onClick={toggleDisplayMode}
+            key='cancel-button'
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+
+      <div className='fieldvalue-section'>
+        <FormInput
+          id='profile-field-text-input'
+          type='text'
+          value={input}
+          errorMsg={error}
+          onChange={onChangeHandler}
+        />
+      </div>
     </div>
   );
 }

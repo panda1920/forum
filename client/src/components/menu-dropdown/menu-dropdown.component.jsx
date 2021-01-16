@@ -55,12 +55,12 @@ const MenuDropdown = ({ toggleDropdown }) => {
           </div>
         </li>
         <li className='noselect separator'></li>
-        <li className=''>
+        <li className='noselect'>
           <BlockText>
             <Button data-testid='user-profile' onClick={transitionToUserProfile}>User Profile</Button>
           </BlockText>
         </li>
-        <li className=''>
+        <li className='noselect'>
           <BlockText>
             <Button onClick={logoutHandler} data-testid='logout'>Logout</Button>
           </BlockText>

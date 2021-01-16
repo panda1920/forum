@@ -31,7 +31,7 @@ const Header = () => {
       return (
         <div className='controls-section'>
           <Button
-            className='button-portrait'
+            className='button-portrait noselect'
             onClick={toggleDropdown}
           >
             <Portrait title='header portrait' imageUrl={imageUrl} />
@@ -60,7 +60,7 @@ const Header = () => {
 
   return (
     <header id='header' title='header'>
-      <div className='logo-section'>
+      <div className='logo-section noselect'>
         <Button
           className='header-button button-logo'
         >
