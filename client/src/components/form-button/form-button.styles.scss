@@ -11,8 +11,5 @@
     color: map-get($colors, primary);
     font-weight: 600;
 
-    &:hover {
-        background-color: map-get($colors, primary);
-        color: map-get($colors, secondary-light1);
-    }
+    @include hovered-darken;
 }

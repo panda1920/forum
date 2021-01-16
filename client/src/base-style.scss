@@ -122,3 +122,16 @@ $general-styling: (
     left: 50%;
     transform: translate(-50%, -50%);
 }
+
+@mixin hovered-darken {
+    &:hover {
+        background-color: map-get($colors, primary);
+        color: map-get($colors, secondary-light1);
+    }
+}
+
+@mixin hovered-highlight {
+    &:hover {
+        color: map-get($colors, 'highlight');
+    }
+}

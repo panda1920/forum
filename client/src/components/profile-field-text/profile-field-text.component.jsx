@@ -32,8 +32,8 @@ const ProfileFieldText = (props) => {
     if (input == null)
       return false;
 
-    const onlySpacePattern = /^\s*$/;
-    if ( onlySpacePattern.test(input) )
+    const onlyWhitespacePattern = /^\s*$/;
+    if ( onlyWhitespacePattern.test(input) )
       return false;
     
     return true;
@@ -81,7 +81,7 @@ function createReadonlySection(props, callbacks) {
 
         <div className='buttons'>
           <Button
-            className='edit'
+            className='icon-button'
             data-testid='edit-button'
             onClick={toggleDisplayMode}
             key='edit-button'
@@ -111,6 +111,7 @@ function createEditSection(props, input, error, callbacks) {
 
         <div className='buttons'>
           <Button
+            className='text-button'
             data-testid='save-button'
             onClick={saveHandler}
             key='save-button'
@@ -118,6 +119,7 @@ function createEditSection(props, input, error, callbacks) {
             Save
           </Button>
           <Button
+            className='text-button'
             data-testid='cancel-button'
             onClick={toggleDisplayMode}
             key='cancel-button'

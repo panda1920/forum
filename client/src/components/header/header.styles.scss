@@ -47,12 +47,9 @@ header {
 }
 
 .header-button {
+    @include hovered-highlight;
+
     display: inline-block;
     height: inherit;
     padding: 0 0.5em;
-
-    &:hover {
-        cursor: pointer;
-        color: map-get($colors, 'highlight');
-    }
 }

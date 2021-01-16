@@ -28,7 +28,7 @@
             flex-direction: row;
             align-items: center;
 
-            .button {
+            .text-button {
                 padding: 5px;
                 margin-right: map-get($spaces, small);
                 border-radius: map-get($general-styling, border-radius-button);
@@ -37,11 +37,13 @@
                 color: map-get($colors, primary);
                 text-align: center;
                 width: map-get($dimensions, user-profile-button-width);
+                @include hovered-darken;
             }
-            .button.edit {
+            .icon-button {
                 background-color: transparent;
                 color: map-get($colors, secondary);
                 font-size: map-get($font-size, large);
+                @include hovered-highlight;
             }
             .button:last-of-type {
                 margin-right: 0;

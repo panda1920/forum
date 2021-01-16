@@ -17,6 +17,8 @@
         flex: 1 1 auto;
 
         .thread-card-title {
+            @include hovered-highlight;
+            
             font-size: map-get($font-size, 'medium');
             font-weight: 600;
             text-decoration: none;
@@ -24,9 +26,6 @@
 
             &:link {
                 color: inherit;
-            }
-            &:hover {
-                color: map-get($colors, highlight);
             }
         }
     }

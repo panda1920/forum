@@ -15,13 +15,12 @@
     }
     .breadcrumbs-active-link {
         text-decoration: none;
-
+        
         &:link, &:visited {
             color: map-get($colors, secondary);
         }
-        &:hover {
-            color: map-get($colors, highlight);
-        }
+        
+        @include hovered-highlight;
     }
     .breadcrumbs-inactive-link {
         font-weight: 600;
