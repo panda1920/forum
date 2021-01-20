@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen, act, cleanup, getByText } from '@testing-library/react';
+import { render, screen, act, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import ProfileFieldText from '../../components/profile-field-text/profile-field-text.component';
+import ProfileFieldText from '../../components/profile-field/profile-field-text.component';
 
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
 import { updateUser } from '../../scripts/api';

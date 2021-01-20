@@ -123,14 +123,14 @@ $general-styling: (
     transform: translate(-50%, -50%);
 }
 
-@mixin hovered-darken {
+@mixin darken-hovered {
     &:hover {
         background-color: map-get($colors, primary);
         color: map-get($colors, secondary-light1);
     }
 }
 
-@mixin hovered-highlight {
+@mixin highlight-hovered {
     &:hover {
         color: map-get($colors, 'highlight');
     }

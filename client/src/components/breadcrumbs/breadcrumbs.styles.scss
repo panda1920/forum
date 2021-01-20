@@ -20,7 +20,7 @@
             color: map-get($colors, secondary);
         }
         
-        @include hovered-highlight;
+        @include highlight-hovered;
     }
     .breadcrumbs-inactive-link {
         font-weight: 600;

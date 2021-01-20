@@ -2,7 +2,8 @@ import React, { useContext } from 'react';
 import { Redirect } from 'react-router-dom';
 
 import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
-import ProfileFieldText from '../../components/profile-field-text/profile-field-text.component';
+import ProfileFieldText from '../../components/profile-field/profile-field-text.component';
+import ProfilePasswordText from '../../components/profile-field/profile-field-password.component';
 import Spinner from '../../components/spinner/spinner.component';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
 
@@ -28,6 +29,7 @@ const UserProfile = () => {
         <h1>User info</h1>
       </div>
       <ProfileFieldText fieldname='hello' value='test_field'/>
+      <ProfilePasswordText />
     </div>
   );
 };

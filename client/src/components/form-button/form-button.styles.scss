@@ -11,5 +11,5 @@
     color: map-get($colors, primary);
     font-weight: 600;
 
-    @include hovered-darken;
+    @include darken-hovered;
 }

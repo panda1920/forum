@@ -47,7 +47,7 @@ header {
 }
 
 .header-button {
-    @include hovered-highlight;
+    @include highlight-hovered;
 
     display: inline-block;
     height: inherit;

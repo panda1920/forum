@@ -45,6 +45,15 @@ export function getSessionUser() {
     );
 }
 
+export function verifyCredentials(credentials) {
+    return apiCall(
+        paths.userApiSession + '/confirm',
+        'POST',
+        { 'Content-Type': 'application/json' },
+        JSON.stringify(credentials),
+    );
+}
+
 export function searchThreads(criteria) {
     const url = `${paths.threadApi}?${createQueryString(criteria)}`;
     return apiCall(

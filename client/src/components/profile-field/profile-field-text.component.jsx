@@ -7,6 +7,7 @@ import Button from '../button/button.component';
 import BlockText from '../block-text/block-text.component';
 import FormInput from '../form-input/form-input.component';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
+import useFormInputState from '../../hooks/form-input-state.hooks';
 
 import { updateUser } from '../../scripts/api';
 
@@ -16,17 +17,14 @@ const ProfileFieldText = (props) => {
   const { value, fieldid, } = props;
 
   const [ isReadonlyMode, setDisplayMode ] = useState(true);
-  const [ error, setError ] = useState('');
-  const [ input, setInput ] = useState(value);
-
   const { setCurrentUser, userId } = useContext(CurrentUserContext);
+  const formInput = useFormInputState(value);
 
   // callbacks
   const toggleDisplayMode = useCallback(() => {
     setDisplayMode(previousMode => !previousMode);
-    setInput(value);
-    setError('');
-  }, [ value ]);
+    formInput.reset();
+  }, [ formInput ]);
 
   const validateInput = useCallback((input) => {
     if (input == null)
@@ -40,27 +38,23 @@ const ProfileFieldText = (props) => {
   }, []);
 
   const saveHandler = useCallback(async () => {
-    if (!validateInput(input)) {
-      setError('Invalid input: must not be blank');
+    if (!validateInput(formInput.value)) {
+      formInput.setError('Invalid input: must not be blank');
       return;
     }
     else
-      setError('');
+    formInput.setError('');
 
-    const response = await updateUser({ userId, [fieldid]: input });
+    const response = await updateUser({ userId, [fieldid]: formInput.value });
     const { sessionUser } = await response.json();
 
     setCurrentUser(sessionUser);
-  }, [ setCurrentUser, validateInput, userId, fieldid, input ]);
-
-  const onChangeHandler = (e) => {
-    setInput(e.target.value);
-  };
+  }, [ setCurrentUser, validateInput, userId, fieldid, formInput ]);
 
   const currentSection = isReadonlyMode ?
     createReadonlySection(props, { toggleDisplayMode, }) :
-    createEditSection(props, input, error,
-      { saveHandler, toggleDisplayMode, onChangeHandler }
+    createEditSection(props, formInput,
+      { saveHandler, toggleDisplayMode, }
     );
 
   return (
@@ -98,9 +92,9 @@ function createReadonlySection(props, callbacks) {
   );
 }
 
-function createEditSection(props, input, error, callbacks) {
+function createEditSection(props, inputState, callbacks) {
   const { fieldname } = props;
-  const { saveHandler, toggleDisplayMode, onChangeHandler } = callbacks;
+  const { saveHandler, toggleDisplayMode, } = callbacks;
 
   return (
     <div className='profile-field-text-section edit-mode'>
@@ -133,9 +127,9 @@ function createEditSection(props, input, error, callbacks) {
         <FormInput
           id='profile-field-text-input'
           type='text'
-          value={input}
-          errorMsg={error}
-          onChange={onChangeHandler}
+          value={inputState.value}
+          errorMsg={inputState.error}
+          onChange={inputState.onChange}
         />
       </div>
     </div>

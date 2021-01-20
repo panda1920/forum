@@ -17,7 +17,7 @@
         flex: 1 1 auto;
 
         .thread-card-title {
-            @include hovered-highlight;
+            @include highlight-hovered;
             
             font-size: map-get($font-size, 'medium');
             font-weight: 600;
