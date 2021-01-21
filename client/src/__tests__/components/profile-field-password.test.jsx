@@ -512,7 +512,6 @@ describe('Testing behavior of ProfileFieldText', () => {
       userEvent.click( screen.getByTestId(IDENTIFIERS.EDIT_BUTTON_ID) );
   
       // put some input, show error and exit edit mode
-      // put some input and exit edit mode
       userEvent.type(
         screen.getByLabelText(IDENTIFIERS.OLD_PASSWORD_LABEL), invalidValues[0]
       );
@@ -534,7 +533,5 @@ describe('Testing behavior of ProfileFieldText', () => {
 
       cleanup();
     }
-
-
   });
 });

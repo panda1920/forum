@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext } from 'react';
 
 import { ModalContext } from '../../contexts/modal/modal';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
@@ -7,6 +7,8 @@ import FormInput from '../form-input/form-input.component';
 import FormButton from '../form-button/form-button.component';
 import BlockText from '../block-text/block-text.component';
 import Button from '../button/button.component';
+import useFormInputState from '../../hooks/form-input-state.hooks';
+
 import { ReactComponent as GoogleLogo } from '../../icons/google_signin_buttons/google.svg';
 import { ReactComponent as TwitterLogo } from '../../icons/Twitter_Logos/Twitter_Logo_Blue/Twitter_Logo_Blue.svg';
 
@@ -19,16 +21,15 @@ export const ModalLoginTitle = 'modal-login';
 const ModalLogin = () => {
   const { isLoginOpen, toggleLogin, toggleSignup } = useContext(ModalContext);
   const { setCurrentUser } = useContext(CurrentUserContext);
-  const [ email, setEmail ] = useState('');
-  const [ password, setPassword ] = useState('');
-  const [ emailError, setEmailError ] = useState('');
-  const [ passwordError, setPasswordError ] = useState('');
+  const email = useFormInputState('');
+  const password = useFormInputState('');
 
   const sendLoginInfo = async () => {
     if ( !validateInputs() ) return;
-    resetErrors();
+    email.setError('');
+    password.setError('');
 
-    const response = await login(email, password);
+    const response = await login(email.value, password.value);
 
     if (response.ignore)
       return;
@@ -37,23 +38,18 @@ const ModalLogin = () => {
 
   const validateInputs = () => {
     const emailPattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    if ( !emailPattern.test(email) ) {
-      setEmailError('Invalid email');
+    if ( !emailPattern.test(email.value) ) {
+      email.setError('Invalid email');
       return false;
     }
 
     const passwordPattern = /^[^ \t]+$/;
-    if ( !passwordPattern.test(password) ) {
-      setPasswordError('Invalid password');
+    if ( !passwordPattern.test(password.value) ) {
+      password.setError('Invalid password');
       return false;
     }
 
     return true;
-  };
-
-  const resetErrors = () => {
-    setEmailError('');
-    setPasswordError('');
   };
 
   const loginSuccess = async (response) => {
@@ -67,17 +63,9 @@ const ModalLogin = () => {
     const isPasswordError = /password/i.test(description);
 
     if (isPasswordError)
-      setPasswordError(description);
+      password.setError(description);
     else
-      setEmailError(description);
-  };
-
-  const onEmailChange = (event) => {
-    setEmail(event.target.value);
-  };
-
-  const onPasswordChange = (event) => {
-    setPassword(event.target.value);
+      email.setError(description);
   };
 
   const openSignup = () => {
@@ -86,9 +74,8 @@ const ModalLogin = () => {
   };
 
   const closeLogin = () => {
-    setEmail('');
-    setPassword('');
-    resetErrors();
+    email.reset();
+    password.reset();
     toggleLogin();
   };
   
@@ -107,18 +94,18 @@ const ModalLogin = () => {
           alt='login input email'
           type='text'
           placeholder='Email'
-          value={email}
-          onChange={onEmailChange}
-          errorMsg={emailError}
+          value={email.value}
+          onChange={email.onChange}
+          errorMsg={email.error}
         />
         <FormInput
           id='login-input-password'
           alt='login input password'
           type='password'
           placeholder='Password'
-          value={password}
-          onChange={onPasswordChange}
-          errorMsg={passwordError}
+          value={password.value}
+          onChange={password.onChange}
+          errorMsg={password.error}
         />
         <div className='login-button-section'>
           <FormButton
