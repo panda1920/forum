@@ -15,7 +15,7 @@ import './user-profile-page.styles.scss';
 // want to make sure that 
 
 const UserProfile = () => {
-  const { isLoggedin, beforeFetch } = useContext(CurrentUserContext);
+  const { isLoggedin, beforeFetch, displayName } = useContext(CurrentUserContext);
 
   if (beforeFetch)
     return <Spinner />;
@@ -28,7 +28,7 @@ const UserProfile = () => {
       <div className='user-profile-page-info'>
         <h1>User info</h1>
       </div>
-      <ProfileFieldText fieldname='hello' value='test_field'/>
+      <ProfileFieldText fieldname='Display Name' fieldid='displayName' value={displayName} />
       <ProfilePasswordText />
     </div>
   );

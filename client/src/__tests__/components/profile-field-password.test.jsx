@@ -233,7 +233,10 @@ describe('Testing behavior of ProfileFieldText', () => {
   test('Clicking on save button with valid values should trigger confirmCredential API', async  () => {
     const validOldPassword = TEST_DATA.DEFAULT_PASSWORD + '_old';
     const validNewpassword = TEST_DATA.DEFAULT_PASSWORD + '_new';
-    const expectedCredentials = { password: validOldPassword };
+    const expectedCredentials = {
+      userId: TEST_DATA.CURRENT_USER.userId,
+      password: validOldPassword
+    };
 
     renderProfileFieldText();
 

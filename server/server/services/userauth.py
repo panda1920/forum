@@ -119,19 +119,26 @@ class UserAuthenticationService:
         logger.info('Logout user')
         self._session.remove_user()
 
-    def confirm_session_credentials(self, password):
+    def confirm_user_credential(self, user_id, password):
         """
-        confirms that password is correct for current session user.
+        Confirms that password is correct for the specified user.
+        Only user himself is authorized to confirm as such.
         
         Args:
+            user_id(str): string that uniquely identifies user
             password(str): plain text password for the current session user
         Returns:
             bool: True if correct
         Raises:
             InvalidUserCredentials: if password is incorrect
+            UnauthorizedError: if user_id does not match session user
         """
         logger.info('Verifying session user credentials')
         session_user = self._session.get_user()
+
+        if user_id != session_user.userId:
+            logger.error('Unauthorized user attempting to confirm credential')
+            raise exceptions.UnauthorizedError('Unauthorized operation')
 
         if not PasswordService.verifyPassword(password, session_user.password):
             logger.info('Invalid user credential')

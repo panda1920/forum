@@ -144,7 +144,7 @@ class TestLogout:
         mockSession.remove_user.assert_called_once()
 
 
-class TestConfirmSessionCredentials:
+class TestConfirmUserCredential:
     DEFAULT_SESSION_USER_ATTRS = dict(
         _id='some_random_id',
         userId='000',
@@ -159,6 +159,15 @@ class TestConfirmSessionCredentials:
         attrs['password'] = PasswordService.hashPassword(password)
         return create_mock_entity_fromattrs(attrs)
 
+    def test_shouldRaiseExceptionWhenUserIdNotMatchSessionUser(self, user_auth):
+        wrong_userid = 'wrong_id'
+        password = 'some_password'
+        mock_session = user_auth._session
+        mock_session.get_user.return_value = self.create_user_with_password(password)
+
+        with pytest.raises(exceptions.UnauthorizedError):
+            user_auth.confirm_user_credential(wrong_userid, password)
+
     def test_shouldReturnTrueWhenCorrectPasswordIsPassed(self, user_auth):
         mock_session = user_auth._session
         user_passwords = [ 'password', 'some_password', '12345678', 'hello_world' ]
@@ -167,7 +176,7 @@ class TestConfirmSessionCredentials:
             user = self.create_user_with_password(password)
             mock_session.get_user.return_value = user
 
-            assert user_auth.confirm_session_credentials(password) is True
+            assert user_auth.confirm_user_credential(user.userId, password) is True
 
     def test_shouldRaiseExceptionWhenWrongPasswordIsPassed(self, user_auth):
         mock_session = user_auth._session
@@ -179,4 +188,4 @@ class TestConfirmSessionCredentials:
             mock_session.get_user.return_value = user
 
             with pytest.raises(exceptions.InvalidUserCredentials):
-                user_auth.confirm_session_credentials(wrong_password)
+                user_auth.confirm_user_credential(user.userId, wrong_password)

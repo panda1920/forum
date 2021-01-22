@@ -46,11 +46,12 @@ export function getSessionUser() {
 }
 
 export function verifyCredentials(credentials) {
+    const { userId, ...rest } = credentials;
     return apiCall(
-        paths.userApiSession + '/confirm',
+        `${paths.userApi}/${userId}/confirm`,
         'POST',
         { 'Content-Type': 'application/json' },
-        JSON.stringify(credentials),
+        JSON.stringify(rest),
     );
 }
 

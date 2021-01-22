@@ -48,8 +48,9 @@ const ProfileFieldText = () => {
     if (!hasNoError) return;
 
     // verify credentials before update
-    let response = await verifyCredentials({ password: oldPassword.value });
+    let response = await verifyCredentials({ userId, password: oldPassword.value });
     if (!response.ok) {
+      console.log(await response.json());
       oldPassword.setError('Invalid value: verification failed');
       return;
     }

@@ -34,7 +34,5 @@ FORUM
         - Fix issue where date is being converted to UTC time, not local time
         - Create thread button should not appear in BoardPage when not logged in
         - Client side validation during thread creation
-        - figure out why backend is not responding properly to user update
-        - fix verify credentials api path
-            make it a member route
-        - use custom hooks in modal forms
+        - profile field must switch to readonly after succesful save
+        - Fix modal signup to deal with existing email

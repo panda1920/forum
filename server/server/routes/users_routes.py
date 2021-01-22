@@ -55,9 +55,6 @@ def updateUserv1(userId):
         return route_utils.createResultResponse(result)
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
-    except Exception as e:
-        print(e)
-        raise
 
 
 @cors_wrapped_route(routes.route, '/v1/users/<userId>/delete', methods=['DELETE'])
@@ -66,6 +63,17 @@ def deleteUserByIdv1(userId):
         delete = Config.getDeleteService(current_app)
         result = delete.deleteUserById(userId)
         return route_utils.createResultResponse(result)
+    except MyAppException as e:
+        return route_utils.createJSONErrorResponse(e)
+
+
+@cors_wrapped_route(routes.route, '/v1/users/<userId>/confirm', methods=['POST'])
+def confirmUserCredentialv1(userId):
+    try:
+        userauth = Config.getAuthService(current_app)
+        data = route_utils.getJsonFromRequest(request)
+        userauth.confirm_user_credential(userId, data['password'])
+        return route_utils.createResultResponse('Credentials verified')
     except MyAppException as e:
         return route_utils.createJSONErrorResponse(e)
 
@@ -93,17 +101,6 @@ def logoutUserv1():
 @cors_wrapped_route(routes.route, '/v1/users/session', methods=['GET'])
 def getSessionUserv1():
     return route_utils.createJSONResponse([], 200)
-
-
-@cors_wrapped_route(routes.route, '/v1/users/session/confirm', methods=['POST'])
-def confirmSessionUserv1():
-    try:
-        userauth = Config.getAuthService(current_app)
-        data = route_utils.getJsonFromRequest(request)
-        userauth.confirm_session_credentials(data['password'])
-        return route_utils.createResultResponse('Credentials verified')
-    except MyAppException as e:
-        return route_utils.createJSONErrorResponse(e)
 
 
 @routes.before_request
