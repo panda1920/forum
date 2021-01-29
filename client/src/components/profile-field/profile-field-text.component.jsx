@@ -26,30 +26,22 @@ const ProfileFieldText = (props) => {
     formInput.reset();
   }, [ formInput ]);
 
-  const validateInput = useCallback((input) => {
-    if (input == null)
-      return false;
-
-    const onlyWhitespacePattern = /^\s*$/;
-    if ( onlyWhitespacePattern.test(input) )
-      return false;
-    
-    return true;
-  }, []);
-
   const saveHandler = useCallback(async () => {
+    // validate input
     if (!validateInput(formInput.value)) {
       formInput.setError('Invalid input: must not be blank');
       return;
     }
     else
-    formInput.setError('');
+      formInput.setError('');
 
+    // update user
     const response = await updateUser({ userId, [fieldid]: formInput.value });
     const { sessionUser } = await response.json();
-
     setCurrentUser(sessionUser);
-  }, [ setCurrentUser, validateInput, userId, fieldid, formInput ]);
+
+    toggleDisplayMode();
+  }, [ setCurrentUser, userId, fieldid, formInput, toggleDisplayMode ]);
 
   const currentSection = isReadonlyMode ?
     createReadonlySection(props, { toggleDisplayMode, }) :
@@ -135,5 +127,17 @@ function createEditSection(props, inputState, callbacks) {
     </div>
   );
 }
+
+// helpers
+const validateInput = (input) => {
+  if (input == null)
+    return false;
+
+  const onlyWhitespacePattern = /^\s*$/;
+  if ( onlyWhitespacePattern.test(input) )
+    return false;
+  
+  return true;
+};
 
 export default ProfileFieldText;

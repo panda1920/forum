@@ -239,6 +239,31 @@ describe('Testing behavior of ProfileFieldText', () => {
     expect( screen.queryByText( /invalid/i ) ).not.toBeInTheDocument();
   });
 
+  test('Clicking on save button with valid values should switch back from edit mode', async () => {
+    const validValue = 'hello world';
+
+    renderProfileFieldText();
+
+    // switch to edit mode
+    userEvent.click( screen.getByTestId(IDENTIFIERS.EDIT_BUTTON_ID) );
+
+    // input and save
+    const saveButton = screen.getByTestId(IDENTIFIERS.SAVE_BUTTON_ID);
+    const input = screen.getByLabelText(TEST_DATA.DEFAULT_FIELDNAME);
+    userEvent.type(input, validValue);
+    await act(async () => userEvent.click(saveButton) );
+
+    expect( screen.queryByTestId(IDENTIFIERS.SAVE_BUTTON_ID) )
+      .not.toBeInTheDocument();
+    expect( screen.queryByTestId(IDENTIFIERS.CANCEL_BUTTON_ID) )
+      .not.toBeInTheDocument();
+    expect( screen.queryByLabelText(TEST_DATA.DEFAULT_FIELDNAME) )
+      .not.toBeInTheDocument();
+    
+    expect( screen.getByTestId(IDENTIFIERS.EDIT_BUTTON_ID) )
+      .toBeInTheDocument();
+  });
+
   test('Pressing on cancel button should cause input field and ok/cancel button to disappear', () => {
     renderProfileFieldText();
 

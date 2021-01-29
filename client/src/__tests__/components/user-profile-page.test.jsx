@@ -1,17 +1,20 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { render, cleanup, act } from '@testing-library/react';
+import { render, cleanup, act, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 
 import Breadcrumbs from '../../components/breadcrumbs/breadcrumbs.component';
 import UserProfile from '../../pages/user-profile/user-profile-page';
 import Spinner from '../../components/spinner/spinner.component';
+import ProfileFieldText from '../../components/profile-field/profile-field-text.component';
+import ProfileFieldPassword from '../../components/profile-field/profile-field-password.component';
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
-
 
 // mock out subcomponents
 jest.mock('../../components/breadcrumbs/breadcrumbs.component');
 jest.mock('../../components/spinner/spinner.component');
+jest.mock('../../components/profile-field/profile-field-password.component');
+jest.mock('../../components/profile-field/profile-field-text.component');
 
 
 const TEST_DATA = {
@@ -24,6 +27,10 @@ const TEST_DATA = {
   DEFAULT_URL: '/some/path',
 };
 
+const IDENTIFIERS = {
+  DISPLAYNAME_FIELD_ID: 'displayName',
+  PASSWORD_FIELD_ID: 'password',
+};
 
 async function renderUserProfile(options = {}) {
   let { isLoggedin, beforeFetch } = options;
@@ -63,11 +70,13 @@ afterEach(() => {
   cleanup();
   Breadcrumbs.mockClear();
   Spinner.mockClear();
+  ProfileFieldText.mockClear();
+  ProfileFieldPassword.mockClear();
 });
 
 describe('Testing UserProfile to render subcomponents', () => {
   test('Renders page title', async () => {
-    const pageTitle = 'User info';
+    const pageTitle = 'User Profile';
 
     const { getByText } = await renderUserProfile();
 
@@ -83,7 +92,10 @@ describe('Testing UserProfile to render subcomponents', () => {
   test('Renders UserInfo fields', async () => {
     await renderUserProfile();
 
-    // create interface for userprofile fields
+    expect( screen.getByTestId(IDENTIFIERS.DISPLAYNAME_FIELD_ID) )
+      .toBeInTheDocument();
+    expect( screen.getByTestId(IDENTIFIERS.PASSWORD_FIELD_ID) )
+      .toBeInTheDocument();
   });
 
   test('Renders only Spinner while waiting for usercontext to populate', async () => {
@@ -94,6 +106,8 @@ describe('Testing UserProfile to render subcomponents', () => {
     expect(Spinner).toHaveBeenCalledTimes(1);
     expect(Breadcrumbs).not.toHaveBeenCalled();
     expect( queryByText(pageTitle) ).not.toBeInTheDocument();
+    expect(ProfileFieldText).not.toHaveBeenCalled();
+    expect(ProfileFieldPassword).not.toHaveBeenCalled();
   });
 });
 
@@ -120,21 +134,16 @@ describe('Testing behavior of UserProfile', () => {
     }
   });
 
-  test('Should pass callbacks to userprofile fields', async () => {
+  test('Should pass user information to displayName field', async () => {
+    await renderUserProfile();
 
-  });
-});
+    const displayNameComponentCall = ProfileFieldText.mock.calls.find(call => {
+      return call[0]['data-testid'] === IDENTIFIERS.DISPLAYNAME_FIELD_ID;
+    });
+    const [ props ] = displayNameComponentCall;
 
-describe('Testing callbacks passed to subcomponents', () => {
-  test('Callback for username should call update API on user', async () => {
-    
-  });
-  
-  test('Callback for password should call update API on user', async () => {
-    
-  });
-  
-  test('Callback for displayName should call update API on user', async () => {
-
+    expect(props).toHaveProperty('fieldname', 'Display Name');
+    expect(props).toHaveProperty('fieldid', 'displayName');
+    expect(props).toHaveProperty('value', TEST_DATA.CURRENT_USER.displayName);
   });
 });

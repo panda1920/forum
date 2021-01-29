@@ -50,7 +50,6 @@ const ProfileFieldText = () => {
     // verify credentials before update
     let response = await verifyCredentials({ userId, password: oldPassword.value });
     if (!response.ok) {
-      console.log(await response.json());
       oldPassword.setError('Invalid value: verification failed');
       return;
     }
@@ -59,11 +58,13 @@ const ProfileFieldText = () => {
     response = await updateUser({ userId, password: newPassword.value });
     const { sessionUser } = await response.json();
     setCurrentUser(sessionUser);
-  }, [ setCurrentUser, userId, oldPassword, newPassword, confPassword ]);
 
-  const currentSection = isReadonlyMode ?
-    createReadonlySection({ toggleDisplayMode }) :
-    createEditSection(
+    toggleDisplayMode();
+  }, [ setCurrentUser, userId, oldPassword, newPassword, confPassword, toggleDisplayMode ]);
+
+  const currentSection = isReadonlyMode
+    ? createReadonlySection({ toggleDisplayMode })
+    : createEditSection(
       { oldPassword, newPassword, confPassword },
       { saveHandler, toggleDisplayMode }
     );

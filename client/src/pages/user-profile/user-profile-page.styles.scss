@@ -2,6 +2,7 @@
 
 .user-profile-page {
     padding: map-get($spaces, large) 0;
+    color: map-get($colors, secondary);
 
     .breadcrumbs-container {
         margin-bottom: map-get($spaces, medium);
@@ -15,6 +16,21 @@
     .user-profile-page-info {
         @include centralize-in-page;
         
-        color: map-get($colors, secondary);
+        margin-bottom: map-get($spaces, large);
+    }
+
+    .user-profile-page-fields {
+        @include centralize-in-page;
+
+        border-radius: map-get($general-styling, border-radius-card);
+        overflow: hidden;
+        
+        h2 {
+            padding: map-get($spaces, medium);
+            background-color: map-get($colors, primary-light2);
+        }
+        .profile-field {
+            margin-top: 1px;
+        }
     }
 }

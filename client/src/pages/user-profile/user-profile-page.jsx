@@ -9,11 +9,6 @@ import { CurrentUserContext } from '../../contexts/current-user/current-user';
 
 import './user-profile-page.styles.scss';
 
-// when normal transition, isloggedin returns true
-// when direct transition, basepage has not had the change to setcurrentuser
-// so regardless of the logged in state isloggedin will be false
-// want to make sure that 
-
 const UserProfile = () => {
   const { isLoggedin, beforeFetch, displayName } = useContext(CurrentUserContext);
 
@@ -26,10 +21,18 @@ const UserProfile = () => {
     <div className='user-profile-page'>
       { createBreadCrumbs() }
       <div className='user-profile-page-info'>
-        <h1>User info</h1>
+        <h1>User Profile</h1>
       </div>
-      <ProfileFieldText fieldname='Display Name' fieldid='displayName' value={displayName} />
-      <ProfilePasswordText />
+      <div className='user-profile-page-fields'>
+        <h2>Account information</h2>
+        <ProfileFieldText
+          fieldname='Display Name'
+          fieldid='displayName'
+          data-testid='displayName'
+          value={displayName}
+        />
+        <ProfilePasswordText data-testid='password'/>
+      </div>
     </div>
   );
 };

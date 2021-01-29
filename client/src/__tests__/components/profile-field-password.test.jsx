@@ -308,6 +308,39 @@ describe('Testing behavior of ProfileFieldText', () => {
     expect(sessionUser).toMatchObject(TEST_DATA.API_RETURN.sessionUser);
   });
 
+  test('Clicking on save button with valid values should switch back from edit mode', async () => {
+    const validOldPassword = TEST_DATA.DEFAULT_PASSWORD + '_old';
+    const validNewpassword = TEST_DATA.DEFAULT_PASSWORD + '_new';
+    renderProfileFieldText();
+
+    // switch to edit mode
+    userEvent.click( screen.getByTestId(IDENTIFIERS.EDIT_BUTTON_ID) );
+
+    // type in some value and click save
+    const oldPasswordInput = screen.getByLabelText(IDENTIFIERS.OLD_PASSWORD_LABEL);
+    const newPasswordInput = screen.getByLabelText(IDENTIFIERS.NEW_PASSWORD_LABEL);
+    const confPasswordInput = screen.getByLabelText(IDENTIFIERS.CONFIRM_PASSWORD_LABEL);
+    const saveButton = screen.getByTestId(IDENTIFIERS.SAVE_BUTTON_ID);
+    userEvent.type(oldPasswordInput, validOldPassword);
+    userEvent.type(newPasswordInput, validNewpassword);
+    userEvent.type(confPasswordInput, validNewpassword);
+    await act(async () => userEvent.click(saveButton));
+
+    expect( screen.queryByLabelText(IDENTIFIERS.OLD_PASSWORD_LABEL) )
+      .not.toBeInTheDocument();
+    expect( screen.queryByLabelText(IDENTIFIERS.NEW_PASSWORD_LABEL) )
+      .not.toBeInTheDocument();
+    expect( screen.queryByLabelText(IDENTIFIERS.CONFIRM_PASSWORD_LABEL) )
+      .not.toBeInTheDocument();
+    expect( screen.queryByTestId(IDENTIFIERS.SAVE_BUTTON_ID) )
+      .not.toBeInTheDocument();
+    expect( screen.queryByTestId(IDENTIFIERS.CANCEL_BUTTON_ID) )
+      .not.toBeInTheDocument();
+
+    expect( screen.getByTestId(IDENTIFIERS.EDIT_BUTTON_ID) )
+      .toBeInTheDocument();
+  });
+
   test('Clicking on save button with invalid values should not send API call', async () => {
     const validPassword = TEST_DATA.DEFAULT_PASSWORD;
     const invalidPassword = ' ';
