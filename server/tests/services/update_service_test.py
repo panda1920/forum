@@ -102,6 +102,22 @@ class TestUserUpdateService:
 
         assert result == self.DEFAULT_REPOUPDATE_RESULT
 
+    def test_updateUserShouldUpdateSessionUserInfoWithNewUser(self, setup_service):
+        mock_session = setup_service._session
+        old_users = create_mock_entities(self.REPOUSER_ATTRSET)
+        new_users = create_mock_entities( [dict(userId='new_id')] )
+        mock_repo = setup_service._repo
+        mock_repo.searchUser.side_effect = [
+            create_repo_return(old_users, 'users'),
+            create_repo_return(new_users, 'users'),
+        ]
+
+        setup_service.updateUser(self.DEFAULT_USER)
+
+        assert mock_session.set_user.call_count == 1
+        user, *_ = mock_session.set_user.call_args_list[0][0]
+        assert user == new_users[0]
+
 
 class TestPostUpdateService:
     DEFAULT_REPOUPDATE_RESULT = 'default_result'

@@ -16,7 +16,7 @@ class RequestUserManager:
     def setCurrentUser(self):
         """
         Places information of session user in global
-        Intended to be called in before_request.
+        Intended to be called in before_request hook.
         
         Args:
         Returns:

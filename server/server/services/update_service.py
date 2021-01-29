@@ -35,7 +35,11 @@ class UpdateService:
         searchFilter = self._create_eqfilter(user, 'userId')
         self._authorizeUpdateUser(searchFilter)
 
-        return self._repo.updateUser(searchFilter, user)
+        updated_result = self._repo.updateUser(searchFilter, user)
+        updated_user = self._repo.searchUser(searchFilter)['users'][0]
+        self._session.set_user(updated_user)
+
+        return updated_result
 
     def updatePost(self, post):
         """
@@ -183,7 +187,8 @@ class UpdateService:
 
     def _authorizeUpdate(self, entities):
         """
-        authorize current user for deletion of entities
+        authorize current user for update of entities
+        only allow update when all entities belong to session user
         
         Args:
             entities(list): list of entities to delete
