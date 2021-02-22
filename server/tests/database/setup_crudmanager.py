@@ -16,7 +16,7 @@ from server.database.mongo_crudmanager import MongoCrudManager
 import tests.mocks as mocks
 
 PROJECT_DIR = Path(__file__).resolve().parents[3]
-TESTDATA = PROJECT_DIR / 'server' / 'tests' / 'database' / 'testdata.json'
+TESTDATA = PROJECT_DIR / 'server' / 'tests' / 'testdata' / 'dbdata.json'
 
 
 class SetupCrudManager:

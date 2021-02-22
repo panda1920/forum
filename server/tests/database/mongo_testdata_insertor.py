@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Script to insert data in mongo
-Data is based on content of testdata.json
+Data is based on content of dbdata.json
 """
 
 import logging

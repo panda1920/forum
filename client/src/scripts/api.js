@@ -38,6 +38,19 @@ export function updateUser(fields) {
     );
 }
 
+export function updateUserPortrait(fields) {
+    const { userId, file } = fields;
+    const formData = new FormData();
+    formData.set('file', file);
+    
+    return apiCall(
+        `${paths.userApi}/${userId}/update`,
+        'PATCH',
+        {},
+        formData,
+    );
+}
+
 export function getSessionUser() {
     return apiCall(
         paths.userApiSession,
@@ -124,7 +137,7 @@ async function defaultResponseHandler(response) {
 }
 
 function createQueryString(object) {
-    return Object.keys(object).map(key =>
-        encodeURIComponent(key) + '=' + encodeURIComponent(object[key])
-    ).join('&');
+    return Object.keys(object)
+        .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(object[key]))
+        .join('&');
 }

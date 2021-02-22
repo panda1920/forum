@@ -4,9 +4,11 @@ This file houses tests for file_repository.py
 """
 
 import os
+import io
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
+import requests
 import pytest
 import boto3
 
@@ -18,13 +20,14 @@ ACCESS_KEY = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_JWT_SECRET_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 TEST_BUCKETNAME = 'myforumapp-test-bucket'
-TEST_DATA_PATH = Path(__file__).parents[0] / 'testdata.json'
+TEST_DATA_PATH = Path(__file__).parents[1] / 'testdata' / 'dbdata.json'
 DEFAULT_TEST_FILENAME = 'filename.txt'
 DEFAULT_TEST_FILENAMES = [
     'filename1.txt',
     'filename2.txt',
     'filename3.txt',
 ]
+DEFAULT_URL_PREFIX = f'https://s3-ap-northeast-1.amazonaws.com/{TEST_BUCKETNAME}/'
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -85,7 +88,10 @@ def retrieveS3Objects(s3):
 
 def writeSampleFileAs(s3, filename):
     with TEST_DATA_PATH.open('rb') as data:
-        s3.upload_fileobj(data, TEST_BUCKETNAME, filename)
+        s3.upload_fileobj(
+            data, TEST_BUCKETNAME, filename,
+            ExtraArgs={ 'ACL': 'public-read' }
+        )
 
 
 def deleteS3Objects(s3, objects):
@@ -271,3 +277,38 @@ class TestS3FileRepository:
         with pytest.raises(exceptions.FailedAWSOperation):
             with patch('server.database.file_repository.boto3', new=boto3_mock):
                 repo.deleteFiles( DEFAULT_TEST_FILENAME[0:1] )
+
+    def test_getUrlShouldReturnPublicUrlOfFile(
+        self, putMultipleSampleFiles, cleanupS3Bucket
+    ):
+        repo = S3FileRepository(TEST_BUCKETNAME)
+
+        for filename in DEFAULT_TEST_FILENAMES:
+            expected_url = DEFAULT_URL_PREFIX + filename
+            url = repo.getUrl(filename)
+
+            assert url == expected_url
+
+            with TEST_DATA_PATH.open('rb') as test_file:
+                expected_binary = test_file.read()
+            binary = download_file(url).read()
+
+            assert binary == expected_binary
+
+    def test_getUrlShouldRaiseExceptionWhenError(self):
+        repo = S3FileRepository(TEST_BUCKETNAME)
+
+        # setup mock
+        boto3_mock = MagicMock()
+        client_mock = MagicMock()
+        boto3_mock.client.return_value = client_mock
+        client_mock.get_bucket_location.side_effect = Exception('some exception')
+
+        with pytest.raises(exceptions.FailedAWSOperation):
+            with patch('server.database.file_repository.boto3', new=boto3_mock):
+                repo.getUrl(DEFAULT_TEST_FILENAME)
+
+
+def download_file(url):
+    r = requests.get(url)
+    return io.BytesIO(r.content)

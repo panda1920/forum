@@ -183,5 +183,5 @@ class DataCreator:
 
 
 if __name__ == '__main__':
-    DEFAULT_FILENAME = Path(__file__).resolve().parents[0] / 'testdata.json'
+    DEFAULT_FILENAME = Path(__file__).resolve().parents[1] / 'testdata' / 'dbdata.json'
     DataCreator(DEFAULT_FILENAME).createTestData()

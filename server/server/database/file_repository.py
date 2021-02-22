@@ -56,6 +56,7 @@ class S3FileRepository(FileRepository):
 
     def __init__(self, bucket_name):
         self._bucket_name = bucket_name
+        self._bucket_location = None
         self._access_key = os.getenv('AWS_ACCESS_KEY_ID')
         self._secret_key = os.getenv('AWS_SECRET_ACCESS_KEY')
 
@@ -93,6 +94,15 @@ class S3FileRepository(FileRepository):
 
         with self._awsOperationHandler('Failed to delete file in repo'):
             s3.delete_objects(Bucket=self._bucket_name, Delete=objects_to_delete)
+
+    def getUrl(self, filename):
+        s3 = self._createS3Client()
+        if self._bucket_location is None:
+            with self._awsOperationHandler('Failed to get bucket info'):
+                response = s3.get_bucket_location(Bucket=self._bucket_name)
+                self._bucket_location = response['LocationConstraint']
+
+        return f'https://s3-{self._bucket_location}.amazonaws.com/{self._bucket_name}/' + filename
 
     def _createS3Client(self):
         """

@@ -18,6 +18,7 @@ boto3 = "*"
 pillow = "*"
 flask-session = "*"
 gunicorn = "*"
+requests = "*"
 
 [requires]
 python_version = "3.7"
