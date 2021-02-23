@@ -282,6 +282,8 @@ class TestS3FileRepository:
         self, putMultipleSampleFiles, cleanupS3Bucket
     ):
         repo = S3FileRepository(TEST_BUCKETNAME)
+        with TEST_DATA_PATH.open('rb') as test_file:
+            expected_binary = test_file.read()
 
         for filename in DEFAULT_TEST_FILENAMES:
             expected_url = DEFAULT_URL_PREFIX + filename
@@ -289,8 +291,6 @@ class TestS3FileRepository:
 
             assert url == expected_url
 
-            with TEST_DATA_PATH.open('rb') as test_file:
-                expected_binary = test_file.read()
             binary = download_file(url).read()
 
             assert binary == expected_binary

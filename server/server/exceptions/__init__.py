@@ -83,7 +83,7 @@ class InvalidSession(MyAppException):
 
 class InvalidImageFileError(MyAppException):
     """
-    Raised when non-valid image file was uploaded
+    Raised when invalid image file was uploaded
     """
     @classmethod
     def getStatusCode(cls):

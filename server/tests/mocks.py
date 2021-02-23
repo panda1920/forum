@@ -11,6 +11,7 @@ from server.database.crudmanager import CrudManager
 from server.database.filter import PrimitiveFilter
 from server.database.aggregate_filter import AggregateFilter
 from server.database.paging import Paging
+from server.database.file_repository import FileRepository
 from server.services.userauth import UserAuthenticationService, PasswordService
 from server.services.entity_creation_service import EntityCreationService
 from server.services.search_service import SearchService
@@ -38,6 +39,10 @@ def createMockAggregateFilter():
 
 def createMockPaging():
     return create_autospec(Paging)
+
+
+def createMockFileRepository():
+    return create_autospec(FileRepository)
 
 
 def createMockUserAuth():

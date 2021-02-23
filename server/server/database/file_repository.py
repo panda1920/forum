@@ -47,6 +47,17 @@ class FileRepository:
         """
         raise NotImplementedError
 
+    def getUrl(self, filename):
+        """
+        Get url of file stored remotely
+        
+        Args:
+            filename(str): filename to search for
+        Returns:
+            url string
+        """
+        raise NotImplementedError
+
 
 class S3FileRepository(FileRepository):
     """
@@ -96,11 +107,7 @@ class S3FileRepository(FileRepository):
             s3.delete_objects(Bucket=self._bucket_name, Delete=objects_to_delete)
 
     def getUrl(self, filename):
-        s3 = self._createS3Client()
-        if self._bucket_location is None:
-            with self._awsOperationHandler('Failed to get bucket info'):
-                response = s3.get_bucket_location(Bucket=self._bucket_name)
-                self._bucket_location = response['LocationConstraint']
+        self._set_bucket_location()
 
         return f'https://s3-{self._bucket_location}.amazonaws.com/{self._bucket_name}/' + filename
 
@@ -114,6 +121,15 @@ class S3FileRepository(FileRepository):
                 aws_access_key_id=self._access_key,
                 aws_secret_access_key=self._secret_key,
             )
+
+    def _set_bucket_location(self):
+        if self._bucket_location is not None:
+            return
+
+        s3 = self._createS3Client()
+        with self._awsOperationHandler('Failed to get bucket info'):
+            response = s3.get_bucket_location(Bucket=self._bucket_name)
+            self._bucket_location = response['LocationConstraint']
 
     @contextmanager
     def _awsOperationHandler(self, errorMsg):
