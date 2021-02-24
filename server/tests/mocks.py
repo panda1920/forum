@@ -20,6 +20,7 @@ from server.services.delete_service import DeleteService
 from server.services.session import SessionService
 from server.services.flask_context import FlaskContext
 from server.services.image_scaler import ImageScalerBase
+from server.services.portrait_uploader import PortraitUploader
 from server.entity import Entity
 from server.middleware.request_user import RequestUserManager
 from server.services.searchfilter_creator import SearchFilterCreator
@@ -91,6 +92,10 @@ def createMockSessionService():
 
 def createMockImageScaler():
     return create_autospec(ImageScalerBase)
+
+
+def createMockPortraitUploadService():
+    return create_autospec(PortraitUploader)
 
 
 def createMockEntity():

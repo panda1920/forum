@@ -97,13 +97,16 @@ class Entity:
 
     def _create_attrs_for(self, operation):
         attrs = self.__dict__.copy()
+        allowed_attrs = self._attribute_description.keys()
         hidden_attrs = [
-            attr for attr in self._attribute_description.keys()
+            attr for attr in allowed_attrs
             if self._attribute_description[attr]['conversion_rules'][operation]['hide']
         ]
 
-        for hidden_attr in hidden_attrs:
-            attrs.pop(hidden_attr, None)
+        # remove attributes that are not known or specified hidden
+        for a in self.__dict__.keys():
+            if ( a not in allowed_attrs ) or ( a in hidden_attrs ):
+                attrs.pop(a, None)
 
         return attrs
 

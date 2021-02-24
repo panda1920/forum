@@ -13,7 +13,7 @@ DEFAULT_OWNER_ATTRS = [
     dict(userId='test_id')
 ]
 
-DEFAULT_ARGS = {
+DEFAULT_ALLOWED_ARGS = {
     '_id': 'test_id',
     'userId': 'test_post',
     'threadId': 'test_thread',
@@ -23,37 +23,36 @@ DEFAULT_ARGS = {
     'createdAt': 123123.12,
     'updatedAt': 123123.12,
 }
+UNKNOWN_ATTRS = {
+    'hello': 'test_value',
+    'foo': 'test_value',
+    '123123': 'test_value',
+    '!!!@#!@#': 'test_value',
+}
 
 
 class TestUserCreation:
     def test_construction_with_kwargs(self):
-        post = Post(**DEFAULT_ARGS)
+        post = Post(**DEFAULT_ALLOWED_ARGS)
 
-        assert post.postId == DEFAULT_ARGS['postId']
-        for attr_name, attr_value in DEFAULT_ARGS.items():
+        assert post.postId == DEFAULT_ALLOWED_ARGS['postId']
+        for attr_name, attr_value in DEFAULT_ALLOWED_ARGS.items():
             assert getattr(post, attr_name) == attr_value
 
     def test_construction_with_dict(self):
-        post = Post(DEFAULT_ARGS)
+        post = Post(DEFAULT_ALLOWED_ARGS)
 
-        assert post.postId == DEFAULT_ARGS['postId']
-        for attr_name, attr_value in DEFAULT_ARGS.items():
+        assert post.postId == DEFAULT_ALLOWED_ARGS['postId']
+        for attr_name, attr_value in DEFAULT_ALLOWED_ARGS.items():
             assert getattr(post, attr_name) == attr_value
 
-    def test_constructionIgnoresUnknownAttributes(self):
-        unknown_attrs = {
-            'hello': 'test_value',
-            'foo': 'test_value',
-            '123123': 'test_value',
-            '!!!@#!@#': 'test_value',
-        }
+    def test_constructionIncludesUnknownAttributes(self):
+        post = Post({ **DEFAULT_ALLOWED_ARGS, **UNKNOWN_ATTRS })
 
-        post = Post({ **DEFAULT_ARGS, **unknown_attrs })
-
-        for known_attr in DEFAULT_ARGS.keys():
+        for known_attr in DEFAULT_ALLOWED_ARGS.keys():
             assert hasattr(post, known_attr)
-        for unknown_attr in unknown_attrs.keys():
-            assert not hasattr(post, unknown_attr)
+        for unknown_attr in UNKNOWN_ATTRS.keys():
+            assert hasattr(post, unknown_attr)
 
     def test_constructionValidatesForType(self):
         wrongtype_attrs = dict(
@@ -63,7 +62,7 @@ class TestUserCreation:
             owner=9999,
         )
         for wrong_attr, value in wrongtype_attrs.items():
-            args = DEFAULT_ARGS.copy()
+            args = DEFAULT_ALLOWED_ARGS.copy()
             args.update({ wrong_attr: value })
 
             with pytest.raises(EntityValidationError):
@@ -73,7 +72,7 @@ class TestUserCreation:
 class TestConversionMethods:
     @pytest.fixture(scope='function')
     def post(self):
-        post = Post(DEFAULT_ARGS)
+        post = Post(DEFAULT_ALLOWED_ARGS)
 
         for owner in post.owner:
             owner.reset_mock()
@@ -87,7 +86,7 @@ class TestConversionMethods:
             if attr == 'owner':
                 assert DEFAULT_OWNER_ATTRS == value
             else:
-                assert DEFAULT_ARGS[attr] == value
+                assert DEFAULT_ALLOWED_ARGS[attr] == value
 
     def test_to_serializeCallsConvertDictForEachOwners(self, post):
         owners = post.owner
@@ -121,7 +120,7 @@ class TestConversionMethods:
             'createdAt',
         ]
         for required_attribute in required_attributes:
-            args = DEFAULT_ARGS.copy()
+            args = DEFAULT_ALLOWED_ARGS.copy()
             args.pop(required_attribute)
             post = Post(args)
 
@@ -134,7 +133,7 @@ class TestConversionMethods:
         ]
 
         for optional_attribute in optional_attributes:
-            args = DEFAULT_ARGS.copy()
+            args = DEFAULT_ALLOWED_ARGS.copy()
             args.pop(optional_attribute)
             post = Post(args)
 
@@ -152,12 +151,12 @@ class TestConversionMethods:
         create_dict = post.to_create()
 
         for attr, value in create_dict.items():
-            assert DEFAULT_ARGS[attr] == value
+            assert DEFAULT_ALLOWED_ARGS[attr] == value
 
     def test_to_createValidatesForRequiredAttributes(self):
         required_attributes = ['userId', 'content', 'threadId', ]
         for required_attribute in required_attributes:
-            args = DEFAULT_ARGS.copy()
+            args = DEFAULT_ALLOWED_ARGS.copy()
             args.pop(required_attribute)
             post = Post(args)
 
@@ -178,11 +177,19 @@ class TestConversionMethods:
         for attr in ignored_attrs:
             assert attr not in create_dict
 
+    def test_to_createIgnoresUnknownAttributes(self):
+        post = Post(DEFAULT_ALLOWED_ARGS, **UNKNOWN_ATTRS)
+
+        create_dict = post.to_create()
+
+        for attr in UNKNOWN_ATTRS.keys():
+            assert attr not in create_dict
+
     def test_to_updateGeneratesDictForUpdate(self, post):
         update_dict = post.to_update()
 
         for attr, value in update_dict.items():
-            assert DEFAULT_ARGS[attr] == value
+            assert DEFAULT_ALLOWED_ARGS[attr] == value
 
     def test_to_updateIgnoresUnnecessaryAttributes(self, post):
         ignored_attrs = [
@@ -209,7 +216,15 @@ class TestConversionMethods:
 
         for optional_attr in optional_attrs:
             assert optional_attr in update_dict
-            assert DEFAULT_ARGS[optional_attr] == update_dict[optional_attr]
+            assert DEFAULT_ALLOWED_ARGS[optional_attr] == update_dict[optional_attr]
+
+    def test_to_updateIgnoresUnknownAttributes(self):
+        post = Post(DEFAULT_ALLOWED_ARGS, **UNKNOWN_ATTRS)
+
+        update_dict = post.to_update()
+
+        for attr in UNKNOWN_ATTRS.keys():
+            assert attr not in update_dict
 
 
 class TestSearch:

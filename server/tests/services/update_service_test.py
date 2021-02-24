@@ -27,10 +27,13 @@ def create_repo_return(entities, name):
 @pytest.fixture(scope='function')
 def setup_service():
     mock_repo = mocks.createMockRepo()
+
     mock_session = mocks.createMockSessionService()
     mock_session.get_user.return_value = DEFAULT_SESSION_USER
+
+    mock_uploader = mocks.createMockPortraitUploadService()
     
-    return UpdateService(mock_repo, PrimitiveFilter, mock_session)
+    return UpdateService(mock_repo, PrimitiveFilter, mock_session, mock_uploader)
 
 
 class TestUserUpdateService:

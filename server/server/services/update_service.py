@@ -16,10 +16,11 @@ class UpdateService:
     Class that provides methods to update entities.
     Includes most of the business logic related to update operations.
     """
-    def __init__(self, repo, PrimitiveFilter, session):
+    def __init__(self, repo, filter, session, uploader):
         self._repo = repo
-        self._filter = PrimitiveFilter
+        self._filter = filter
         self._session = session
+        self._uploader = uploader
 
     def updateUser(self, user):
         """

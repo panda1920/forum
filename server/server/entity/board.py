@@ -150,5 +150,5 @@ class Board(Entity):
         },
     }
     _schema = extract_schema(_attribute_description)
-    _validator = Validator(_schema, purge_unknown=True)
+    _validator = Validator(_schema, allow_unknown=True)
     _logger = logging.getLogger(__name__)

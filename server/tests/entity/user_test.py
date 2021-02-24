@@ -9,7 +9,7 @@ from server.entity import User
 from server.exceptions import EntityValidationError
 
 
-DEFAULT_ARGS = dict(
+DEFAULT_ALLOWED_ARGS = dict(
     userId='test_id',
     userName='test@example.com',
     displayName='test',
@@ -18,37 +18,36 @@ DEFAULT_ARGS = dict(
     createdAt=123123.12,
     updatedAt=123123.12,
 )
+UNKNOWN_ATTRS = {
+    'hello': 'test_value',
+    'foo': 'test_value',
+    '123123': 'test_value',
+    '!!!@#!@#': 'test_value',
+}
 
 
 class TestUserCreation:
     def test_construction_with_kwargs(self):
-        user = User(**DEFAULT_ARGS)
+        user = User(**DEFAULT_ALLOWED_ARGS)
 
-        assert user.userId == DEFAULT_ARGS['userId']
-        for attr_name, attr_value in DEFAULT_ARGS.items():
+        assert user.userId == DEFAULT_ALLOWED_ARGS['userId']
+        for attr_name, attr_value in DEFAULT_ALLOWED_ARGS.items():
             assert getattr(user, attr_name) == attr_value
 
     def test_construction_with_dict(self):
-        user = User(DEFAULT_ARGS)
+        user = User(DEFAULT_ALLOWED_ARGS)
 
-        assert user.userId == DEFAULT_ARGS['userId']
-        for attr_name, attr_value in DEFAULT_ARGS.items():
+        assert user.userId == DEFAULT_ALLOWED_ARGS['userId']
+        for attr_name, attr_value in DEFAULT_ALLOWED_ARGS.items():
             assert getattr(user, attr_name) == attr_value
 
-    def test_constructionIgnoresUnknownAttributes(self):
-        unknown_attrs = {
-            'hello': 'test_value',
-            'foo': 'test_value',
-            '123123': 'test_value',
-            '!!!@#!@#': 'test_value',
-        }
+    def test_constructionIncludesUnknownAttributes(self):
+        user = User({ **DEFAULT_ALLOWED_ARGS, **UNKNOWN_ATTRS })
 
-        user = User({ **DEFAULT_ARGS, **unknown_attrs })
-
-        for known_attr in DEFAULT_ARGS.keys():
+        for known_attr in DEFAULT_ALLOWED_ARGS.keys():
             assert hasattr(user, known_attr)
-        for unknown_attr in unknown_attrs.keys():
-            assert not hasattr(user, unknown_attr)
+        for unknown_attr in UNKNOWN_ATTRS.keys():
+            assert hasattr(user, unknown_attr)
 
     def test_constructionValidatesForType(self):
         wrongtype_attrs = dict(
@@ -59,14 +58,14 @@ class TestUserCreation:
             imageUrl=9999,
         )
         for wrong_attr, value in wrongtype_attrs.items():
-            args = DEFAULT_ARGS.copy()
+            args = DEFAULT_ALLOWED_ARGS.copy()
             args.update({ wrong_attr: value })
 
             with pytest.raises(EntityValidationError):
                 User(args)
 
     def test_constructionValidatesUsername(self):
-        args = DEFAULT_ARGS.copy()
+        args = DEFAULT_ALLOWED_ARGS.copy()
         args.update(dict(userName='hello'))  # not an email
 
         with pytest.raises(EntityValidationError):
@@ -76,13 +75,13 @@ class TestUserCreation:
 class TestConversionMethods:
     @pytest.fixture(scope='function')
     def user(self):
-        return User(DEFAULT_ARGS)
+        return User(DEFAULT_ALLOWED_ARGS)
 
     def test_to_serialize(self, user):
         serialized = user.to_serialize()
 
         for attr, value in serialized.items():
-            assert DEFAULT_ARGS[attr] == value
+            assert DEFAULT_ALLOWED_ARGS[attr] == value
 
     def test_to_serializeIgnoresPrivateInformation(self, user):
         private_attrs = ['_id', 'password', ]
@@ -101,7 +100,7 @@ class TestConversionMethods:
             'createdAt',
         ]
         for required_attribute in required_attributes:
-            args = DEFAULT_ARGS.copy()
+            args = DEFAULT_ALLOWED_ARGS.copy()
             args.pop(required_attribute)
             user = User(args)
 
@@ -114,7 +113,7 @@ class TestConversionMethods:
         ]
 
         for optional_attribute in optional_attributes:
-            args = DEFAULT_ARGS.copy()
+            args = DEFAULT_ALLOWED_ARGS.copy()
             args.pop(optional_attribute)
             user = User(args)
 
@@ -132,12 +131,12 @@ class TestConversionMethods:
         create_dict = user.to_create()
 
         for attr, value in create_dict.items():
-            assert DEFAULT_ARGS[attr] == value
+            assert DEFAULT_ALLOWED_ARGS[attr] == value
 
     def test_to_createValidatesForRequiredAttributes(self):
         required_attributes = ['userName', 'displayName', 'password']
         for required_attribute in required_attributes:
-            args = DEFAULT_ARGS.copy()
+            args = DEFAULT_ALLOWED_ARGS.copy()
             args.pop(required_attribute)
             user = User(args)
 
@@ -150,7 +149,7 @@ class TestConversionMethods:
             '_id': 'test_value',
             'createdAt': 123123.12
         }
-        args = {**DEFAULT_ARGS, **ignored_args }
+        args = {**DEFAULT_ALLOWED_ARGS, **ignored_args }
         user = User(args)
 
         create_dict = user.to_create()
@@ -158,11 +157,19 @@ class TestConversionMethods:
         for attr in ignored_args.keys():
             assert attr not in create_dict
 
+    def test_to_createIgnoresUnknownAttributes(self):
+        user = User(DEFAULT_ALLOWED_ARGS, **UNKNOWN_ATTRS)
+
+        create_dict = user.to_create()
+
+        for attr in UNKNOWN_ATTRS.keys():
+            assert attr not in create_dict
+
     def test_to_updateGeneratesDictForUpdate(self, user):
         update_dict = user.to_update()
 
         for attr, value in update_dict.items():
-            assert DEFAULT_ARGS[attr] == value
+            assert DEFAULT_ALLOWED_ARGS[attr] == value
 
     def test_to_updateIgnoresUnnecessaryAttributes(self):
         ignored_args = {
@@ -172,7 +179,7 @@ class TestConversionMethods:
             'createdAt': 123123.12,
             'updatedAt': 123123.12,
         }
-        args = { **DEFAULT_ARGS, **ignored_args }
+        args = { **DEFAULT_ALLOWED_ARGS, **ignored_args }
         user = User(args)
 
         update_dict = user.to_update()
@@ -186,13 +193,21 @@ class TestConversionMethods:
             'password': 'test_value',
             'imageUrl': 'www.example.com/image.jpg',
         }
-        args = { **DEFAULT_ARGS, **optional_attrs }
+        args = { **DEFAULT_ALLOWED_ARGS, **optional_attrs }
         user = User(args)
 
         update_dict = user.to_update()
 
         for optional_attr in optional_attrs:
             assert optional_attr in update_dict
+
+    def test_to_updateIgnoresUnknownAttributes(self):
+        user = User(DEFAULT_ALLOWED_ARGS, **UNKNOWN_ATTRS)
+
+        update_dict = user.to_update()
+
+        for attr in UNKNOWN_ATTRS.keys():
+            assert attr not in update_dict
 
 
 class TestSearch:
