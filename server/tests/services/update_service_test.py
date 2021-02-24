@@ -3,6 +3,7 @@
 This file houses test for update_service.py
 """
 from unittest.mock import ANY
+from pathlib import Path
 
 import pytest
 
@@ -13,6 +14,10 @@ from server.database.filter import PrimitiveFilter
 from server.services.update_service import UpdateService
 
 DEFAULT_SESSION_USER = create_mock_entity_fromattrs( dict(userId='test_user_id') )
+TESTDATA_DIR = Path(__file__).resolve().parents[1] / 'testdata'
+DEFAULT_IMAGE = TESTDATA_DIR / 'sample_image.png'
+with DEFAULT_IMAGE.open('rb') as f:
+    DEFAULT_IMAGE_DATA = f.read()
 
 
 # helper functions
@@ -42,9 +47,10 @@ class TestUserUpdateService:
         dict(userId=DEFAULT_SESSION_USER.userId),
     ]
     DEFAULT_USER_ATTRSET = [
-        dict(userId='0', displayName='Bobby'),
+        dict(userId='0', displayName='Bobby', portraitImage=DEFAULT_IMAGE_DATA),
     ]
     DEFAULT_USER = create_mock_entities(DEFAULT_USER_ATTRSET)[0]
+    DEFAULT_PORTRAIT_URL = 'http://example.com/test_image.png'
     
     @pytest.fixture(scope='function', autouse=True)
     def setup_mocks(self, setup_service):
@@ -55,15 +61,18 @@ class TestUserUpdateService:
         mock_repo.searchUser.return_value = repouser_return
         mock_repo.updateUser.return_value = self.DEFAULT_REPOUPDATE_RESULT
 
+        mock_uploader = setup_service._uploader
+        mock_uploader.upload.return_value = dict(publicUrl=self.DEFAULT_PORTRAIT_URL)
+
     def test_updateUserShouldCallSearchForUserInformation(self, setup_service):
         mock_repo = setup_service._repo
-        expectedFilter = PrimitiveFilter.createFilter(dict(
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='userId', operator='eq', value=[ self.DEFAULT_USER.userId ]
         ))
 
         setup_service.updateUser(self.DEFAULT_USER)
 
-        mock_repo.searchUser.assert_called_with(expectedFilter)
+        mock_repo.searchUser.assert_called_with(expected_filter)
 
     def test_updateUserShouldRaiseExceptionWhenAuthorizationFail(self, setup_service):
         session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
@@ -83,15 +92,42 @@ class TestUserUpdateService:
 
         assert setup_service._repo.updateUser.call_count == 0
 
+    def test_updateUserShouldUploadPortraitImage(self, setup_service):
+        mock_uploader = setup_service._uploader
+
+        setup_service.updateUser(self.DEFAULT_USER)
+
+        assert mock_uploader.upload.call_count == 1
+
+    def test_updateUserShouldNotUploadWhenNoFilePresent(self, setup_service):
+        attrs = self.DEFAULT_USER_ATTRSET[0].copy()
+        attrs.pop('portraitImage', None)
+        update_user = create_mock_entity_fromattrs(attrs)
+        mock_uploader = setup_service._uploader
+
+        setup_service.updateUser(update_user)
+
+        assert mock_uploader.upload.call_count == 0
+
     def test_updateUserShouldPassCreatedFilterAndUserToUpdate(self, setup_service):
         mock_repo = setup_service._repo
-        expectedFilter = PrimitiveFilter.createFilter(dict(
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='userId', operator='eq', value=[ self.DEFAULT_USER.userId ]
         ))
 
         setup_service.updateUser(self.DEFAULT_USER)
 
-        mock_repo.updateUser.assert_called_with(expectedFilter, self.DEFAULT_USER)
+        filter, user, *_ = mock_repo.updateUser.call_args_list[0][0]
+        assert filter == expected_filter
+        assert user == self.DEFAULT_USER
+
+    def test_updateUserShouldPassPublicUrlToUpdate(self, setup_service):
+        mock_repo = setup_service._repo
+
+        setup_service.updateUser(self.DEFAULT_USER)
+
+        _, user, *_ = mock_repo.updateUser.call_args_list[0][0]
+        assert user.imageUrl == self.DEFAULT_PORTRAIT_URL
 
     def test_updateUserShouldRaiseExceptionWhenNoUserId(self, setup_service):
         attributes = [{ 'displayName': 'test_name' }]
@@ -143,13 +179,13 @@ class TestPostUpdateService:
 
     def test_updatePostShouldCallSearchForPostInformation(self, setup_service):
         mock_repo = setup_service._repo
-        expectedFilter = PrimitiveFilter.createFilter(dict(
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='postId', operator='eq', value=[ self.DEFAULT_POST.postId ]
         ))
 
         setup_service.updatePost(self.DEFAULT_POST)
 
-        mock_repo.searchPost.assert_called_with(expectedFilter)
+        mock_repo.searchPost.assert_called_with(expected_filter)
 
     def test_updatePostShouldRaiseExceptionWhenAuthorizationFail(self, setup_service):
         session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
@@ -171,13 +207,13 @@ class TestPostUpdateService:
 
     def test_updatePostShouldPassCreatedFilterAndPostToUpdate(self, setup_service):
         mock_repo = setup_service._repo
-        expectedFilter = PrimitiveFilter.createFilter(dict(
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='postId', operator='eq', value=[ self.DEFAULT_POST.postId ]
         ))
 
         setup_service.updatePost(self.DEFAULT_POST)
 
-        mock_repo.updatePost.assert_called_with(expectedFilter, self.DEFAULT_POST)
+        mock_repo.updatePost.assert_called_with(expected_filter, self.DEFAULT_POST)
 
     def test_updatePostShouldRaiseExceptionWhenNoPostId(self, setup_service):
         mock_post = create_mock_entities([dict(content='test_content')])[0]
@@ -212,13 +248,13 @@ class TestThreadUpdateService:
 
     def test_updateThreadShouldCallSearchForThreadInformation(self, setup_service):
         mock_repo = setup_service._repo
-        expectedFilter = PrimitiveFilter.createFilter(dict(
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='threadId', operator='eq', value=[ self.DEFAULT_THREAD.threadId ]
         ))
 
         setup_service.updateThread(self.DEFAULT_THREAD)
 
-        mock_repo.searchThread.assert_called_with(expectedFilter)
+        mock_repo.searchThread.assert_called_with(expected_filter)
 
     def test_updateThreadShouldRaiseExceptionWhenAuthorizationFail(self, setup_service):
         session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
@@ -240,13 +276,13 @@ class TestThreadUpdateService:
 
     def test_updateThreadShouldPassCreatedFilterToUpdate(self, setup_service):
         mock_repo = setup_service._repo
-        expectedFilter = PrimitiveFilter.createFilter(dict(
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='threadId', operator='eq', value=[ self.DEFAULT_THREAD.threadId ]
         ))
 
         setup_service.updateThread(self.DEFAULT_THREAD)
 
-        mock_repo.updateThread.assert_called_with(expectedFilter, ANY)
+        mock_repo.updateThread.assert_called_with(expected_filter, ANY)
 
     def test_updateThreadShouldRaiseExceptionWhenNoThreadId(self, setup_service):
         mock_thread = create_mock_entities([dict(title='test_title')])[0]
@@ -324,13 +360,13 @@ class TestBoardUpdateService:
 
     def test_updateBoardShouldCallSearchForBoardInformation(self, setup_service):
         mock_repo = setup_service._repo
-        expectedFilter = PrimitiveFilter.createFilter(dict(
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='boardId', operator='eq', value=[ self.DEFAULT_BOARD.boardId ]
         ))
 
         setup_service.updateBoard(self.DEFAULT_BOARD)
 
-        mock_repo.searchBoard.assert_called_with(expectedFilter)
+        mock_repo.searchBoard.assert_called_with(expected_filter)
     
     def test_updateBoardShouldRaiseExceptionWhenAuthorizationFail(self, setup_service):
         session_user = create_mock_entity_fromattrs( dict(userId='some_random_id') )
@@ -352,13 +388,13 @@ class TestBoardUpdateService:
     
     def test_updateBoardShouldPassCreatedFilterAndEntityToUpdate(self, setup_service):
         mock_repo = setup_service._repo
-        expectedFilter = PrimitiveFilter.createFilter(dict(
+        expected_filter = PrimitiveFilter.createFilter(dict(
             field='boardId', operator='eq', value=[ self.DEFAULT_BOARD.boardId ]
         ))
 
         setup_service.updateBoard(self.DEFAULT_BOARD)
 
-        mock_repo.updateBoard.assert_called_with(expectedFilter, self.DEFAULT_BOARD)
+        mock_repo.updateBoard.assert_called_with(expected_filter, self.DEFAULT_BOARD)
     
     def test_updateBoardShouldRaiseExceptionWhenNoBoardId(self, setup_service):
         mock_board = create_mock_entities([dict(title='test_title')])[0]

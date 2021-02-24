@@ -36,6 +36,13 @@ class UpdateService:
         searchFilter = self._create_eqfilter(user, 'userId')
         self._authorizeUpdateUser(searchFilter)
 
+        try:
+            portrait_data = user.portraitImage
+            response = self._uploader.upload(portrait_data)
+            setattr(user, 'imageUrl', response['publicUrl'])
+        except AttributeError:
+            pass
+
         updated_result = self._repo.updateUser(searchFilter, user)
         updated_user = self._repo.searchUser(searchFilter)['users'][0]
         self._session.set_user(updated_user)
