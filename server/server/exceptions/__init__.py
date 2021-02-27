@@ -17,6 +17,15 @@ class MyAppException(Exception):
 
 
 # client-side error
+class InvalidRequest(MyAppException):
+    """
+    Just a generic error to reject client request
+    """
+    @classmethod
+    def getStatusCode(cls):
+        return 400
+
+
 class FilterParseError(MyAppException):
     """
     Thrown when parsing failed during construction of filters

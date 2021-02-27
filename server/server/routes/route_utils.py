@@ -8,13 +8,13 @@ import os
 
 from flask import make_response, request, current_app
 
-from server.exceptions import RequestDataTypeMismatchError
+import server.exceptions as exceptions
 
 
 def getJsonFromRequest(req):
     jsonData = req.get_json(silent=True)
     if jsonData is None:
-        raise RequestDataTypeMismatchError('Request expecting json data')
+        raise exceptions.RequestDataTypeMismatchError('Request expecting json data')
     return jsonData
 
 
@@ -79,14 +79,18 @@ def cors_wrapped_route(route_func, path, **options):
     """
     def inner(func):
         def wrapper(*args, **kwargs):
-            if request.method == 'OPTIONS':
-                return preflight_response()
-            elif is_valid_request():
-                return func(*args, **kwargs)
-            else:
-                return createJSONResponse(
-                    [{ 'error': { 'description': 'Invalid Request' } }], 400
-                )
+            try:
+                if request.method == 'OPTIONS':
+                    # just assume that its preflight request when OPTION
+                    return preflight_response()
+                elif is_valid_request():
+                    # invoke the decorated route functions
+                    return func(*args, **kwargs)
+                else:
+                    raise exceptions.InvalidRequest('Invalid Request')
+            except exceptions.MyAppException as e:
+                # for any exceptions raised in route functions
+                return createJSONErrorResponse(e)
 
         wrapper.__name__ = func.__name__
 

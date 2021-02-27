@@ -15,57 +15,42 @@ routes = Blueprint('threadRoutes', __name__)
 
 @cors_wrapped_route(routes.route, '/v1/threads', methods=['GET'])
 def searchThreadsv1():
-    try:
-        search = Config.getSearchService(current_app)
-        keyValues = request.args.to_dict(flat=True)
-        result = search.searchThreadsByKeyValues(keyValues)
-        result['threads'] = [ thread.to_serialize() for thread in result['threads'] ]
-        return route_utils.createResultResponse(result)
-    except MyAppException as e:
-        return route_utils.createJSONErrorResponse(e)
+    search = Config.getSearchService(current_app)
+    keyValues = request.args.to_dict(flat=True)
+    result = search.searchThreadsByKeyValues(keyValues)
+    result['threads'] = [ thread.to_serialize() for thread in result['threads'] ]
+    return route_utils.createResultResponse(result)
 
 
 @cors_wrapped_route(routes.route, '/v1/threads/<threadId>/view', methods=['PATCH'])
 def viewThread(threadId):
-    try:
-        update = Config.getUpdateService(current_app)
-        result = update.viewThread(threadId)
-        return route_utils.createResultResponse(result)
-    except MyAppException as e:
-        return route_utils.createJSONErrorResponse(e)
+    update = Config.getUpdateService(current_app)
+    result = update.viewThread(threadId)
+    return route_utils.createResultResponse(result)
 
 
 @cors_wrapped_route(routes.route, '/v1/threads/create', methods=['POST'])
 def createThreadv1():
-    try:
-        create = Config.getCreationService(current_app)
-        thread_to_create = Thread(route_utils.getJsonFromRequest(request))
-        result = create.createNewThread(thread_to_create)
-        return route_utils.createResultResponse(result, 201)
-    except MyAppException as e:
-        return route_utils.createJSONErrorResponse(e)
+    create = Config.getCreationService(current_app)
+    thread_to_create = Thread(route_utils.getJsonFromRequest(request))
+    result = create.createNewThread(thread_to_create)
+    return route_utils.createResultResponse(result, 201)
 
 
 @cors_wrapped_route(routes.route, '/v1/threads/<threadId>/update', methods=['PATCH'])
 def updateThreadByIdv1(threadId):
-    try:
-        update = Config.getUpdateService(current_app)
-        thread_to_update = Thread(route_utils.getJsonFromRequest(request))
-        thread_to_update.threadId = threadId
-        result = update.updateThread(thread_to_update)
-        return route_utils.createResultResponse(result, 200)
-    except MyAppException as e:
-        return route_utils.createJSONErrorResponse(e)
+    update = Config.getUpdateService(current_app)
+    thread_to_update = Thread(route_utils.getJsonFromRequest(request))
+    thread_to_update.threadId = threadId
+    result = update.updateThread(thread_to_update)
+    return route_utils.createResultResponse(result, 200)
 
 
 @cors_wrapped_route(routes.route, '/v1/threads/<threadId>/delete', methods=['DELETE'])
 def deleteThreadByIdv1(threadId):
-    try:
-        delete = Config.getDeleteService(current_app)
-        result = delete.deleteThreadById(threadId)
-        return route_utils.createResultResponse(result, 202)
-    except MyAppException as e:
-        return route_utils.createJSONErrorResponse(e)
+    delete = Config.getDeleteService(current_app)
+    result = delete.deleteThreadById(threadId)
+    return route_utils.createResultResponse(result, 202)
 
 
 @routes.before_request
