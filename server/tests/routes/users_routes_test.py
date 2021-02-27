@@ -320,6 +320,14 @@ class TestUserAPIs:
             assert passed_user.userId == userIdToUpdate
             assert passed_user.portraitImage == filedata
 
+    def test_updateUserShouldReturnErrorWhenNoFileWasFound(self, client):
+        userIdToUpdate = '1'
+        url = f'{self.USERAPI_BASE_URL}/{userIdToUpdate}/update-portrait'
+
+        response = client.patch(url)
+
+        response.status_code == exceptions.InvalidRequest.getStatusCode()
+
     def test_updateUserPortraitReturnsErrorWhenUpdateUserRaisesException(self, mockApp):
         mockUpdate = Config.getUpdateService(mockApp)
 

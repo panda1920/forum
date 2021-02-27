@@ -7,7 +7,7 @@ from flask import Blueprint, request, current_app
 from server.config import Config
 import server.routes.route_utils as route_utils
 from server.routes.route_utils import cors_wrapped_route
-from server.exceptions import MyAppException
+from server.exceptions import MyAppException, InvalidRequest
 from server.entity import User
 
 routes = Blueprint('userRoutes', __name__)
@@ -47,11 +47,14 @@ def updateUserv1(userId):
 
 @cors_wrapped_route(routes.route, '/v1/users/<userId>/update-portrait', methods=['PATCH'])
 def updateUserPortraitv1(userId):
-    update = Config.getUpdateService(current_app)
-    portrait_data = request.files['portraitImage'].read()
-    user_to_update = User(dict(portraitImage=portrait_data, userId=userId))
-    result = update.updateUser(user_to_update)
-    return route_utils.createResultResponse(result)
+    try:
+        update = Config.getUpdateService(current_app)
+        portrait_data = request.files['portraitImage'].read()
+        user_to_update = User(dict(portraitImage=portrait_data, userId=userId))
+        result = update.updateUser(user_to_update)
+        return route_utils.createResultResponse(result)
+    except KeyError:
+        raise InvalidRequest('No file was found')
 
 
 @cors_wrapped_route(routes.route, '/v1/users/<userId>/delete', methods=['DELETE'])
