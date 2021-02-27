@@ -62,7 +62,7 @@ class TestPortraitUploader:
 
         response = uploader.upload(data)
 
-        assert response['publicUrl'] == DEFAULT_URL
+        assert response['url'] == DEFAULT_URL
         assert mock_file_repo.getUrl.call_count == 1
 
     def test_uploadShouldRaiseExceptionWhenBinaryIsNotImage(self, uploader):

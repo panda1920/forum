@@ -21,7 +21,7 @@ class PortraitUploader:
         Uploads portrait image
         
         Args:
-            binary - byte sequence of the image
+            binary(bytes): byte sequence of the image
         Returns:
             None
         """
@@ -31,9 +31,9 @@ class PortraitUploader:
 
         self._file_repo.writeBinary(binary, filename)
 
-        public_url = self._file_repo.getUrl(filename)
+        url = self._file_repo.getUrl(filename)
         return dict(
-            publicUrl=public_url
+            url=url
         )
 
     def _create_filename(self, image):

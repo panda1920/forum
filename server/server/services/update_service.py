@@ -39,7 +39,7 @@ class UpdateService:
         try:
             portrait_data = user.portraitImage
             response = self._uploader.upload(portrait_data)
-            setattr(user, 'imageUrl', response['publicUrl'])
+            setattr(user, 'imageUrl', response['url'])
         except AttributeError:
             pass
 

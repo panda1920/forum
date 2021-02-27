@@ -62,7 +62,7 @@ class TestUserUpdateService:
         mock_repo.updateUser.return_value = self.DEFAULT_REPOUPDATE_RESULT
 
         mock_uploader = setup_service._uploader
-        mock_uploader.upload.return_value = dict(publicUrl=self.DEFAULT_PORTRAIT_URL)
+        mock_uploader.upload.return_value = dict(url=self.DEFAULT_PORTRAIT_URL)
 
     def test_updateUserShouldCallSearchForUserInformation(self, setup_service):
         mock_repo = setup_service._repo

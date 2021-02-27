@@ -4,6 +4,7 @@ This file houses tests for User related routes available for this app
 """
 import json
 import pytest
+from pathlib import Path
 
 from server.config import Config
 from server.entity import User
@@ -22,6 +23,7 @@ DEFAULT_RETURN_UPDATEUSER = 'some_value_updateuser'
 DEFAULT_RETURN_DELETEUSER = dict(deleteCount=1)
 DEFAULT_RETURN_LOGIN = dict()
 DEFAULT_RETURN_LOGOUT = dict()
+DEFAULT_UPLOAD_FILE = Path(__file__).resolve().parents[1] / 'testdata' / 'sample_image.png'
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -297,6 +299,48 @@ class TestUserAPIs:
             mockUpdate.updateUser.side_effect = e
             with mockApp.test_client() as client:
                 response = client.patch(url, json=userProperties)
+
+            assert response.status_code == e.getStatusCode()
+
+    def test_updateUserPortraitShouldPassUserEntityToServiceAndReturn200(self, client, mockApp):
+        mockUpdate = Config.getUpdateService(mockApp)
+
+        with DEFAULT_UPLOAD_FILE.open('rb') as upload_file:
+            filedata = upload_file.read()
+            upload_file.seek(0)  # reset file pointer position
+            userIdToUpdate = '1'
+            params = { 'portraitImage': upload_file }
+            url = f'{self.USERAPI_BASE_URL}/{userIdToUpdate}/update-portrait'
+
+            response = client.patch(url, data=params)
+
+            assert response.status_code == 200
+            passed_user, *_ = mockUpdate.updateUser.call_args_list[0][0]
+            assert isinstance(passed_user, User)
+            assert passed_user.userId == userIdToUpdate
+            assert passed_user.portraitImage == filedata
+
+    def test_updateUserPortraitReturnsErrorWhenUpdateUserRaisesException(self, mockApp):
+        mockUpdate = Config.getUpdateService(mockApp)
+
+        userIdToUpdate = '1'
+        url = f'{self.USERAPI_BASE_URL}/{userIdToUpdate}/update-portrait'
+        exceptionsToTest = [
+            exceptions.EntityValidationError('some error'),
+            exceptions.RecordNotFoundError('some error'),
+            exceptions.ServerMiscError('some error'),
+            exceptions.UnauthorizedError('some error'),
+            exceptions.InvalidImageFileError('some error'),
+        ]
+
+        for e in exceptionsToTest:
+            with DEFAULT_UPLOAD_FILE.open('rb') as upload_file, \
+                mockApp.test_client() as client:
+                    
+                mockUpdate.updateUser.side_effect = e
+                params = { 'portraitImage': upload_file }
+
+                response = client.patch(url, data=params)
 
             assert response.status_code == e.getStatusCode()
 

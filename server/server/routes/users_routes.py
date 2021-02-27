@@ -57,6 +57,18 @@ def updateUserv1(userId):
         return route_utils.createJSONErrorResponse(e)
 
 
+@cors_wrapped_route(routes.route, '/v1/users/<userId>/update-portrait', methods=['PATCH'])
+def updateUserPortraitv1(userId):
+    try:
+        update = Config.getUpdateService(current_app)
+        portrait_data = request.files['portraitImage'].read()
+        user_to_update = User(dict(portraitImage=portrait_data, userId=userId))
+        result = update.updateUser(user_to_update)
+        return route_utils.createResultResponse(result)
+    except MyAppException as e:
+        return route_utils.createJSONErrorResponse(e)
+
+
 @cors_wrapped_route(routes.route, '/v1/users/<userId>/delete', methods=['DELETE'])
 def deleteUserByIdv1(userId):
     try:
