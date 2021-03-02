@@ -298,6 +298,7 @@ class TestUserAPIs:
         for e in exceptionsToTest:
             mockUpdate.updateUser.side_effect = e
             with mockApp.test_client() as client:
+                
                 response = client.patch(url, json=userProperties)
 
             assert response.status_code == e.getStatusCode()
@@ -330,7 +331,6 @@ class TestUserAPIs:
 
     def test_updateUserPortraitReturnsErrorWhenUpdateUserRaisesException(self, mockApp):
         mockUpdate = Config.getUpdateService(mockApp)
-
         userIdToUpdate = '1'
         url = f'{self.USERAPI_BASE_URL}/{userIdToUpdate}/update-portrait'
         exceptionsToTest = [
@@ -342,8 +342,7 @@ class TestUserAPIs:
         ]
 
         for e in exceptionsToTest:
-            with DEFAULT_UPLOAD_FILE.open('rb') as upload_file, \
-                mockApp.test_client() as client:
+            with DEFAULT_UPLOAD_FILE.open('rb') as upload_file, mockApp.test_client() as client:
                     
                 mockUpdate.updateUser.side_effect = e
                 params = { 'portraitImage': upload_file }
