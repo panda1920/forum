@@ -40,11 +40,12 @@ export function updateUser(fields) {
 
 export function updateUserPortrait(fields) {
     const { userId, file } = fields;
+    const url = `${paths.userApi}/${userId}/update-portrait`;
     const formData = new FormData();
-    formData.set('file', file);
+    formData.set('portraitImage', file);
     
     return apiCall(
-        `${paths.userApi}/${userId}/update`,
+        url,
         'PATCH',
         {},
         formData,
@@ -116,24 +117,30 @@ export function searchBoards(criteria) {
 
 async function apiCall(url, method, headers, body) {
     // add custom header to force trigger CORS preflight
-    const custom_header = { ...headers, 'X-Requested-With': 'myapp' };
+    const customHeader = { ...headers, 'X-Requested-With': 'myapp' };
     try {
-        let response = await fetch(url, { method, headers: custom_header, body, credentials: 'same-origin' });
-        return defaultResponseHandler(response);
+        let response = await fetch(url, {
+            method, headers: customHeader, body, credentials: 'same-origin'
+        });
+
+        return (
+            (response.status >= 500)
+            // ignore all server side error because there is nothing that can be done
+            ? createDummyResponseForError()
+            : response
+        );
     }
     catch(err) {
         // do nothing when fetch api fails
         // failure is normally due to some connection issues
         console.log(err);
+        return createDummyResponseForError();
     }
 }
 
-async function defaultResponseHandler(response) {
-    // ignore all server side error
-    if (response.status >= 500)
-        return { ignore: true, ok: false };
-    else
-        return response;
+function createDummyResponseForError() {
+    // notify that info from server side is ignored
+    return { ignore: true, ok: false };
 }
 
 function createQueryString(object) {
