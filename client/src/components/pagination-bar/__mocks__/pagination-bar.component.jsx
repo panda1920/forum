@@ -2,7 +2,7 @@ import React from 'react';
 
 const mockPaginationBar = () => {
   return (
-    <div title='pagination bar'>
+    <div title='pagination bar' data-testid='test-pagination-bar'>
 
     </div>
   );

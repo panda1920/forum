@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 import React from 'react';
 import { render, screen, act, } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -18,7 +16,7 @@ jest.mock('../../scripts/api', () => ({
 
 const TEST_DATA = {
   USER_PROFILE: {
-    USER_ID: 'test_id',
+    userId: 'test_id',
   },
   IMAGE_URL: 'example.com/test_image.png',
   FILE: new File(['test data'], 'test_file.text', { type: 'text/plain' }),
@@ -30,7 +28,11 @@ const IDENTIFIERS = {
 
 function renderProfileFieldPortrait() {
   return render(
-    <ProfileFieldPortrait imageUrl={TEST_DATA.IMAGE_URL} />
+    <CurrentUserContext.Provider
+      value={{ ...TEST_DATA.USER_PROFILE }}
+    >
+      <ProfileFieldPortrait imageUrl={TEST_DATA.IMAGE_URL} />
+    </CurrentUserContext.Provider>
   );
 }
 
@@ -70,8 +72,8 @@ describe('Testing behavior of ProfileFieldPortrait', () => {
     });
 
     expect(updateUserPortrait).toHaveBeenCalledTimes(1);
-    const [ userId, file ] = updateUserPortrait.mock.calls[0];
-    expect(userId).toBe(TEST_DATA.USER_PROFILE.USER_ID);
+    const { userId, file } = updateUserPortrait.mock.calls[0][0];
+    expect(userId).toBe(TEST_DATA.USER_PROFILE.userId);
     expect(file).toBe(TEST_DATA.FILE);
   });
 

@@ -116,7 +116,7 @@ describe('testing behavior of menu dropdown component', () => {
 
     await clickLogout();
 
-    expect(mockToggle).toHaveBeenCalledTimes(2);
+    expect(mockToggle).toHaveBeenCalledTimes(1);
   });
 
   test('menu dropdown rendered should gain focus', () => {
@@ -126,14 +126,12 @@ describe('testing behavior of menu dropdown component', () => {
     expect(document.activeElement).toBe(dropdown);
   });
 
-  test('when menu dropdown lose focus should fire toggle dropdown', () => {
+  test('when menu dropdown lose focus should fire toggle dropdown', async () => {
     const { mocks: { mockToggle } } = createMenuDropdown();
     const dropdown = screen.getByTitle('dropdown');
     const blurevent = new FocusEvent('blur');
 
-    act(() => {
-      fireEvent(dropdown, blurevent);
-    });
+    dropdown.blur();
 
     expect(mockToggle).toHaveBeenCalledTimes(1);
   });
@@ -153,7 +151,7 @@ describe('testing behavior of menu dropdown component', () => {
 
     UserEvent.click(userInfo);
 
-    expect(mockToggle).toHaveBeenCalledTimes(2);
+    expect(mockToggle).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -451,6 +451,10 @@ describe('Testing behavior of ProfileFieldText', () => {
       await act(async () => userEvent.click(saveButton));
       jest.runAllTimers(); // go around double submission prevention
 
+      userEvent.clear(oldPasswordInput);
+      userEvent.clear(newPasswordInput);
+      userEvent.clear(confPasswordInput);
+
       // save with valid value
       userEvent.type(oldPasswordInput, validPassword);
       userEvent.type(newPasswordInput, validNewPassword);

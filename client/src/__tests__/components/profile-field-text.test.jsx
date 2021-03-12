@@ -182,15 +182,12 @@ describe('Testing behavior of ProfileFieldText', () => {
       const saveButton = screen.getByTestId(IDENTIFIERS.SAVE_BUTTON_ID);
       const input = screen.getByLabelText(TEST_DATA.DEFAULT_FIELDNAME);
   
-      // due to a bug? where userEvent doesn't allow empty space typing
-      // https://github.com/testing-library/user-event/issues/182
-      if (invalidValue === '') {
-        // userEvent.clear(input); // .clear() is not implemented in this ver
-        cleanup();
-        continue;
-      }
-      else
+      if (invalidValue === '')
+        userEvent.clear(input);
+      else {
+        input.setSelectionRange(0, input.value.length);
         userEvent.type(input, invalidValue);
+      }
       await act(async () => userEvent.click(saveButton) );
 
       expect(input).toHaveValue(invalidValue);
@@ -210,6 +207,7 @@ describe('Testing behavior of ProfileFieldText', () => {
     const saveButton = screen.getByTestId(IDENTIFIERS.SAVE_BUTTON_ID);
     const input = screen.getByLabelText(TEST_DATA.DEFAULT_FIELDNAME);
 
+    input.setSelectionRange(0, input.value.length);
     userEvent.type(input, invalidValue);
     await act(async () => userEvent.click(saveButton) );
 

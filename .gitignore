@@ -33,6 +33,9 @@ client/build/
 client/public/**/*.zip
 client/public/**/*.rar
 
+# backup of previous project structure
+client-back/*
+
 # misc
 .DS_Store
 .env.local

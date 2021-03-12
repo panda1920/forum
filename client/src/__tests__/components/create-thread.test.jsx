@@ -1,7 +1,7 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-import { render, cleanup, act } from '@testing-library/react';
+import { render, cleanup, act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import HtmlInput from '../../components/htmlinput/htmlinput.component';
@@ -114,7 +114,7 @@ describe('Testing behavior of CreateThread', () => {
       const { getByText } = renderResult;
       const inputs = { title: TEST_DATA.DEFAULT_TITLE_INPUT, post: invalidInput };
   
-      await enterInputAndClickButton(renderResult, inputs);
+      await enterInputAndClickButton(inputs);
   
       expect( getByText('Error', { exact: false }) ).toBeInTheDocument();
 
@@ -130,7 +130,7 @@ describe('Testing behavior of CreateThread', () => {
       const { getByText } = renderResult;
       const inputs = { title: invalidInput, post: TEST_DATA.DEFAULT_POST_INPUT };
   
-      await enterInputAndClickButton(renderResult, inputs);
+      await enterInputAndClickButton(inputs);
 
       expect( getByText('Error', { exact: false }) ).toBeInTheDocument();
 
@@ -146,9 +146,9 @@ describe('Testing behavior of CreateThread', () => {
     ];
 
     for (const inputs of invalidInputsPermutation) {
-      const renderResult = renderCreateThread();
+      renderCreateThread();
 
-      await enterInputAndClickButton(renderResult, inputs);
+      await enterInputAndClickButton(inputs);
 
       expect(createThread).not.toHaveBeenCalled();
       expect(createPost).not.toHaveBeenCalled();
@@ -158,13 +158,13 @@ describe('Testing behavior of CreateThread', () => {
   });
 
   test('Should fire API calls when input is valid and button is clicked', async () => {
-    const renderResult = renderCreateThread();
+    renderCreateThread();
     const inputs = {
       title: TEST_DATA.DEFAULT_TITLE_INPUT,
       post: TEST_DATA.DEFAULT_POST_INPUT,
     };
 
-    await enterInputAndClickButton(renderResult, inputs);
+    await enterInputAndClickButton(inputs);
 
     expect(createThread).toHaveBeenCalledTimes(1);
     expect(createPost).toHaveBeenCalledTimes(1);
@@ -172,12 +172,12 @@ describe('Testing behavior of CreateThread', () => {
     const [ newThread ] = createThread.mock.calls[0];
     expect(newThread).toMatchObject({
       boardId: TEST_DATA.DEFAULT_BOARD_ID,
-      title: TEST_DATA.DEFAULT_TITLE_INPUT,
+      title: inputs.title,
     });
     const [ newPost ] = createPost.mock.calls[0];
     expect(newPost).toMatchObject({
       threadId: TEST_DATA.DEFAULT_NEWTHREAD_ID,
-      content: TEST_DATA.DEFAULT_POST_INPUT,
+      content: inputs.post,
     });
   });
 
@@ -189,7 +189,7 @@ describe('Testing behavior of CreateThread', () => {
         post: TEST_DATA.DEFAULT_POST_INPUT,
       };
 
-      await enterInputAndClickButton(renderResult, inputs);
+      await enterInputAndClickButton(inputs);
 
       expect(history.location.pathname)
         .toBe(`${clientBoardPath}/${TEST_DATA.DEFAULT_BOARD_ID}`);
@@ -206,7 +206,7 @@ describe('Testing behavior of CreateThread', () => {
       createMockFetchImplementation(false, 400, () => {})
     );
 
-    await enterInputAndClickButton(renderResult, inputs);
+    await enterInputAndClickButton(inputs);
 
     expect( getByText('Error', { exact: false }) ).toBeInTheDocument();
   });
@@ -222,7 +222,7 @@ describe('Testing behavior of CreateThread', () => {
       createMockFetchImplementation(false, 400, () => {})
     );
 
-    await enterInputAndClickButton(renderResult, inputs);
+    await enterInputAndClickButton(inputs);
 
     expect( getByText('Error', { exact: false }) ).toBeInTheDocument();
   });
@@ -238,7 +238,7 @@ describe('Testing behavior of CreateThread', () => {
       createMockFetchImplementation(false, 400, () => {})
     );
 
-    await enterInputAndClickButton(renderResult, inputs);
+    await enterInputAndClickButton(inputs);
 
     expect(history.location.pathname).toBe(TEST_DATA.INITIAL_PATH);
   });
@@ -246,21 +246,20 @@ describe('Testing behavior of CreateThread', () => {
 
 // helper functions
 
-async function enterInputAndClickButton(renderResult, inputs) {
+async function enterInputAndClickButton(inputs) {
   const { title, post } = inputs;
-  const { getByText, getByLabelText } = renderResult;
   const [ { onChange } ] = HtmlInput.mock.calls.slice(-1)[0];
 
   // enter title
-  await act(async () => {
-    userEvent.type(getByLabelText('Title'), title);
-  });
+  const input = screen.getByLabelText('Title');
+  input.setSelectionRange(0, input.value.length);
+  userEvent.type(input, title);
   // enter text for new post
   await act(async () => {
     onChange(post);
   });
   // click create button
   await act(async () => {
-    userEvent.click(getByText('Create'));
+    userEvent.click(screen.getByText('Create'));
   });
 }

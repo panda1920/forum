@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, cleanup, act } from '@testing-library/react';
+import { render, cleanup, act, screen } from '@testing-library/react';
 
 import { CurrentUserContext } from '../../contexts/current-user/current-user';
 import PaginationBar from '../../components/pagination-bar/pagination-bar.component';
@@ -87,10 +87,10 @@ afterEach(() => {
 });
 
 describe('Testing EntityList is being rendered properly', () => {
-  test('Should render 2 PaginationBar', () => {
-    renderEntityList();
+  test('Should render 2 PaginationBar', async () => {
+    await renderEntityList();
 
-    expect(PaginationBar).toHaveBeenCalledTimes(2);
+    expect( screen.getAllByTestId('test-pagination-bar') ).toHaveLength(2);
   });
 });
 

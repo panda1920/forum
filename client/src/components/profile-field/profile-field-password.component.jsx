@@ -36,7 +36,7 @@ const ProfileFieldText = () => {
     confPassword.setError('');
 
     // validate all inputs
-    let hasNoError = validateState(oldPassword)
+    let hasNoError = validateState(oldPassword);
     hasNoError = validateState(newPassword) && hasNoError;
     hasNoError = validateState(confPassword) && hasNoError;
     if (newPassword.value !== confPassword.value) {

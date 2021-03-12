@@ -33,7 +33,6 @@ function renderCreatePost() {
     onCreate,
   };
 }
-
 beforeEach(() => {
   createPost.mockImplementation(
     createMockFetchImplementation(true, 200, async () => {})
